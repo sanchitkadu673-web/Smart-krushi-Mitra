@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-textMain;
+  }
+}
+
+/* Custom premium styling animations & micro-interactions */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(165, 214, 167, 0.25);
+}
+
+.transition-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -10px rgba(46, 125, 50, 0.15);
+}
