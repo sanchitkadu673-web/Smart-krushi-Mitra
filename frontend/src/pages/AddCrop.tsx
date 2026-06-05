@@ -24,7 +24,7 @@ export const AddCrop: React.FC = () => {
   useEffect(() => {
     const fetchMasters = async () => {
       try {
-        const res = await axios.get('/api/admin/crops');
+        const res = await axios.get('/api/crops/masters');
         setMasters(res.data);
         if (res.data.length > 0) {
           setForm(f => ({ ...f, cropMasterId: res.data[0].id }));
@@ -133,7 +133,7 @@ export const AddCrop: React.FC = () => {
                       <button
                         key={m.id}
                         type="button"
-                        onClick={() => {
+                        onMouseDown={() => {
                           setSearchQuery(m.name);
                           setForm(f => ({ ...f, cropMasterId: m.id }));
                           setIsOpen(false);

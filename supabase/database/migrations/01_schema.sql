@@ -30,6 +30,8 @@ CREATE TABLE IF NOT EXISTS public.crop_master (
     category TEXT NOT NULL,
     duration_days INTEGER NOT NULL,
     expected_yield TEXT NOT NULL,
+    description TEXT,
+    varieties TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

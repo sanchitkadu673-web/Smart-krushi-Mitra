@@ -5,6 +5,18 @@ import { addCropSchema, updateCropSchema } from '../validators/schemas';
 import { NotificationService } from '../services/NotificationService';
 
 export class CropController {
+  public static async listCropMasters(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { data, error } = await supabaseAdmin.from('crop_master').select('*');
+      if (error) {
+        return res.status(400).json({ error: error.message });
+      }
+      return res.status(200).json(data);
+    } catch (err) {
+      next(err);
+    }
+  }
+
   public static async listCrops(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const userId = req.user?.id;
