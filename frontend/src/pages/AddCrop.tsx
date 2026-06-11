@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { Search, ChevronDown } from 'lucide-react';
 
 export const AddCrop: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   const [masters, setMasters] = useState<any[]>([]);
@@ -15,7 +15,8 @@ export const AddCrop: React.FC = () => {
     cropMasterId: '',
     sowingDate: new Date().toISOString().split('T')[0],
     area: '',
-    variety: ''
+    variety: '',
+    farmingType: 'irrigated'
   });
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,7 +58,8 @@ export const AddCrop: React.FC = () => {
         cropMasterId: form.cropMasterId,
         sowingDate: form.sowingDate,
         area: form.area ? parseFloat(form.area) : undefined,
-        variety: form.variety || undefined
+        variety: form.variety || undefined,
+        farmingType: form.farmingType
       });
       toast.success('Crop registered successfully!');
       navigate('/dashboard');
@@ -154,17 +156,32 @@ export const AddCrop: React.FC = () => {
               )}
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                {t('sowingDate')}
-              </label>
-              <input
-                type="date"
-                required
-                value={form.sowingDate}
-                onChange={e => setForm({ ...form, sowingDate: e.target.value })}
-                className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none font-medium"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  {t('sowingDate')}
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={form.sowingDate}
+                  onChange={e => setForm({ ...form, sowingDate: e.target.value })}
+                  className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none font-medium"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  {i18n.language === 'mr' ? 'शेतीचा प्रकार' : i18n.language === 'hi' ? 'खेती का प्रकार' : 'Farming Type'}
+                </label>
+                <select
+                  value={form.farmingType}
+                  onChange={e => setForm({ ...form, farmingType: e.target.value })}
+                  className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none font-medium bg-white"
+                >
+                  <option value="irrigated">{i18n.language === 'mr' ? 'बागायती (Irrigated)' : i18n.language === 'hi' ? 'सिंचित (Irrigated)' : 'Irrigated'}</option>
+                  <option value="rainfed">{i18n.language === 'mr' ? 'जिरायती/कोरडवाहू (Rainfed)' : i18n.language === 'hi' ? 'वर्षा आधारित (Rainfed)' : 'Rainfed'}</option>
+                </select>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

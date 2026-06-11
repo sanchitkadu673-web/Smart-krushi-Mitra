@@ -19,6 +19,10 @@ export interface RecommendationResponse {
   fertilizers: any[];
   sprays: any[];
   irrigation: any[];
+  allStages: any[];
+  allFertilizers: any[];
+  allSprays: any[];
+  allIrrigation: any[];
   diseases: any[];
   pests: any[];
 }
@@ -137,54 +141,66 @@ export class RecommendationEngineService {
       }
     }
 
-    // 3. Fetch recommendations for current stage (or overall)
-    let fertilizers: any[] = [];
-    let sprays: any[] = [];
-    let irrigation: any[] = [];
+    // 3. Fetch ALL recommendations
+    let allFertilizers: any[] = [];
+    let allSprays: any[] = [];
+    let allIrrigation: any[] = [];
 
-    if (currentStage) {
-      if (currentStage.stageId.startsWith('default-stage-')) {
-        const stageNum = currentStage.stageId.split('-')[2];
-        if (stageNum === '1') {
-          fertilizers = [{ id: 'df-1', fertilizer_name: 'NPK Organic Compost / Base Dose (सेंद्रिय खत)', quantity: 'Basal Dose: 50kg per acre' }];
-          sprays = [{ id: 'ds-1', spray_name: 'Neem Oil Spray (कडुलिंब अर्क) for sucking pests prevention' }];
-          irrigation = [{ id: 'di-1', water_requirement: 'Light watering right after sowing if soil lacks moisture (पेरणीनंतर हलके पाणी)' }];
-        } else if (stageNum === '2') {
-          fertilizers = [{ id: 'df-2', fertilizer_name: 'NPK 19:19:19 Soluble Fertilizer (१९:१९:१९ विद्राव्य खत)', quantity: 'Spray: 1kg per acre' }];
-          sprays = [{ id: 'ds-2', spray_name: 'Bio-Insecticide / Neem Oil (जैविक कीटकनाशक) for crop growth protection' }];
-          irrigation = [{ id: 'di-2', water_requirement: 'Moderate watering at interval of 10-12 days (१०-१२ दिवसांच्या अंतराने मध्यम पाणी)' }];
-        } else if (stageNum === '3') {
-          fertilizers = [{ id: 'df-3', fertilizer_name: 'NPK 0:52:34 & Micro-nutrients (०:५२:३४ आणि सूक्ष्म अन्नद्रव्ये)', quantity: 'Spray: 1.5kg per acre' }];
-          sprays = [{ id: 'ds-3', spray_name: 'Fungicide spray (बुरशीनाशक फवारणी) for flower rot prevention' }];
-          irrigation = [{ id: 'di-3', water_requirement: 'Critical stage: maintain consistent soil moisture (महत्त्वाचा टप्पा: जमिनीत पुरेसा ओलावा ठेवा)' }];
-        } else {
-          fertilizers = [];
-          sprays = [{ id: 'ds-4', spray_name: 'No sprays recommended close to harvest (कापणीच्या वेळी फवारणी टाळा)' }];
-          irrigation = [{ id: 'di-4', water_requirement: 'Stop watering 10-15 days before harvest (कापणीच्या १०-१५ दिवस आधी पाणी देणे बंद करा)' }];
-        }
+    if (activeStages && activeStages.length > 0 && activeStages[0].id.startsWith('default-stage-')) {
+      // Create mock full schedule
+      allFertilizers = [
+        { id: 'df-1', stage_id: activeStages[0].id, fertilizer_name: 'NPK Organic Compost / Base Dose (सेंद्रिय खत)', quantity: 'Basal Dose: 50kg per acre' },
+        { id: 'df-2', stage_id: activeStages[1].id, fertilizer_name: 'NPK 19:19:19 Soluble Fertilizer (१९:१९:१९ विद्राव्य खत)', quantity: 'Spray: 1kg per acre' },
+        { id: 'df-3', stage_id: activeStages[2].id, fertilizer_name: 'NPK 0:52:34 & Micro-nutrients (०:५२:३४ आणि सूक्ष्म अन्नद्रव्ये)', quantity: 'Spray: 1.5kg per acre' }
+      ];
+      allSprays = [
+        { id: 'ds-1', stage_id: activeStages[0].id, spray_name: 'Neem Oil Spray (कडुलिंब अर्क) for sucking pests prevention' },
+        { id: 'ds-2', stage_id: activeStages[1].id, spray_name: 'Bio-Insecticide / Neem Oil (जैविक कीटकनाशक) for crop growth protection' },
+        { id: 'ds-3', stage_id: activeStages[2].id, spray_name: 'Fungicide spray (बुरशीनाशक फवारणी) for flower rot prevention' },
+        { id: 'ds-4', stage_id: activeStages[3].id, spray_name: 'No sprays recommended close to harvest (कापणीच्या वेळी फवारणी टाळा)' }
+      ];
+      allIrrigation = [
+        { id: 'di-1', stage_id: activeStages[0].id, water_requirement: 'Light watering right after sowing if soil lacks moisture (पेरणीनंतर हलके पाणी)' },
+        { id: 'di-2', stage_id: activeStages[1].id, water_requirement: 'Moderate watering at interval of 10-12 days (१०-१२ दिवसांच्या अंतराने मध्यम पाणी)' },
+        { id: 'di-3', stage_id: activeStages[2].id, water_requirement: 'Critical stage: maintain consistent soil moisture (महत्त्वाचा टप्पा: जमिनीत पुरेसा ओलावा ठेवा)' },
+        { id: 'di-4', stage_id: activeStages[3].id, water_requirement: 'Stop watering 10-15 days before harvest (कापणीच्या १०-१५ दिवस आधी पाणी देणे बंद करा)' }
+      ];
+    } else {
+      const { data: fertData } = await supabaseAdmin
+        .from('fertilizer_schedule')
+        .select('*')
+        .eq('crop_master_id', crop.crop_master_id);
+      allFertilizers = fertData || [];
+
+      const { data: sprayData } = await supabaseAdmin
+        .from('spray_schedule')
+        .select('*')
+        .eq('crop_master_id', crop.crop_master_id);
+      allSprays = sprayData || [];
+
+      const { data: irrData } = await supabaseAdmin
+        .from('irrigation_schedule')
+        .select('*')
+        .eq('crop_master_id', crop.crop_master_id);
+      allIrrigation = irrData || [];
+    }
+
+    if (crop.farming_type === 'rainfed') {
+      if (allIrrigation.length === 0 && activeStages && activeStages.length > 0) {
+        allIrrigation = [{ id: 'di-rainfed', stage_id: activeStages[0].id, water_requirement: 'Rainfed Crop: Rely on natural rainfall. Provide life-saving irrigation only during extended dry spells (पावसावर अवलंबून. पावसाचा खंड पडल्यास संरक्षित पाणी द्या).' }];
       } else {
-        const { data: fertData } = await supabaseAdmin
-          .from('fertilizer_schedule')
-          .select('*')
-          .eq('crop_master_id', crop.crop_master_id)
-          .eq('stage_id', currentStage.stageId);
-        fertilizers = fertData || [];
-
-        const { data: sprayData } = await supabaseAdmin
-          .from('spray_schedule')
-          .select('*')
-          .eq('crop_master_id', crop.crop_master_id)
-          .eq('stage_id', currentStage.stageId);
-        sprays = sprayData || [];
-
-        const { data: irrData } = await supabaseAdmin
-          .from('irrigation_schedule')
-          .select('*')
-          .eq('crop_master_id', crop.crop_master_id)
-          .eq('stage_id', currentStage.stageId);
-        irrigation = irrData || [];
+        allIrrigation = allIrrigation.map(irr => ({
+          ...irr,
+          water_requirement: `Rainfed (जिरायती): Rely on rainfall. Provide life-saving irrigation if needed. (Original: ${irr.water_requirement})`
+        }));
       }
     }
+
+    // Keep backwards compatibility for current stage
+    let fertilizers = currentStage ? allFertilizers.filter(f => f.stage_id === currentStage!.stageId) : [];
+    let sprays = currentStage ? allSprays.filter(s => s.stage_id === currentStage!.stageId) : [];
+    let irrigation = currentStage ? allIrrigation.filter(i => i.stage_id === currentStage!.stageId) : [];
+
 
     // 4. Fetch all Diseases & Pests associated with the crop master
     const { data: dbDiseases } = await supabaseAdmin
@@ -299,6 +315,10 @@ export class RecommendationEngineService {
       fertilizers,
       sprays,
       irrigation,
+      allStages: activeStages,
+      allFertilizers,
+      allSprays,
+      allIrrigation,
       diseases,
       pests,
       seedBrands,

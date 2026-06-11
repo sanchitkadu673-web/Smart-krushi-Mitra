@@ -130,7 +130,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-bold text-gray-900">Crop Master Database</h3>
-            <button 
+            <button
               onClick={() => setShowAddForm(!showAddForm)}
               className="bg-primary hover:bg-primary-dark text-white font-bold px-4 py-2 rounded-xl text-sm flex items-center gap-1.5 transition-colors"
             >
@@ -142,8 +142,8 @@ export const AdminDashboard: React.FC = () => {
             <form onSubmit={handleAddCropMaster} className="mb-8 p-6 bg-background rounded-xl border border-gray-100 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   value={newCrop.name}
                   onChange={e => setNewCrop({ ...newCrop, name: e.target.value })}
@@ -153,7 +153,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Category</label>
-                <select 
+                <select
                   value={newCrop.category}
                   onChange={e => setNewCrop({ ...newCrop, category: e.target.value })}
                   className="w-full px-3 py-2 border rounded-lg bg-white text-sm"
@@ -166,8 +166,8 @@ export const AdminDashboard: React.FC = () => {
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Duration (Days)</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   required
                   value={newCrop.durationDays}
                   onChange={e => setNewCrop({ ...newCrop, durationDays: parseInt(e.target.value) })}
@@ -176,8 +176,8 @@ export const AdminDashboard: React.FC = () => {
               </div>
               <div>
                 <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Yield Spec</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   value={newCrop.expectedYield}
                   onChange={e => setNewCrop({ ...newCrop, expectedYield: e.target.value })}
@@ -211,7 +211,7 @@ export const AdminDashboard: React.FC = () => {
                     <td className="py-3.5 px-4">{c.duration_days} Days</td>
                     <td className="py-3.5 px-4">{c.expected_yield}</td>
                     <td className="py-3.5 px-4 text-right">
-                      <button 
+                      <button
                         onClick={() => handleDeleteCropMaster(c.id)}
                         className="text-red-500 hover:text-red-700 p-1.5 rounded bg-red-50 hover:bg-red-100 transition-colors"
                       >

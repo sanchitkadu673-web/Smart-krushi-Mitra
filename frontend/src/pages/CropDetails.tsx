@@ -489,7 +489,7 @@ export const CropDetails: React.FC = () => {
   const [crop, setCrop] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'fertilizer' | 'spray' | 'irrigation' | 'pests' | 'diseases'>('fertilizer');
+  const [activeTab, setActiveTab] = useState<'master_chart' | 'ai_schedule' | 'fertilizer' | 'spray' | 'irrigation' | 'pests' | 'diseases'>('master_chart');
 
   // Edit Crop fields state
   const [isEditing, setIsEditing] = useState(false);
@@ -497,6 +497,7 @@ export const CropDetails: React.FC = () => {
     sowingDate: '',
     area: '',
     variety: '',
+    farmingType: 'irrigated',
     status: 'active'
   });
 
@@ -506,6 +507,7 @@ export const CropDetails: React.FC = () => {
       sowingDate: crop.sowing_date,
       area: crop.area || '',
       variety: crop.variety || '',
+      farmingType: crop.farming_type || 'irrigated',
       status: crop.status || 'active'
     });
     setIsEditing(true);
@@ -518,6 +520,7 @@ export const CropDetails: React.FC = () => {
         sowingDate: editForm.sowingDate,
         area: editForm.area ? parseFloat(editForm.area) : undefined,
         variety: editForm.variety || undefined,
+        farmingType: editForm.farmingType,
         status: editForm.status
       });
       setCrop(res.data);
@@ -598,7 +601,13 @@ export const CropDetails: React.FC = () => {
             <span className="text-4xl">🌱</span>
             <div>
               <h1 className="text-3xl font-extrabold text-gray-900">{crop.crop_master.name}</h1>
-              <p className="text-sm text-gray-500 mt-1">Sown on: {crop.sowing_date} • {crop.area ? `${crop.area} ${i18n.language === 'mr' ? 'एकर' : i18n.language === 'hi' ? 'एकड़' : 'Acres'}` : 'No area specified'}</p>
+              <div className="text-sm text-gray-500 mt-1 flex flex-wrap gap-2 items-center">
+                <span>Sown on: {crop.sowing_date}</span>
+                <span>•</span>
+                <span>{crop.area ? `${crop.area} ${i18n.language === 'mr' ? 'एकर' : i18n.language === 'hi' ? 'एकड़' : 'Acres'}` : 'No area specified'}</span>
+                <span>•</span>
+                <span className="font-semibold text-primary">{crop.farming_type === 'rainfed' ? (i18n.language === 'mr' ? 'जिरायती/कोरडवाहू' : i18n.language === 'hi' ? 'वर्षा आधारित' : 'Rainfed') : (i18n.language === 'mr' ? 'बागायती' : i18n.language === 'hi' ? 'सिंचित' : 'Irrigated')}</span>
+              </div>
               <button 
                 onClick={handleEditClick}
                 className="text-xs bg-primary/10 text-primary font-bold px-3 py-1.5 rounded-lg mt-2 hover:bg-primary/20 transition-all flex items-center gap-1.5"
@@ -690,6 +699,7 @@ export const CropDetails: React.FC = () => {
           {/* Navigation tab links */}
           <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm h-fit space-y-1">
             {[
+              { id: 'master_chart', label: i18n.language === 'mr' ? 'संपूर्ण वेळापत्रक' : i18n.language === 'hi' ? 'संपूर्ण अनुसूची' : 'Master Chart', icon: Calendar },
               { id: 'fertilizer', label: t('fertilizers'), icon: Sparkles },
               { id: 'spray', label: t('sprays'), icon: Sprout },
               { id: 'irrigation', label: t('irrigation'), icon: Droplets },
@@ -716,19 +726,182 @@ export const CropDetails: React.FC = () => {
 
           {/* Tab content panel */}
           <div className="lg:col-span-3 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm min-h-[300px]">
+            {activeTab === 'master_chart' && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-900">{i18n.language === 'mr' ? 'संपूर्ण पीक वेळापत्रक' : i18n.language === 'hi' ? 'संपूर्ण फसल अनुसूची' : 'Master Crop Timeline'}</h3>
+                </div>
+                
+                {/* Summary Statistics */}
+                <div className="grid grid-cols-3 gap-4 mb-8">
+                  <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 text-center">
+                    <span className="block text-2xl font-black text-primary">{recommendations.allFertilizers?.length || 0}</span>
+                    <span className="text-xs font-bold text-gray-600 uppercase mt-1">{i18n.language === 'mr' ? 'एकूण खत वेळा' : i18n.language === 'hi' ? 'कुल उर्वरक समय' : 'Fertilizer Times'}</span>
+                  </div>
+                  <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-center">
+                    <span className="block text-2xl font-black text-amber-600">{recommendations.allSprays?.length || 0}</span>
+                    <span className="text-xs font-bold text-gray-600 uppercase mt-1">{i18n.language === 'mr' ? 'एकूण फवारणी' : i18n.language === 'hi' ? 'कुल छिड़काव' : 'Spray Times'}</span>
+                  </div>
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">
+                    <span className="block text-2xl font-black text-blue-600">{recommendations.allIrrigation?.length || 0}</span>
+                    <span className="text-xs font-bold text-gray-600 uppercase mt-1">{i18n.language === 'mr' ? 'एकूण पाणी' : i18n.language === 'hi' ? 'कुल सिंचाई' : 'Watering Times'}</span>
+                  </div>
+                </div>
+
+                {/* Timeline */}
+                <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
+                  {recommendations.allStages?.map((stage: any, index: number) => {
+                    const stageFerts = recommendations.allFertilizers?.filter((f: any) => f.stage_id === stage.id || f.stage_id === stage.stageId) || [];
+                    const stageSprays = recommendations.allSprays?.filter((s: any) => s.stage_id === stage.id || s.stage_id === stage.stageId) || [];
+                    const stageIrr = recommendations.allIrrigation?.filter((i: any) => i.stage_id === stage.id || i.stage_id === stage.stageId) || [];
+
+                    return (
+                      <div key={stage.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                        {/* Icon */}
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-green-100 text-green-600 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm z-10 font-bold">
+                          {index + 1}
+                        </div>
+                        {/* Card */}
+                        <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="flex items-center justify-between mb-4 border-b border-gray-50 pb-3">
+                            <h4 className="font-bold text-gray-900 text-base">{translateStageName(stage.stage_name || stage.stageName, i18n.language)}</h4>
+                            <span className="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">Day {stage.start_day || stage.startDay}-{stage.end_day || stage.endDay}</span>
+                          </div>
+                          <div className="space-y-3">
+                            {stageIrr.length > 0 && (
+                              <div className="bg-blue-50/50 p-3 rounded-xl border border-blue-100/50">
+                                <span className="text-xs font-bold text-blue-600 flex items-center gap-1.5 mb-1"><Droplets className="w-3.5 h-3.5"/> {i18n.language === 'mr' ? 'पाणी व्यवस्थापन' : 'Irrigation'}</span>
+                                {stageIrr.map((i: any) => <p key={i.id} className="text-sm text-gray-700">{i.water_requirement}</p>)}
+                              </div>
+                            )}
+                            {stageFerts.length > 0 && (
+                              <div className="bg-green-50/50 p-3 rounded-xl border border-green-100/50">
+                                <span className="text-xs font-bold text-green-600 flex items-center gap-1.5 mb-1"><Sparkles className="w-3.5 h-3.5"/> {i18n.language === 'mr' ? 'खत व्यवस्थापन' : 'Fertilizer'}</span>
+                                {stageFerts.map((f: any) => (
+                                  <div key={f.id} className="mt-1">
+                                    <p className="text-sm font-semibold text-gray-800">{f.fertilizer_name}</p>
+                                    <p className="text-xs text-gray-500">{f.quantity}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {stageSprays.length > 0 && (
+                              <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-100/50">
+                                <span className="text-xs font-bold text-amber-600 flex items-center gap-1.5 mb-1"><Sprout className="w-3.5 h-3.5"/> {i18n.language === 'mr' ? 'फवारणी' : 'Spray'}</span>
+                                {stageSprays.map((s: any) => <p key={s.id} className="text-sm text-gray-700">{s.spray_name}</p>)}
+                              </div>
+                            )}
+                            {stageIrr.length === 0 && stageFerts.length === 0 && stageSprays.length === 0 && (
+                              <p className="text-sm text-gray-400 italic">No specific activities scheduled for this stage.</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            
+            {activeTab === 'ai_schedule' && (
+              <div>
+                <h3 className="text-xl font-bold mb-6 text-gray-900 flex items-center gap-2">
+                  <Sparkles className="w-6 h-6 text-yellow-500" />
+                  {i18n.language === 'mr' ? 'AI स्मार्ट कृषी वेळापत्रक आणि मशागत' : 'AI Smart Farming Schedule & Tillage'}
+                </h3>
+                {!crop.ai_schedule_data ? (
+                  <div className="p-8 text-center bg-blue-50/50 rounded-2xl border border-blue-100">
+                    <p className="text-blue-800 font-medium">AI schedule is being generated... Check back in a minute!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="p-5 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100">
+                       <h4 className="font-bold text-green-800 text-xl mb-4 border-b border-green-200 pb-2">{crop.ai_schedule_data.crop_info?.name}</h4>
+                       
+                       {crop.ai_schedule_data.crop_info?.pre_sowing_tillage && (
+                         <div className="mb-4">
+                           <h5 className="font-bold text-green-900 mb-1 flex items-center gap-2"><Sprout className="w-4 h-4"/> पूर्व मशागत (Pre-Sowing Tillage)</h5>
+                           <p className="text-gray-700 bg-white p-3 rounded-lg border border-green-100">{crop.ai_schedule_data.crop_info.pre_sowing_tillage}</p>
+                         </div>
+                       )}
+                       
+                       {crop.ai_schedule_data.crop_info?.sowing_method && (
+                         <div className="mb-4">
+                           <h5 className="font-bold text-green-900 mb-1 flex items-center gap-2"><Calendar className="w-4 h-4"/> पेरणी पद्धत (Sowing Method)</h5>
+                           <p className="text-gray-700 bg-white p-3 rounded-lg border border-green-100">{crop.ai_schedule_data.crop_info.sowing_method}</p>
+                         </div>
+                       )}
+
+                       <div className="mt-4">
+                         <h5 className="font-bold text-green-900 mb-1">सामान्य सल्ला (General Advice)</h5>
+                         <p className="text-gray-700">{crop.ai_schedule_data.crop_info?.general_advice}</p>
+                       </div>
+                    </div>
+                    
+                    <h4 className="text-lg font-bold text-gray-800 mt-8 mb-4 border-b pb-2">वाढीचे टप्पे आणि वेळापत्रक (Growth Stages & Schedule)</h4>
+                    
+                    <div className="space-y-6">
+                      {crop.ai_schedule_data.stages?.map((stage: any, index: number) => (
+                        <div key={index} className="p-5 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
+                            <h5 className="font-extrabold text-gray-900 text-lg text-primary">{stage.stage_name}</h5>
+                            <span className="bg-primary/10 text-primary font-bold px-3 py-1 rounded-full text-xs">Day {stage.start_day} - {stage.end_day}</span>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="bg-blue-50/50 p-3 rounded-lg border border-blue-100/50">
+                              <p className="text-xs font-bold text-blue-800 uppercase mb-1 flex items-center gap-1"><Droplets className="w-3 h-3"/> Water</p>
+                              <p className="text-sm text-gray-800">{stage.water_requirement}</p>
+                            </div>
+                            <div className="bg-green-50/50 p-3 rounded-lg border border-green-100/50">
+                              <p className="text-xs font-bold text-green-800 uppercase mb-1">Fertilizer (खत)</p>
+                              <p className="text-sm text-gray-800">{stage.fertilizer_advice}</p>
+                            </div>
+                            <div className="bg-orange-50/50 p-3 rounded-lg border border-orange-100/50">
+                              <p className="text-xs font-bold text-orange-800 uppercase mb-1 flex items-center gap-1"><ShieldAlert className="w-3 h-3"/> Spray (फवारणी)</p>
+                              <p className="text-sm text-gray-800">{stage.spray_advice}</p>
+                            </div>
+                            {stage.intercultural_operations && (
+                              <div className="bg-purple-50/50 p-3 rounded-lg border border-purple-100/50">
+                                <p className="text-xs font-bold text-purple-800 uppercase mb-1">Weeding (मशागत)</p>
+                                <p className="text-sm text-gray-800">{stage.intercultural_operations}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeTab === 'fertilizer' && (
               <div>
-                <h3 className="text-xl font-bold mb-6 text-gray-900">{t('fertilizers')}</h3>
-                {recommendations.fertilizers.length === 0 ? (
-                  <p className="text-gray-400 text-sm">No fertilizer recommendations required at this stage.</p>
+                <h3 className="text-xl font-bold mb-6 text-gray-900">{i18n.language === 'mr' ? 'खत व्यवस्थापन वेळापत्रक' : i18n.language === 'hi' ? 'उर्वरक प्रबंधन अनुसूची' : 'Complete Fertilizer Schedule'}</h3>
+                {(!recommendations.allFertilizers || recommendations.allFertilizers.length === 0) ? (
+                  <p className="text-gray-400 text-sm">No fertilizer recommendations required.</p>
                 ) : (
-                  <div className="space-y-4">
-                    {recommendations.fertilizers.map((f: any) => (
-                      <div key={f.id} className="p-4 rounded-xl bg-green-50/20 border border-green-100/50">
-                        <h4 className="font-extrabold text-gray-900">{f.fertilizer_name}</h4>
-                        <p className="text-sm text-gray-600 mt-1">Recommended Quantity: <span className="font-bold text-primary">{f.quantity}</span></p>
-                      </div>
-                    ))}
+                  <div>
+                    {recommendations.allStages.map((stage: any) => {
+                      const stageFerts = recommendations.allFertilizers.filter((f: any) => f.stage_id === stage.id || f.stage_id === stage.stageId);
+                      if (stageFerts.length === 0) return null;
+                      return (
+                        <div key={stage.id} className="mb-8 last:mb-0">
+                          <h4 className="font-bold text-gray-800 border-b border-gray-100 pb-2 mb-4">
+                            {translateStageName(stage.stage_name || stage.stageName, i18n.language)} <span className="text-gray-400 text-sm font-normal ml-2">(Day {stage.start_day || stage.startDay} - {stage.end_day || stage.endDay})</span>
+                          </h4>
+                          <div className="space-y-4">
+                            {stageFerts.map((f: any) => (
+                              <div key={f.id} className="p-4 rounded-xl bg-green-50/20 border border-green-100/50">
+                                <h4 className="font-extrabold text-gray-900">{f.fertilizer_name}</h4>
+                                <p className="text-sm text-gray-600 mt-1">Recommended Quantity: <span className="font-bold text-primary">{f.quantity}</span></p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -736,16 +909,29 @@ export const CropDetails: React.FC = () => {
 
             {activeTab === 'spray' && (
               <div>
-                <h3 className="text-xl font-bold mb-6 text-gray-900">{t('sprays')}</h3>
-                {recommendations.sprays.length === 0 ? (
-                  <p className="text-gray-400 text-sm">No sprays schedules defined for current stage.</p>
+                <h3 className="text-xl font-bold mb-6 text-gray-900">{i18n.language === 'mr' ? 'फवारणी वेळापत्रक' : i18n.language === 'hi' ? 'छिड़काव अनुसूची' : 'Complete Spray Schedule'}</h3>
+                {(!recommendations.allSprays || recommendations.allSprays.length === 0) ? (
+                  <p className="text-gray-400 text-sm">No sprays schedules defined.</p>
                 ) : (
-                  <div className="space-y-4">
-                    {recommendations.sprays.map((s: any) => (
-                      <div key={s.id} className="p-4 rounded-xl bg-green-50/20 border border-green-100/50">
-                        <h4 className="font-extrabold text-gray-900">{s.spray_name}</h4>
-                      </div>
-                    ))}
+                  <div>
+                    {recommendations.allStages.map((stage: any) => {
+                      const stageSprays = recommendations.allSprays.filter((s: any) => s.stage_id === stage.id || s.stage_id === stage.stageId);
+                      if (stageSprays.length === 0) return null;
+                      return (
+                        <div key={stage.id} className="mb-8 last:mb-0">
+                          <h4 className="font-bold text-gray-800 border-b border-gray-100 pb-2 mb-4">
+                            {translateStageName(stage.stage_name || stage.stageName, i18n.language)} <span className="text-gray-400 text-sm font-normal ml-2">(Day {stage.start_day || stage.startDay} - {stage.end_day || stage.endDay})</span>
+                          </h4>
+                          <div className="space-y-4">
+                            {stageSprays.map((s: any) => (
+                              <div key={s.id} className="p-4 rounded-xl bg-green-50/20 border border-green-100/50">
+                                <h4 className="font-extrabold text-gray-900">{s.spray_name}</h4>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -753,17 +939,30 @@ export const CropDetails: React.FC = () => {
 
             {activeTab === 'irrigation' && (
               <div>
-                <h3 className="text-xl font-bold mb-6 text-gray-900">{t('irrigation')}</h3>
-                {recommendations.irrigation.length === 0 ? (
+                <h3 className="text-xl font-bold mb-6 text-gray-900">{i18n.language === 'mr' ? 'पाणी व्यवस्थापन वेळापत्रक' : i18n.language === 'hi' ? 'सिंचाई अनुसूची' : 'Complete Irrigation Schedule'}</h3>
+                {(!recommendations.allIrrigation || recommendations.allIrrigation.length === 0) ? (
                   <p className="text-gray-400 text-sm">Standard rainfall suffices. No extra irrigation schedules active.</p>
                 ) : (
-                  <div className="space-y-4">
-                    {recommendations.irrigation.map((i: any) => (
-                      <div key={i.id} className="p-4 rounded-xl bg-green-50/20 border border-green-100/50">
-                        <h4 className="font-extrabold text-gray-900">Water Requirement:</h4>
-                        <p className="text-sm text-gray-600 mt-1">{i.water_requirement}</p>
-                      </div>
-                    ))}
+                  <div>
+                    {recommendations.allStages.map((stage: any) => {
+                      const stageIrr = recommendations.allIrrigation.filter((i: any) => i.stage_id === stage.id || i.stage_id === stage.stageId);
+                      if (stageIrr.length === 0) return null;
+                      return (
+                        <div key={stage.id} className="mb-8 last:mb-0">
+                          <h4 className="font-bold text-gray-800 border-b border-gray-100 pb-2 mb-4">
+                            {translateStageName(stage.stage_name || stage.stageName, i18n.language)} <span className="text-gray-400 text-sm font-normal ml-2">(Day {stage.start_day || stage.startDay} - {stage.end_day || stage.endDay})</span>
+                          </h4>
+                          <div className="space-y-4">
+                            {stageIrr.map((i: any) => (
+                              <div key={i.id} className="p-4 rounded-xl bg-green-50/20 border border-green-100/50">
+                                <h4 className="font-extrabold text-gray-900">Water Requirement:</h4>
+                                <p className="text-sm text-gray-600 mt-1">{i.water_requirement}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -851,17 +1050,30 @@ export const CropDetails: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Crop Status</label>
-                <select
-                  value={editForm.status}
-                  onChange={e => setEditForm({ ...editForm, status: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary bg-white font-medium"
-                >
-                  <option value="active">Active (सक्रिय)</option>
-                  <option value="harvested">Harvested (काढणी झालेले)</option>
-                  <option value="abandoned">Abandoned (सोडून दिलेले)</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Farming Type</label>
+                  <select
+                    value={editForm.farmingType}
+                    onChange={e => setEditForm({ ...editForm, farmingType: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary bg-white font-medium"
+                  >
+                    <option value="irrigated">Irrigated (बागायती)</option>
+                    <option value="rainfed">Rainfed (जिरायती)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Crop Status</label>
+                  <select
+                    value={editForm.status}
+                    onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary bg-white font-medium"
+                  >
+                    <option value="active">Active (सक्रिय)</option>
+                    <option value="harvested">Harvested (काढणी झालेले)</option>
+                    <option value="abandoned">Abandoned (सोडून दिलेले)</option>
+                  </select>
+                </div>
               </div>
 
               <div className="flex gap-3.5 justify-end pt-4">

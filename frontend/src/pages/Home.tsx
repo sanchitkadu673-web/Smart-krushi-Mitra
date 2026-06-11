@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '../components/navigation/Navbar';
 import { ShieldCheck, CloudSun, CalendarDays, Sprout, Milestone, HelpCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export const Home: React.FC = () => {
   const { t } = useTranslation();
+  const { profile } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
@@ -27,12 +29,20 @@ export const Home: React.FC = () => {
         </p>
 
         <div className="mt-10 flex flex-wrap gap-4 justify-center">
-          <Link to="/register" className="bg-primary hover:bg-primary-dark text-white font-bold text-lg px-8 py-3.5 rounded-xl shadow-lg hover:shadow-xl transition-all">
-            {t('getStartedBtn')}
-          </Link>
-          <Link to="/login" className="bg-white border-2 border-primary/20 text-primary hover:border-primary font-bold text-lg px-8 py-3.5 rounded-xl transition-all">
-            {t('login')}
-          </Link>
+          {profile ? (
+            <Link to="/dashboard" className="bg-primary hover:bg-primary-dark text-white font-bold text-lg px-8 py-3.5 rounded-xl shadow-lg hover:shadow-xl transition-all">
+              {t('dashboard') || 'Dashboard'}
+            </Link>
+          ) : (
+            <>
+              <Link to="/register" className="bg-primary hover:bg-primary-dark text-white font-bold text-lg px-8 py-3.5 rounded-xl shadow-lg hover:shadow-xl transition-all">
+                {t('getStartedBtn')}
+              </Link>
+              <Link to="/login" className="bg-white border-2 border-primary/20 text-primary hover:border-primary font-bold text-lg px-8 py-3.5 rounded-xl transition-all">
+                {t('login')}
+              </Link>
+            </>
+          )}
         </div>
       </section>
 

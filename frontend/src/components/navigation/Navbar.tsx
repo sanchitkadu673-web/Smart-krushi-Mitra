@@ -2,7 +2,8 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Globe, LogOut, Menu, User, Bell } from 'lucide-react';
+import { Globe, LogOut, User, Bell, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 const transliterateName = (name: string, lang: string) => {
   if (lang !== 'mr' && lang !== 'hi') return name;
@@ -29,6 +30,7 @@ const transliterateName = (name: string, lang: string) => {
 export const Navbar: React.FC = () => {
   const { profile, logout } = useAuth();
   const { t, i18n } = useTranslation();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -55,8 +57,8 @@ export const Navbar: React.FC = () => {
         {/* Language Selector */}
         <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
           <Globe className="w-4 h-4 text-gray-500" />
-          <select 
-            value={i18n.language} 
+          <select
+            value={i18n.language}
             onChange={handleLanguageChange}
             className="bg-transparent text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
           >
@@ -65,6 +67,19 @@ export const Navbar: React.FC = () => {
             <option value="en">English</option>
           </select>
         </div>
+
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 text-gray-700 dark:hover:bg-slate-700 transition-all focus:outline-none flex items-center justify-center cursor-pointer"
+          aria-label="Toggle Theme"
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-4 h-4 text-amber-500 animate-pulse" />
+          ) : (
+            <Moon className="w-4 h-4 text-indigo-600" />
+          )}
+        </button>
 
         {profile ? (
           <>
@@ -86,7 +101,7 @@ export const Navbar: React.FC = () => {
                 Admin
               </Link>
             )}
-            <button 
+            <button
               onClick={handleLogout}
               className="flex items-center gap-1 text-sm text-red-600 hover:text-red-800 font-semibold transition-colors"
             >

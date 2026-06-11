@@ -32,7 +32,7 @@ export class AuthController {
       } else {
         // Query user if already existing
         const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
-        const found = existingUser.users.find((u: any) => u.phone === `+91${validated.mobile}`);
+        const found = existingUser.users.find((u: any) => u.phone === `+91${validated.mobile}` || u.phone === `91${validated.mobile}`);
         if (!found) {
           return res.status(400).json({ error: 'Failed to find/create authentication user' });
         }
@@ -105,18 +105,18 @@ export class AuthController {
       let sessionData: any = null;
 
       if (otp === '123456') {
-        // Dev bypass
-        const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers();
-        const foundUser = authUsers.users.find((u: any) => 
-          email ? u.email === email : u.phone === `+91${mobile}`
-        );
-        if (!foundUser) {
+        // Dev bypass - Query profiles directly to avoid phone format issues
+        const { data: foundProfile } = email 
+          ? await supabaseAdmin.from('profiles').select('*').eq('email', email).single()
+          : await supabaseAdmin.from('profiles').select('*').eq('mobile', mobile).single();
+          
+        if (!foundProfile) {
           return res.status(404).json({ error: 'User not found, please register first' });
         }
 
         sessionData = {
           access_token: 'dev-token-bypass-otp',
-          user: foundUser
+          user: { id: foundProfile.user_id }
         };
       } else {
         const verifyOptions = email 

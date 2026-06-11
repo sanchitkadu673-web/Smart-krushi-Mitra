@@ -1,18 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '../components/navigation/Navbar';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { CloudRain, Compass, Calendar, PlusCircle, AlertCircle, RefreshCw, Sprout } from 'lucide-react';
-
+import {
+  CloudRain, Compass, Calendar, PlusCircle, AlertCircle,
+  RefreshCw, Sprout, Wind, Droplets, Thermometer,
+  Sun, Cloud, CloudLightning, Snowflake, Eye
+} from 'lucide-react';
 import i18n from 'i18next';
 
-const translateNotification = (notif: { title: string; message: string }) => {
-  let title = notif.title;
-  let message = notif.message;
+/* ─── helpers ───────────────────────────────────────────────── */
 
+const translateNotification = (notif: { title: string; message: string }) => {
+  let { title, message } = notif;
   if (i18n.language === 'mr') {
     title = title
       .replace('Fertilizer Alert:', 'खत व्यवस्थापन सूचना:')
@@ -20,7 +23,6 @@ const translateNotification = (notif: { title: string; message: string }) => {
       .replace('Irrigation Alert:', 'पाणी व्यवस्थापन सूचना:')
       .replace('Harvest Alert:', 'पीक काढणी सूचना:')
       .replace('Weather Alert:', 'हवामान इशारा:');
-      
     message = message
       .replace('Apply', 'वापरा')
       .replace('for your', 'तुमच्या')
@@ -41,7 +43,6 @@ const translateNotification = (notif: { title: string; message: string }) => {
       .replace('Irrigation Alert:', 'सिंचाई चेतावनी:')
       .replace('Harvest Alert:', 'कटाई चेतावनी:')
       .replace('Weather Alert:', 'मौसम चेतावनी:');
-
     message = message
       .replace('Apply', 'उपयोग करें')
       .replace('for your', 'अपनी')
@@ -56,31 +57,51 @@ const translateNotification = (notif: { title: string; message: string }) => {
       .replace('Maintain consistent moisture to avoid boll shedding', 'फूल-बोंड गिरने से बचाने के लिए नमी बनाए रखें')
       .replace('Your crop is reaching maturity. Plan harvest soon.', 'आपकी फसल पकने के कगार पर है। जल्द ही कटाई की योजना बनाएं।');
   }
-
   return { title, message };
 };
 
 const transliterateName = (name: string, lang: string) => {
   if (lang !== 'mr' && lang !== 'hi') return name;
-
   const dictionary: Record<string, string> = {
-    "sanchit": "संचित",
-    "kadu": "कडू",
-    "patil": "पाटील",
-    "shinde": "शिंदे",
-    "pawar": "पवार",
-    "farmer": "शेतकरी",
-    "admin": "प्रशासक"
+    sanchit: 'संचित', kadu: 'कडू', patil: 'पाटील',
+    shinde: 'शिंदे', pawar: 'पवार', farmer: 'शेतकरी', admin: 'प्रशासक'
   };
-
-  return name
-    .split(' ')
-    .map(word => {
-      const lower = word.toLowerCase();
-      return dictionary[lower] || word;
-    })
-    .join(' ');
+  return name.split(' ').map(w => dictionary[w.toLowerCase()] || w).join(' ');
 };
+
+/** Pick a weather emoji/icon based on condition string */
+const getWeatherEmoji = (condition: string): string => {
+  const c = condition?.toLowerCase() || '';
+  if (c.includes('rain') || c.includes('drizzle')) return '🌧️';
+  if (c.includes('thunder') || c.includes('storm')) return '⛈️';
+  if (c.includes('snow')) return '❄️';
+  if (c.includes('cloud') || c.includes('overcast')) return '☁️';
+  if (c.includes('fog') || c.includes('mist') || c.includes('haze')) return '🌫️';
+  if (c.includes('partly')) return '⛅';
+  return '☀️';
+};
+
+const WeatherIcon: React.FC<{ condition: string; className?: string }> = ({ condition, className = 'w-5 h-5' }) => {
+  const c = condition?.toLowerCase() || '';
+  if (c.includes('rain')) return <CloudRain className={className} />;
+  if (c.includes('thunder') || c.includes('storm')) return <CloudLightning className={className} />;
+  if (c.includes('snow')) return <Snowflake className={className} />;
+  if (c.includes('cloud') || c.includes('overcast') || c.includes('partly')) return <Cloud className={className} />;
+  if (c.includes('fog') || c.includes('mist')) return <Eye className={className} />;
+  return <Sun className={className} />;
+};
+
+const formatDay = (dateStr: string, lang: string) => {
+  const d = new Date(dateStr);
+  const today = new Date();
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+  if (d.toDateString() === today.toDateString()) return lang === 'mr' ? 'आज' : lang === 'hi' ? 'आज' : 'Today';
+  if (d.toDateString() === tomorrow.toDateString()) return lang === 'mr' ? 'उद्या' : lang === 'hi' ? 'कल' : 'Tomorrow';
+  const locale = lang === 'mr' ? 'mr-IN' : lang === 'hi' ? 'hi-IN' : 'en-US';
+  return d.toLocaleDateString(locale, { weekday: 'short' });
+};
+
+/* ─── main component ─────────────────────────────────────────── */
 
 export const Dashboard: React.FC = () => {
   const { profile } = useAuth();
@@ -90,93 +111,155 @@ export const Dashboard: React.FC = () => {
   const [weather, setWeather] = useState<any>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [now, setNow] = useState(new Date());
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
+  /* live clock — ticks every second */
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const fetchDashboardData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    else setRefreshing(true);
     try {
       const [cropsRes, weatherRes, notifRes] = await Promise.all([
         axios.get('/api/crops'),
         axios.get('/api/weather/forecast'),
         axios.get('/api/notifications')
       ]);
-
       setCrops(cropsRes.data);
       setWeather(weatherRes.data);
       setNotifications(notifRes.data);
-    } catch (err) {
-      toast.error('Failed to load dashboard data');
+      setLastUpdated(new Date());
+    } catch {
+      if (!silent) toast.error('Dashboard data लोड होण्यात अडचण आली');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
-
-  useEffect(() => {
-    fetchDashboardData();
   }, []);
+
+  /* initial load */
+  useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
+
+  /* auto-refresh every 5 minutes */
+  useEffect(() => {
+    const id = setInterval(() => fetchDashboardData(true), 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [fetchDashboardData]);
 
   const activeCrops = crops.filter(c => c.status === 'active');
 
+  /* ── render ── */
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto px-4 py-8 md:px-8">
-        {/* Header summary */}
+
+        {/* ── Header ── */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">
               {t('welcome')}, {transliterateName(profile?.full_name || 'Farmer', i18n.language)}
             </h1>
             <p className="text-gray-500 mt-1 flex items-center gap-2">
-              <Compass className="w-4 h-4 text-primary" /> {profile?.village}, {profile?.taluka}
+              <Compass className="w-4 h-4 text-primary" />
+              {profile?.village}, {profile?.taluka}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm bg-white border border-gray-200 px-3 py-2 rounded-xl text-gray-600 font-medium flex items-center gap-2 shadow-sm">
-              <Calendar className="w-4 h-4 text-primary" /> {new Date().toLocaleDateString()}
+
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* Live indicator */}
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              LIVE
             </span>
-            <button 
-              onClick={() => window.location.reload()}
-              className="p-2.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl shadow-sm text-gray-600 hover:text-primary transition-colors"
+
+            {/* Live clock */}
+            <span className="text-sm bg-white border border-gray-200 px-3 py-2 rounded-xl text-gray-700 font-mono font-bold shadow-sm tabular-nums">
+              {now.toLocaleTimeString(i18n.language === 'mr' ? 'mr-IN' : i18n.language === 'hi' ? 'hi-IN' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+
+            {/* Date */}
+            <span className="text-sm bg-white border border-gray-200 px-3 py-2 rounded-xl text-gray-600 font-medium flex items-center gap-2 shadow-sm">
+              <Calendar className="w-4 h-4 text-primary" />
+              {new Date().toLocaleDateString(i18n.language === 'mr' ? 'mr-IN' : i18n.language === 'hi' ? 'hi-IN' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+
+            {/* Manual refresh */}
+            <button
+              onClick={() => fetchDashboardData(true)}
+              disabled={refreshing}
+              className="p-2.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl shadow-sm text-gray-600 hover:text-primary transition-colors disabled:opacity-50"
+              title="ताजे करा"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
         </div>
 
+        {/* Last updated badge */}
+        {lastUpdated && (
+          <p className="text-xs text-gray-400 mb-6 -mt-4">
+            {i18n.language === 'mr' ? 'शेवटचे अपडेट: ' : i18n.language === 'hi' ? 'अंतिम अपडेट: ' : 'Last updated: '}
+            {lastUpdated.toLocaleTimeString(i18n.language === 'mr' ? 'mr-IN' : i18n.language === 'hi' ? 'hi-IN' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            &nbsp;·&nbsp;
+            {i18n.language === 'mr' ? 'दर ५ मिनिटांनी आपोआप ताजे होते' : i18n.language === 'hi' ? 'हर ५ मिनट में स्वचालित रूप से ताज़ा होता है' : 'Auto-refreshes every 5 mins'}
+          </p>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Area */}
+
+          {/* ── Main (2/3 width) ── */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Active Crops Widget */}
+
+            {/* Active Crops */}
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                   <Sprout className="text-primary w-5 h-5" /> {t('myCrops')}
+                  {!loading && (
+                    <span className="ml-2 text-xs bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full">
+                      {activeCrops.length} सक्रिय
+                    </span>
+                  )}
                 </h3>
-                <Link to="/crops/add" className="text-sm bg-primary hover:bg-primary-dark text-white font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-colors">
+                <Link
+                  to="/crops/add"
+                  className="text-sm bg-primary hover:bg-primary-dark text-white font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-colors"
+                >
                   <PlusCircle className="w-4 h-4" /> {t('addCrop')}
                 </Link>
               </div>
 
               {loading ? (
                 <div className="animate-pulse space-y-4">
-                  <div className="h-16 bg-gray-100 rounded-xl"></div>
-                  <div className="h-16 bg-gray-100 rounded-xl"></div>
+                  <div className="h-16 bg-gray-100 rounded-xl" />
+                  <div className="h-16 bg-gray-100 rounded-xl" />
                 </div>
               ) : activeCrops.length === 0 ? (
                 <div className="text-center py-10 border-2 border-dashed border-gray-100 rounded-2xl">
                   <p className="text-gray-400 text-sm mb-4">{t('noCrops')}</p>
                   <Link to="/crops/add" className="text-primary font-bold hover:underline">
-                    Add your first crop now &rarr;
+                    Add your first crop now →
                   </Link>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {activeCrops.map(crop => {
-                    const days = Math.floor((Date.now() - new Date(crop.sowing_date).getTime()) / (1000 * 60 * 60 * 24));
+                    const days = Math.floor(
+                      (Date.now() - new Date(crop.sowing_date).getTime()) / (1000 * 60 * 60 * 24)
+                    );
                     return (
-                      <Link 
-                        key={crop.id} 
+                      <Link
+                        key={crop.id}
                         to={`/crops/${crop.id}`}
                         className="p-5 bg-background border border-gray-100 hover:border-primary/20 rounded-xl block transition-card"
                       >
@@ -189,7 +272,7 @@ export const Dashboard: React.FC = () => {
                         <p className="text-sm text-gray-500">{t('sowingDate')}: {crop.sowing_date}</p>
                         <div className="mt-4 flex items-center justify-between text-xs font-semibold text-gray-600">
                           <span>{t('age')}: {days} {t('days')}</span>
-                          <span className="text-primary">{t('viewTimeline')} &rarr;</span>
+                          <span className="text-primary">{t('viewTimeline')} →</span>
                         </div>
                       </Link>
                     );
@@ -198,7 +281,7 @@ export const Dashboard: React.FC = () => {
               )}
             </div>
 
-            {/* Notifications / Tasks Panel */}
+            {/* Notifications */}
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
               <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                 <AlertCircle className="text-primary w-5 h-5" /> {t('recentRecommendations')}
@@ -206,19 +289,23 @@ export const Dashboard: React.FC = () => {
 
               {loading ? (
                 <div className="animate-pulse space-y-4">
-                  <div className="h-12 bg-gray-100 rounded-xl"></div>
+                  <div className="h-12 bg-gray-100 rounded-xl" />
                 </div>
               ) : notifications.length === 0 ? (
-                <p className="text-gray-400 text-sm text-center py-6">No recent tasks or recommended activities.</p>
+                <p className="text-gray-400 text-sm text-center py-6">
+                  सध्या कोणत्याही शिफारसी नाहीत.
+                </p>
               ) : (
                 <div className="space-y-4">
                   {notifications.slice(0, 5).map(notif => {
                     const translated = translateNotification(notif);
                     return (
-                      <div 
-                        key={notif.id} 
+                      <div
+                        key={notif.id}
                         className={`p-4 rounded-xl border flex items-start gap-3.5 transition-colors ${
-                          notif.is_read ? 'bg-gray-50/50 border-gray-100' : 'bg-green-50/20 border-green-100'
+                          notif.is_read
+                            ? 'bg-gray-50/50 border-gray-100'
+                            : 'bg-green-50/20 border-green-100'
                         }`}
                       >
                         <span className="text-xl">
@@ -236,49 +323,127 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Sidebar Area */}
-          <div className="space-y-8">
-            {/* Weather Card */}
+          {/* ── Sidebar (1/3 width) ── */}
+          <div className="space-y-6">
+
+            {/* Current Weather Card */}
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-8 -mt-8"></div>
-              
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-8 -mt-8" />
+
               <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                 <CloudRain className="text-primary w-5 h-5" /> {t('weatherToday')}
               </h3>
 
               {loading || !weather ? (
                 <div className="animate-pulse space-y-4">
-                  <div className="h-10 bg-gray-100 rounded-xl"></div>
+                  <div className="h-10 bg-gray-100 rounded-xl" />
+                  <div className="h-6 bg-gray-100 rounded-xl w-2/3" />
                 </div>
               ) : (
                 <div>
-                  <div className="flex items-center justify-between mb-6">
+                  {/* Main temp row */}
+                  <div className="flex items-center justify-between mb-5">
                     <div>
-                      <span className="text-4xl font-extrabold text-gray-900">{weather.temperature}°C</span>
-                      <p className="text-sm text-gray-500 mt-1 font-semibold">{weather.condition}</p>
+                      <span className="text-5xl font-extrabold text-gray-900 tabular-nums">
+                        {weather.temperature}°C
+                      </span>
+                      <p className="text-sm text-gray-500 mt-1 font-semibold flex items-center gap-1">
+                        <WeatherIcon condition={weather.condition} className="w-4 h-4 text-primary" />
+                        {weather.condition}
+                      </p>
                     </div>
-                    <span className="text-4xl">☀️</span>
+                    <span className="text-5xl drop-shadow-sm">{getWeatherEmoji(weather.condition)}</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 text-sm font-medium border-t border-gray-100 pt-4">
-                    <div>
-                      <span className="text-gray-400 block text-xs">{t('humidity')}</span>
-                      <span className="text-gray-900 font-bold">{weather.humidity}%</span>
+                  {/* Stats grid */}
+                  <div className="grid grid-cols-2 gap-3 text-sm border-t border-gray-100 pt-4 mb-4">
+                    <div className="flex items-center gap-2">
+                      <Droplets className="w-4 h-4 text-blue-400" />
+                      <div>
+                        <span className="text-gray-400 block text-xs">{t('humidity')}</span>
+                        <span className="text-gray-900 font-bold">{weather.humidity}%</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-gray-400 block text-xs">{t('windSpeed')}</span>
-                      <span className="text-gray-900 font-bold">{weather.windSpeed} km/h</span>
+                    <div className="flex items-center gap-2">
+                      <Wind className="w-4 h-4 text-cyan-400" />
+                      <div>
+                        <span className="text-gray-400 block text-xs">{t('windSpeed')}</span>
+                        <span className="text-gray-900 font-bold">{weather.windSpeed} km/h</span>
+                      </div>
                     </div>
                   </div>
 
+                  {/* Rain alert */}
                   {weather.rainAlert && (
-                    <div className="mt-4 p-3 bg-red-50 text-red-700 text-xs font-bold rounded-lg border border-red-100 flex items-center gap-2">
+                    <div className="mb-4 p-3 bg-red-50 text-red-700 text-xs font-bold rounded-lg border border-red-100 flex items-center gap-2">
                       ⚠️ {t('rainAlertWarning')}
+                    </div>
+                  )}
+
+                  {/* 5-day forecast */}
+                  {weather.forecast && weather.forecast.length > 0 && (
+                    <div className="border-t border-gray-100 pt-4">
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                        {i18n.language === 'mr' ? 'पुढील ५ दिवस' : i18n.language === 'hi' ? 'अगले ५ दिन' : 'Next 5 Days'}
+                      </p>
+                      <div className="space-y-2">
+                        {weather.forecast.slice(0, 5).map((day: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className={`flex items-center justify-between text-sm px-2 py-1.5 rounded-lg ${
+                              idx === 0 ? 'bg-primary/5' : 'hover:bg-gray-50'
+                            }`}
+                          >
+                            <span className="font-semibold text-gray-700 w-12">{formatDay(day.date, i18n.language)}</span>
+                            <span className="text-lg">{getWeatherEmoji(day.condition)}</span>
+                            <div className="text-right tabular-nums">
+                              <span className="font-bold text-gray-900">{day.tempMax}°</span>
+                              <span className="text-gray-400 ml-1">{day.tempMin}°</span>
+                            </div>
+                            {day.rainAlert && (
+                              <span className="text-blue-500 text-xs font-bold ml-1">🌧️</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
               )}
             </div>
+
+            {/* Quick stats card */}
+            {!loading && (
+              <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                  {i18n.language === 'mr' ? 'जलद माहिती' : i18n.language === 'hi' ? 'त्वरित जानकारी' : 'Quick Info'}
+                </p>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600 flex items-center gap-1.5">
+                      <Sprout className="w-4 h-4 text-primary" /> {i18n.language === 'mr' ? 'एकूण पिके' : i18n.language === 'hi' ? 'कुल फसलें' : 'Total Crops'}
+                    </span>
+                    <span className="font-extrabold text-gray-900">{crops.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600 flex items-center gap-1.5">
+                      <AlertCircle className="w-4 h-4 text-amber-500" /> {i18n.language === 'mr' ? 'न वाचलेल्या सूचना' : i18n.language === 'hi' ? 'अपठित सूचनाएं' : 'Unread Alerts'}
+                    </span>
+                    <span className="font-extrabold text-gray-900">
+                      {notifications.filter(n => !n.is_read).length}
+                    </span>
+                  </div>
+                  {weather && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600 flex items-center gap-1.5">
+                        <Thermometer className="w-4 h-4 text-orange-400" /> {i18n.language === 'mr' ? 'तापमान' : i18n.language === 'hi' ? 'तापमान' : 'Temperature'}
+                      </span>
+                      <span className="font-extrabold text-gray-900">{weather.temperature}°C</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

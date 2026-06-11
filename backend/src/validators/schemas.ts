@@ -27,6 +27,7 @@ export const addCropSchema = z.object({
   sowingDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Sowing date must be YYYY-MM-DD'),
   area: z.number().positive('Area must be a positive number').optional(),
   variety: z.string().optional(),
+  farmingType: z.enum(['irrigated', 'rainfed']).optional().default('irrigated'),
   status: z.enum(['active', 'harvested', 'abandoned']).optional()
 });
 

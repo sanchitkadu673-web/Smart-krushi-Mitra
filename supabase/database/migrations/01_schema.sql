@@ -3,9 +3,17 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ROLES TYPE
-CREATE TYPE user_role AS ENUM ('farmer', 'admin');
-CREATE TYPE crop_status AS ENUM ('active', 'harvested', 'abandoned');
-CREATE TYPE alert_type AS ENUM ('fertilizer', 'spray', 'pest', 'disease', 'irrigation', 'harvest', 'weather');
+DO $$ BEGIN
+    CREATE TYPE user_role AS ENUM ('farmer', 'admin');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE crop_status AS ENUM ('active', 'harvested', 'abandoned');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE alert_type AS ENUM ('fertilizer', 'spray', 'pest', 'disease', 'irrigation', 'harvest', 'weather');
+EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 -- PROFILES TABLE
 CREATE TABLE IF NOT EXISTS public.profiles (
@@ -44,6 +52,7 @@ CREATE TABLE IF NOT EXISTS public.crops (
     area NUMERIC(10, 2),
     variety TEXT,
     status crop_status NOT NULL DEFAULT 'active',
+    ai_schedule_data JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -142,7 +151,9 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+DROP TRIGGER IF EXISTS update_crops_updated_at ON public.crops;
 CREATE TRIGGER update_crops_updated_at BEFORE UPDATE ON public.crops FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
 
 -- ROW LEVEL SECURITY (RLS) POLICIES
@@ -160,8 +171,11 @@ ALTER TABLE public.weather_cache ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- 1. Profiles Policies
+DROP POLICY IF EXISTS "Allow public read access to profiles" ON public.profiles;
 CREATE POLICY "Allow public read access to profiles" ON public.profiles FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow users to update own profile" ON public.profiles;
 CREATE POLICY "Allow users to update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Allow users to insert own profile" ON public.profiles;
 CREATE POLICY "Allow users to insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Helper function to check if user is admin
@@ -176,46 +190,67 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 2. Crop Master Policies
+DROP POLICY IF EXISTS "Allow public read to crop master" ON public.crop_master;
 CREATE POLICY "Allow public read to crop master" ON public.crop_master FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow admins to manage crop master" ON public.crop_master;
 CREATE POLICY "Allow admins to manage crop master" ON public.crop_master FOR ALL USING (public.is_admin());
 
 -- 3. Crops Policies
+DROP POLICY IF EXISTS "Allow users to view own crops" ON public.crops;
 CREATE POLICY "Allow users to view own crops" ON public.crops FOR SELECT USING (auth.uid() = user_id OR public.is_admin());
+DROP POLICY IF EXISTS "Allow users to manage own crops" ON public.crops;
 CREATE POLICY "Allow users to manage own crops" ON public.crops FOR ALL USING (auth.uid() = user_id OR public.is_admin());
 
 -- 4. Crop Stages Policies
+DROP POLICY IF EXISTS "Allow public read to crop stages" ON public.crop_stages;
 CREATE POLICY "Allow public read to crop stages" ON public.crop_stages FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow admins to manage crop stages" ON public.crop_stages;
 CREATE POLICY "Allow admins to manage crop stages" ON public.crop_stages FOR ALL USING (public.is_admin());
 
 -- 5. Fertilizer Policies
+DROP POLICY IF EXISTS "Allow public read to fertilizer schedule" ON public.fertilizer_schedule;
 CREATE POLICY "Allow public read to fertilizer schedule" ON public.fertilizer_schedule FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow admins to manage fertilizer schedule" ON public.fertilizer_schedule;
 CREATE POLICY "Allow admins to manage fertilizer schedule" ON public.fertilizer_schedule FOR ALL USING (public.is_admin());
 
 -- 6. Spray Policies
+DROP POLICY IF EXISTS "Allow public read to spray schedule" ON public.spray_schedule;
 CREATE POLICY "Allow public read to spray schedule" ON public.spray_schedule FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow admins to manage spray schedule" ON public.spray_schedule;
 CREATE POLICY "Allow admins to manage spray schedule" ON public.spray_schedule FOR ALL USING (public.is_admin());
 
 -- 7. Irrigation Policies
+DROP POLICY IF EXISTS "Allow public read to irrigation schedule" ON public.irrigation_schedule;
 CREATE POLICY "Allow public read to irrigation schedule" ON public.irrigation_schedule FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow admins to manage irrigation schedule" ON public.irrigation_schedule;
 CREATE POLICY "Allow admins to manage irrigation schedule" ON public.irrigation_schedule FOR ALL USING (public.is_admin());
 
 -- 8. Diseases Policies
+DROP POLICY IF EXISTS "Allow public read to diseases" ON public.diseases;
 CREATE POLICY "Allow public read to diseases" ON public.diseases FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow admins to manage diseases" ON public.diseases;
 CREATE POLICY "Allow admins to manage diseases" ON public.diseases FOR ALL USING (public.is_admin());
 
 -- 9. Pests Policies
+DROP POLICY IF EXISTS "Allow public read to pests" ON public.pests;
 CREATE POLICY "Allow public read to pests" ON public.pests FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow admins to manage pests" ON public.pests;
 CREATE POLICY "Allow admins to manage pests" ON public.pests FOR ALL USING (public.is_admin());
 
 -- 10. Notifications Policies
+DROP POLICY IF EXISTS "Allow users to manage own notifications" ON public.notifications;
 CREATE POLICY "Allow users to manage own notifications" ON public.notifications FOR ALL USING (auth.uid() = user_id OR public.is_admin());
 
 -- 11. Weather Cache Policies
+DROP POLICY IF EXISTS "Allow public read to weather cache" ON public.weather_cache;
 CREATE POLICY "Allow public read to weather cache" ON public.weather_cache FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow admins to manage weather cache" ON public.weather_cache;
 CREATE POLICY "Allow admins to manage weather cache" ON public.weather_cache FOR ALL USING (public.is_admin());
 
 -- 12. Audit Logs Policies
+DROP POLICY IF EXISTS "Allow admins to view audit logs" ON public.audit_logs;
 CREATE POLICY "Allow admins to view audit logs" ON public.audit_logs FOR SELECT USING (public.is_admin());
+DROP POLICY IF EXISTS "Allow insert audit logs" ON public.audit_logs;
 CREATE POLICY "Allow insert audit logs" ON public.audit_logs FOR INSERT WITH CHECK (true);
 
 -- INDEXES FOR PERFORMANCE

@@ -48,6 +48,7 @@ export class CropController {
           sowing_date: validated.sowingDate,
           area: validated.area,
           variety: validated.variety,
+          farming_type: validated.farmingType,
           status: validated.status || 'active'
         })
         .select('*, crop_master(*)')
@@ -59,6 +60,23 @@ export class CropController {
 
       // Generate crop notifications immediately upon registering a crop
       await NotificationService.generateCropNotifications(crop.id);
+
+      // --- AI Generation ---
+      try {
+        const { AiService } = require('../services/AiService');
+        const cropName = crop.crop_master?.name || 'Unknown Crop';
+        const aiData = await AiService.generateCropSchedule(cropName, crop.sowing_date);
+        
+        // Update crop with AI data
+        await supabaseAdmin
+          .from('crops')
+          .update({ ai_schedule_data: aiData })
+          .eq('id', crop.id);
+          
+        crop.ai_schedule_data = aiData;
+      } catch (aiErr) {
+        console.error("AI Generation failed:", aiErr);
+      }
 
       return res.status(201).json(crop);
     } catch (err) {
@@ -115,7 +133,13 @@ export class CropController {
 
       const { data: crop, error } = await supabaseAdmin
         .from('crops')
-        .update(validated)
+        .update({
+          sowing_date: validated.sowingDate,
+          area: validated.area,
+          variety: validated.variety,
+          farming_type: validated.farmingType,
+          status: validated.status
+        })
         .eq('id', id)
         .select('*, crop_master(*)')
         .single();
