@@ -151,8 +151,8 @@ export const Home: React.FC = () => {
           </div>
           
           <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-[#1A2E1A] dark:text-white tracking-tight leading-[1.1] mb-8 drop-shadow-sm">
-            Grow <span className="text-[#4CAF50]">More</span>. <br className="hidden sm:block" />
-            Earn <span className="text-[#F59E0B]">More</span>.
+            {t('heroGrowPart1')}<span className="text-[#4CAF50]">{t('heroGrowPart2')}</span> <br className="hidden sm:block" />
+            {t('heroEarnPart1')}<span className="text-[#F59E0B]">{t('heroEarnPart2')}</span>
           </h1>
           
           <p className="text-lg md:text-xl text-[#1A2E1A]/80 dark:text-slate-350 max-w-2xl leading-relaxed mb-10 font-bold">
@@ -276,24 +276,54 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-10 bg-[#1B5E20] text-[#F7FAF4] relative z-20">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-[#4CAF50]/30">
-          <div className="text-center">
-            <div className="text-4xl font-black mb-1">10k+</div>
-            <div className="text-[#4CAF50]/80 font-semibold">{t('stats1') || 'Farmers Connected'}</div>
+      {/* Registration Process Section */}
+      <section className="py-20 bg-white dark:bg-slate-900 border-y border-slate-100 dark:border-slate-800 relative z-20">
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[#1A2E1A] dark:text-[#F7FAF4] tracking-tight">
+              {t('howItWorksTitle')}
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">
+              {i18n.language === 'mr' ? 'स्मार्ट कृषी मित्र वर नोंदणी करण्याची सोपी पद्धत' : i18n.language === 'hi' ? 'स्मार्ट कृषि मित्र पर पंजीकरण की आसान प्रक्रिया' : 'Simple steps to register and start growing smart'}
+            </p>
           </div>
-          <div className="text-center">
-            <div className="text-4xl font-black mb-1">500+</div>
-            <div className="text-[#4CAF50]/80 font-semibold">{t('stats2') || 'Verified Shops'}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-black mb-1">50+</div>
-            <div className="text-[#4CAF50]/80 font-semibold">{t('stats3') || 'Agri Experts'}</div>
-          </div>
-          <div className="text-center">
-            <div className="text-4xl font-black mb-1">98%</div>
-            <div className="text-[#4CAF50]/80 font-semibold">{t('stats4') || 'Success Rate'}</div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
+            {/* Step 1 */}
+            <div className="flex flex-col items-center text-center group relative">
+              <div className="w-16 h-16 rounded-2xl bg-green-50 dark:bg-green-950/30 text-green-600 flex items-center justify-center font-black text-xl mb-4 shadow-sm border border-green-100 dark:border-green-900 group-hover:scale-110 transition-transform duration-300">
+                1
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{t('step1Title')}</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs">{t('step1Desc')}</p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex flex-col items-center text-center group relative">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/30 text-amber-600 flex items-center justify-center font-black text-xl mb-4 shadow-sm border border-amber-100 dark:border-amber-900 group-hover:scale-110 transition-transform duration-300">
+                2
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{t('step2Title')}</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs">{t('step2Desc')}</p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex flex-col items-center text-center group relative">
+              <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-950/30 text-blue-600 flex items-center justify-center font-black text-xl mb-4 shadow-sm border border-blue-100 dark:border-blue-900 group-hover:scale-110 transition-transform duration-300">
+                3
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{t('step3Title')}</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs">{t('step3Desc')}</p>
+            </div>
+
+            {/* Step 4 */}
+            <div className="flex flex-col items-center text-center group relative">
+              <div className="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-950/30 text-purple-600 flex items-center justify-center font-black text-xl mb-4 shadow-sm border border-purple-100 dark:border-purple-900 group-hover:scale-110 transition-transform duration-300">
+                4
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{t('step4Title')}</h3>
+              <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs">{t('step4Desc')}</p>
+            </div>
           </div>
         </div>
       </section>
@@ -332,22 +362,22 @@ export const Home: React.FC = () => {
             },
             {
               icon: <MapPin className="w-8 h-8" />,
-              title: 'Find Nearby Shops',
-              desc: 'Locate verified fertilizer and pesticide dealers near your village.',
+              title: t('feat4Title') || 'Find Nearby Shops',
+              desc: t('feat4Desc') || 'Locate verified fertilizer and pesticide dealers near your village.',
               color: 'from-[#1B5E20] to-[#4CAF50]',
               bg: 'bg-[#4CAF50]/10'
             },
             {
               icon: <Users className="w-8 h-8" />,
-              title: 'Expert Advice',
-              desc: 'Connect directly with agriculture experts to solve your crop diseases.',
+              title: t('feat5Title') || 'Expert Advice',
+              desc: t('feat5Desc') || 'Connect directly with agriculture experts to solve your crop diseases.',
               color: 'from-[#1B5E20] to-[#F59E0B]',
               bg: 'bg-[#1B5E20]/10'
             },
             {
               icon: <BarChart3 className="w-8 h-8" />,
-              title: 'Market Insights',
-              desc: 'Get the latest market prices and trends to sell at the right time.',
+              title: t('feat6Title') || 'Market Insights',
+              desc: t('feat6Desc') || 'Get the latest market prices and trends to sell at the right time.',
               color: 'from-[#4CAF50] to-[#F59E0B]',
               bg: 'bg-[#4CAF50]/10'
             }
@@ -369,38 +399,28 @@ export const Home: React.FC = () => {
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#4CAF50]/10 rounded-full blur-[120px] pointer-events-none"></div>
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-black mb-4 text-[#F7FAF4]">A Complete Ecosystem</h2>
-            <p className="text-xl text-[#F7FAF4]/70">Connecting all stakeholders of the agriculture sector.</p>
+            <h2 className="text-4xl font-black mb-4 text-[#F7FAF4]">{t('ecosystemTitle')}</h2>
+            <p className="text-xl text-[#F7FAF4]/70">{t('ecosystemDesc')}</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             <div className="bg-[#1B5E20]/20 border border-[#4CAF50]/20 p-8 rounded-3xl hover:bg-[#1B5E20]/30 transition-colors text-left">
               <Tractor className="w-12 h-12 text-[#4CAF50] mb-6" />
-              <h3 className="text-2xl font-bold mb-4 text-[#F7FAF4]">For Farmers</h3>
+              <h3 className="text-2xl font-bold mb-4 text-[#F7FAF4]">{t('forFarmers')}</h3>
               <ul className="space-y-3 text-slate-300">
-                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> Digital Crop Records</li>
-                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> AI Farming Schedules</li>
-                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> Direct Shop Ordering</li>
+                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> {t('farmerBullet1')}</li>
+                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> {t('farmerBullet2')}</li>
+                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> {t('farmerBullet3')}</li>
               </ul>
             </div>
             
             <div className="bg-[#1B5E20]/20 border border-[#4CAF50]/20 p-8 rounded-3xl hover:bg-[#1B5E20]/30 transition-colors text-left">
               <Sprout className="w-12 h-12 text-[#4CAF50] mb-6" />
-              <h3 className="text-2xl font-bold mb-4 text-[#F7FAF4]">For Shop Owners</h3>
+              <h3 className="text-2xl font-bold mb-4 text-[#F7FAF4]">{t('forShopOwners')}</h3>
               <ul className="space-y-3 text-slate-300">
-                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> Inventory Management</li>
-                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> Farmer Requests</li>
-                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> Digital Storefront</li>
-              </ul>
-            </div>
-
-            <div className="bg-[#1B5E20]/20 border border-[#4CAF50]/20 p-8 rounded-3xl hover:bg-[#1B5E20]/30 transition-colors text-left">
-              <Users className="w-12 h-12 text-[#4CAF50] mb-6" />
-              <h3 className="text-2xl font-bold mb-4 text-[#F7FAF4]">For Experts</h3>
-              <ul className="space-y-3 text-slate-300">
-                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> Solve Farmer Queries</li>
-                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> Share Knowledge</li>
-                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> Build Reputation</li>
+                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> {t('shopBullet1')}</li>
+                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> {t('shopBullet2')}</li>
+                <li className="flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-[#4CAF50]" /> {t('shopBullet3')}</li>
               </ul>
             </div>
           </div>
@@ -412,13 +432,13 @@ export const Home: React.FC = () => {
         <div className="bg-gradient-to-br from-[#4CAF50]/10 to-[#F7FAF4] dark:from-emerald-950/20 dark:to-slate-950 rounded-[3rem] p-12 md:p-20 shadow-premium-3d border border-[#4CAF50]/15 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/40 rounded-full blur-3xl"></div>
           <div className="relative z-10">
-            <h2 className="text-4xl md:text-5xl font-black text-[#1A2E1A] dark:text-[#F7FAF4] mb-6">Ready to transform your farming?</h2>
-            <p className="text-xl text-[#1A2E1A]/80 dark:text-slate-300 mb-10 max-w-2xl mx-auto">Join thousands of farmers who are already increasing their yield and profits with Smart Krushi Mitra.</p>
+            <h2 className="text-4xl md:text-5xl font-black text-[#1A2E1A] dark:text-[#F7FAF4] mb-6">{t('ctaTitle')}</h2>
+            <p className="text-xl text-[#1A2E1A]/80 dark:text-slate-300 mb-10 max-w-2xl mx-auto">{t('ctaDesc')}</p>
             <button 
               onClick={() => setShowRoleModal(true)}
               className="inline-flex items-center justify-center bg-[#1B5E20] hover:bg-[#124115] text-[#F7FAF4] font-bold text-xl px-10 py-5 rounded-2xl shadow-xl hover:shadow-[#1B5E20]/40 transition-all hover:-translate-y-1 cursor-pointer"
             >
-              Create Your Free Account
+              {t('ctaBtn')}
             </button>
           </div>
         </div>
@@ -429,9 +449,9 @@ export const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-between">
           <div className="flex items-center gap-2 mb-4 md:mb-0">
             <Leaf className="w-6 h-6 text-[#1B5E20]" />
-            <span className="text-xl font-black text-[#1A2E1A] dark:text-[#F7FAF4]">Smart Krushi Mitra</span>
+            <span className="text-xl font-black text-[#1A2E1A] dark:text-[#F7FAF4]">{t('appName')}</span>
           </div>
-          <p className="text-[#1A2E1A]/60 dark:text-slate-400 font-medium">© {new Date().getFullYear()} All rights reserved. Made for Indian Farmers.</p>
+          <p className="text-[#1A2E1A]/60 dark:text-slate-400 font-medium">{t('footerText')}</p>
         </div>
       </footer>
 

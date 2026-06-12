@@ -109,4 +109,70 @@ export class AdminController {
       return res.status(200).json({ message: 'Crop stage deleted' });
     } catch (err) { next(err); }
   }
+
+  // Listing farmers for admin
+  public static async listFarmers(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('role', 'farmer');
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(200).json(data);
+    } catch (err) { next(err); }
+  }
+
+  // Listing shops for admin
+  public static async listShops(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { data: shops, error: shopsError } = await supabaseAdmin.from('shops').select('*');
+      if (shopsError) return res.status(400).json({ error: shopsError.message });
+
+      const { data: profiles, error: profilesError } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('role', 'shop_owner');
+      if (profilesError) return res.status(400).json({ error: profilesError.message });
+
+      const joined = shops.map((shop: any) => {
+        const owner = profiles.find((p: any) => p.user_id === shop.owner_id);
+        return {
+          ...shop,
+          owner: owner || null
+        };
+      });
+
+      return res.status(200).json(joined);
+    } catch (err) { next(err); }
+  }
+
+  // Broadcast notification to all users
+  public static async broadcastNotification(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { title, message, type } = req.body;
+      if (!title || !message || !type) {
+        return res.status(400).json({ error: 'Title, message and type are required' });
+      }
+
+      const { data: profiles, error: fetchErr } = await supabaseAdmin.from('profiles').select('user_id');
+      if (fetchErr) return res.status(400).json({ error: fetchErr.message });
+
+      if (!profiles || profiles.length === 0) {
+        return res.status(200).json({ message: 'No users registered to receive alerts' });
+      }
+
+      const notificationsToInsert = profiles.map((p: any) => ({
+        user_id: p.user_id,
+        title,
+        message,
+        type,
+        is_read: false
+      }));
+
+      const { error: insertErr } = await supabaseAdmin.from('notifications').insert(notificationsToInsert);
+      if (insertErr) return res.status(400).json({ error: insertErr.message });
+
+      return res.status(200).json({ message: 'Alert broadcasted successfully to all users!' });
+    } catch (err) { next(err); }
+  }
 }

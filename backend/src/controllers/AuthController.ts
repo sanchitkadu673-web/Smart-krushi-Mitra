@@ -173,7 +173,7 @@ export class AuthController {
         }
 
         sessionData = {
-          access_token: 'dev-token-bypass-otp',
+          access_token: `mock-token-${foundProfile.mobile}`,
           user: { id: foundProfile.user_id }
         };
       } else {
