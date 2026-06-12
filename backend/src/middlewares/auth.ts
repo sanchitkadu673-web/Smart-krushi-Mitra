@@ -5,7 +5,7 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email?: string;
-    role: 'farmer' | 'admin';
+    role: 'farmer' | 'admin' | 'super_admin' | 'shop_owner' | 'expert';
   };
 }
 
@@ -48,14 +48,15 @@ export async function requireAuth(req: AuthenticatedRequest, res: Response, next
   }
 }
 
-export function requireRole(role: 'farmer' | 'admin') {
+export function requireRole(roles: string | string[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    if (req.user.role !== role) {
-      return res.status(403).json({ error: `Forbidden: Access restricted to ${role}` });
+    const allowedRoles = Array.isArray(roles) ? roles : [roles];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ error: `Forbidden: Access restricted to ${allowedRoles.join(', ')}` });
     }
 
     next();

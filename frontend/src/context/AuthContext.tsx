@@ -10,14 +10,15 @@ interface Profile {
   district: string;
   taluka: string;
   village: string;
-  role: 'farmer' | 'admin';
+  role: 'farmer' | 'admin' | 'super_admin' | 'shop_owner' | 'expert';
 }
 
 interface AuthContextType {
   token: string | null;
   profile: Profile | null;
   loading: boolean;
-  login: (credentials: { mobile?: string; email?: string }, otp: string) => Promise<void>;
+  login: (credentials: { mobile?: string; email?: string }, otp: string) => Promise<Profile>;
+  loginPassword: (mobile: string, password: string) => Promise<Profile>;
   register: (data: any) => Promise<void>;
   logout: () => void;
 }
@@ -26,9 +27,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
-  const [profile, setProfile] = useState<Profile | null>(
-    localStorage.getItem('profile') ? JSON.parse(localStorage.getItem('profile')!) : null
-  );
+  const [profile, setProfile] = useState<Profile | null>(() => {
+    try {
+      const saved = localStorage.getItem('profile');
+      return saved && saved !== 'undefined' ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -39,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [token]);
 
-  const login = async (credentials: { mobile?: string; email?: string }, otp: string) => {
+  const login = async (credentials: { mobile?: string; email?: string }, otp: string): Promise<Profile> => {
     setLoading(true);
     try {
       const response = await axios.post('/api/auth/verify-otp', { ...credentials, otp });
@@ -50,6 +56,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       setToken(receivedToken);
       setProfile(receivedProfile);
+      return receivedProfile;
+    } catch (err) {
+      throw err; // Login.tsx ला error दिसण्यासाठी
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginPassword = async (mobile: string, password: string): Promise<Profile> => {
+    setLoading(true);
+    try {
+      const response = await axios.post('/api/auth/login-password', { mobile, password });
+      const { token: receivedToken, profile: receivedProfile } = response.data;
+      
+      localStorage.setItem('token', receivedToken);
+      localStorage.setItem('profile', JSON.stringify(receivedProfile));
+      
+      setToken(receivedToken);
+      setProfile(receivedProfile);
+      return receivedProfile;
+    } catch (err) {
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -65,7 +93,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         district: data.district,
         taluka: data.taluka,
         village: data.village,
-        role: data.role || 'farmer'
+        role: data.role || 'farmer',
+        password: data.password,
+        shopName: data.shopName,
+        gstNumber: data.gstNumber
       });
     } finally {
       setLoading(false);
@@ -80,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ token, profile, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ token, profile, loading, login, loginPassword, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

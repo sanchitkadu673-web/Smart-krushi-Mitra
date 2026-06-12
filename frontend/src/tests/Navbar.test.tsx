@@ -17,7 +17,15 @@ vi.mock('../context/AuthContext', () => ({
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
-    i18n: { language: 'mr', changeLanguage: vi.fn() }
+    i18n: { language: 'en', changeLanguage: vi.fn() }
+  })
+}));
+
+// Mock theme context
+vi.mock('../context/ThemeContext', () => ({
+  useTheme: () => ({
+    theme: 'light',
+    toggleTheme: vi.fn()
   })
 }));
 

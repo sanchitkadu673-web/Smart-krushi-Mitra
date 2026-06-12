@@ -4,8 +4,13 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ROLES TYPE
 DO $$ BEGIN
-    CREATE TYPE user_role AS ENUM ('farmer', 'admin');
-EXCEPTION WHEN duplicate_object THEN null; END $$;
+    CREATE TYPE user_role AS ENUM ('farmer', 'admin', 'super_admin', 'shop_owner', 'expert');
+EXCEPTION WHEN duplicate_object THEN 
+    -- If exists, try adding new values
+    BEGIN ALTER TYPE user_role ADD VALUE 'super_admin'; EXCEPTION WHEN duplicate_object THEN null; END;
+    BEGIN ALTER TYPE user_role ADD VALUE 'shop_owner'; EXCEPTION WHEN duplicate_object THEN null; END;
+    BEGIN ALTER TYPE user_role ADD VALUE 'expert'; EXCEPTION WHEN duplicate_object THEN null; END;
+END $$;
 
 DO $$ BEGIN
     CREATE TYPE crop_status AS ENUM ('active', 'harvested', 'abandoned');
@@ -261,3 +266,91 @@ CREATE INDEX IF NOT EXISTS idx_fertilizer_stage_id ON public.fertilizer_schedule
 CREATE INDEX IF NOT EXISTS idx_spray_stage_id ON public.spray_schedule(stage_id);
 CREATE INDEX IF NOT EXISTS idx_irrigation_stage_id ON public.irrigation_schedule(stage_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id_read ON public.notifications(user_id, is_read);
+
+-- ==========================================
+-- PHASE 1: NEW TABLES FOR PLATFORM EXPANSION
+-- ==========================================
+
+-- SHOPS TABLE
+CREATE TABLE IF NOT EXISTS public.shops (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id UUID REFERENCES public.profiles(user_id) ON DELETE CASCADE,
+    shop_name TEXT NOT NULL,
+    license_number TEXT NOT NULL,
+    gps_lat TEXT,
+    gps_lng TEXT,
+    address TEXT NOT NULL,
+    is_approved BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- PRODUCTS TABLE
+CREATE TABLE IF NOT EXISTS public.products (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    shop_id UUID REFERENCES public.shops(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    company TEXT NOT NULL,
+    category TEXT NOT NULL, -- e.g., Fertilizer, Pesticide, Seed
+    price DECIMAL(10,2) NOT NULL,
+    stock_quantity INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- EXPERTS TABLE
+CREATE TABLE IF NOT EXISTS public.experts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    profile_id UUID REFERENCES public.profiles(user_id) ON DELETE CASCADE,
+    specialization TEXT NOT NULL,
+    qualification TEXT NOT NULL,
+    is_approved BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- EXPERT QUERIES TABLE
+CREATE TABLE IF NOT EXISTS public.expert_queries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    farmer_id UUID REFERENCES public.profiles(user_id) ON DELETE CASCADE,
+    expert_id UUID REFERENCES public.experts(id) ON DELETE SET NULL,
+    question TEXT NOT NULL,
+    answer TEXT,
+    status TEXT NOT NULL DEFAULT 'pending', -- pending, answered
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- PRODUCT REQUESTS TABLE
+CREATE TABLE IF NOT EXISTS public.product_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    farmer_id UUID REFERENCES public.profiles(user_id) ON DELETE CASCADE,
+    product_id UUID REFERENCES public.products(id) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    status TEXT NOT NULL DEFAULT 'pending', -- pending, accepted, rejected
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- RLS FOR NEW TABLES
+ALTER TABLE public.shops ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.experts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.expert_queries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.product_requests ENABLE ROW LEVEL SECURITY;
+
+-- Add triggers for updated_at
+DROP TRIGGER IF EXISTS update_shops_updated_at ON public.shops;
+CREATE TRIGGER update_shops_updated_at BEFORE UPDATE ON public.shops FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+
+DROP TRIGGER IF EXISTS update_products_updated_at ON public.products;
+CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON public.products FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+
+DROP TRIGGER IF EXISTS update_expert_queries_updated_at ON public.expert_queries;
+CREATE TRIGGER update_expert_queries_updated_at BEFORE UPDATE ON public.expert_queries FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+
+DROP TRIGGER IF EXISTS update_product_requests_updated_at ON public.product_requests;
+CREATE TRIGGER update_product_requests_updated_at BEFORE UPDATE ON public.product_requests FOR EACH ROW EXECUTE PROCEDURE update_modified_column();
+
+-- Add shop_id reference to profiles
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS shop_id UUID REFERENCES public.shops(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_profiles_shop_id ON public.profiles(shop_id);

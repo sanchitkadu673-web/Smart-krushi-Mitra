@@ -219,3 +219,173 @@
 .dark select {
   color-scheme: dark;
 }
+
+/* 3D and Animations for Landing Page */
+.perspective-1000 {
+  perspective: 1200px;
+}
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-15px) rotate(2deg);
+  }
+}
+
+@keyframes float-delayed {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(-2deg);
+  }
+}
+
+@keyframes drift-slow {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(30px, -20px) rotate(180deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(360deg);
+  }
+}
+
+@keyframes drift-fast {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(0.9);
+  }
+  50% {
+    transform: translate(-25px, 20px) rotate(-180deg) scale(1.1);
+  }
+  100% {
+    transform: translate(0, 0) rotate(-360deg) scale(0.9);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(1.15);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 8s ease-in-out infinite;
+}
+
+.animate-drift-slow {
+  animation: drift-slow 25s linear infinite;
+}
+
+.animate-drift-fast {
+  animation: drift-fast 18s linear infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 8s ease-in-out infinite;
+}
+
+/* Custom Nature Animations */
+@keyframes sway {
+  0%, 100% {
+    transform: rotate(-8deg) translateX(0);
+  }
+  50% {
+    transform: rotate(8deg) translateX(5px);
+  }
+}
+
+@keyframes sunrays {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.15);
+    opacity: 0.95;
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 0.7;
+  }
+}
+
+@keyframes float-pollen {
+  0% {
+    transform: translateY(100vh) translateX(0) scale(0.5);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-10vh) translateX(40px) scale(1.2);
+    opacity: 0;
+  }
+}
+
+.animate-sway {
+  animation: sway 6s ease-in-out infinite;
+}
+
+.animate-sunrays {
+  animation: sunrays 45s linear infinite;
+}
+
+.animate-pollen {
+  animation: float-pollen 15s ease-in-out infinite;
+}
+
+
+/* 3D layered card tilt effect variables */
+.card-3d-interactive {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.card-3d-interactive:hover {
+  transform: rotateX(12deg) rotateY(-12deg) rotateZ(1.5deg);
+}
+
+.layer-depth-1 {
+  transform: translateZ(20px);
+}
+.layer-depth-2 {
+  transform: translateZ(45px);
+}
+.layer-depth-3 {
+  transform: translateZ(70px);
+}
+.layer-depth-4 {
+  transform: translateZ(95px);
+}
+
+/* Premium 3D Multi-Layer Box Shadows */
+.shadow-premium-3d {
+  box-shadow: 0 4px 16px rgba(27, 94, 32, 0.08), 0 20px 60px rgba(27, 94, 32, 0.15);
+}
+.dark .shadow-premium-3d {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 20px 60px rgba(0, 0, 0, 0.6);
+}

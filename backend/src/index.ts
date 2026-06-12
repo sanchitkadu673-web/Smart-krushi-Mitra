@@ -10,6 +10,7 @@ import recommendationRoutes from './routes/recommendations';
 import notificationRoutes from './routes/notifications';
 import weatherRoutes from './routes/weather';
 import adminRoutes from './routes/admin';
+import shopRoutes from './routes/shop';
 import { errorHandler } from './middlewares/errorHandler';
 
 dotenv.config();
@@ -33,8 +34,8 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 // Request Parsing
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Health Check
 app.get('/health', (req, res) => {
@@ -49,6 +50,7 @@ app.use('/api/recommendations', recommendationRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/weather', weatherRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/shop', shopRoutes);
 
 // Global Error Handler
 app.use(errorHandler);

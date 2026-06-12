@@ -6,7 +6,7 @@ const router = Router();
 
 // Protect all admin endpoints
 router.use(requireAuth);
-router.use(requireRole('admin'));
+router.use(requireRole(['admin', 'super_admin']));
 
 router.get('/stats', AdminController.getStats);
 

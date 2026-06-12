@@ -25,6 +25,8 @@ export interface RecommendationResponse {
   allIrrigation: any[];
   diseases: any[];
   pests: any[];
+  seedBrands?: string;
+  cultivationGuide?: string;
 }
 
 export class RecommendationEngineService {

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '../components/navigation/Navbar';
@@ -9,6 +9,7 @@ export const Register: React.FC = () => {
   const { register } = useAuth();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [form, setForm] = useState({
     fullName: '',
@@ -18,9 +19,19 @@ export const Register: React.FC = () => {
     district: '',
     taluka: '',
     village: '',
-    role: 'farmer'
+    role: searchParams.get('role') || 'farmer',
+    password: '',
+    shopName: '',
+    gstNumber: ''
   });
   const [loading, setLoading] = useState(false);
+
+  const urlRole = searchParams.get('role');
+  useEffect(() => {
+    if (urlRole) {
+      setForm(prev => ({ ...prev, role: urlRole }));
+    }
+  }, [urlRole]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -175,9 +186,60 @@ export const Register: React.FC = () => {
               className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none"
             >
               <option value="farmer">Farmer (शेतकरी)</option>
-              <option value="admin">Admin (प्रशासक)</option>
+              <option value="shop_owner">Shop Owner (दुकानदार)</option>
+              <option value="expert">Agriculture Expert (कृषी तज्ञ)</option>
+              <option value="super_admin">Admin (प्रशासक)</option>
             </select>
           </div>
+
+          {form.role === 'shop_owner' && (
+            <div className="space-y-6 bg-slate-50 p-6 rounded-xl border border-slate-200 mt-6">
+              <h3 className="font-bold text-slate-800">Shop Owner Details</h3>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Shop Name (दुकानाचे नाव)
+                </label>
+                <input
+                  type="text"
+                  name="shopName"
+                  required
+                  value={form.shopName}
+                  onChange={handleChange}
+                  placeholder="Krushi Seva Kendra"
+                  className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  GST Number / License No.
+                </label>
+                <input
+                  type="text"
+                  name="gstNumber"
+                  required
+                  value={form.gstNumber}
+                  onChange={handleChange}
+                  placeholder="27AADCB2230M1Z2"
+                  className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Password (पासवर्ड)
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  required
+                  minLength={6}
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Minimum 6 characters"
+                  className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none bg-white"
+                />
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"

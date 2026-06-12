@@ -64,7 +64,7 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  if (profile?.role !== 'admin') {
+  if (profile?.role !== 'admin' && profile?.role !== 'super_admin') {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center">
         <p className="text-red-600 font-extrabold text-lg">Forbidden: Access Restricted to Admins</p>
@@ -86,7 +86,7 @@ export const AdminDashboard: React.FC = () => {
 
         {/* Stats widgets */}
         {stats && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
               <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
                 <Users className="w-6 h-6" />
@@ -97,11 +97,20 @@ export const AdminDashboard: React.FC = () => {
               </div>
             </div>
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="block text-gray-400 text-xs font-bold uppercase">Total Shops</span>
+                <span className="text-2xl font-black text-gray-900 mt-0.5 block">{stats.totalShopOwners}</span>
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
               <div className="p-3 bg-green-50 text-green-600 rounded-xl">
                 <Sprout className="w-6 h-6" />
               </div>
               <div>
-                <span className="block text-gray-400 text-xs font-bold uppercase">Total Crop Records</span>
+                <span className="block text-gray-400 text-xs font-bold uppercase">Total Crops</span>
                 <span className="text-2xl font-black text-gray-900 mt-0.5 block">{stats.totalCrops}</span>
               </div>
             </div>

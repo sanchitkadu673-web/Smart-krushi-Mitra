@@ -46,21 +46,21 @@ export const Navbar: React.FC = () => {
 
   return (
     <nav className="glass-panel sticky top-0 z-50 bg-white/90 shadow-sm px-4 py-3 md:px-8 flex items-center justify-between">
-      <Link to="/" className="flex items-center gap-2">
-        <span className="text-2xl">🌱</span>
-        <span className="font-extrabold text-xl text-primary tracking-tight font-sans">
+      <Link to="/" className="flex items-center gap-1 md:gap-2">
+        <span className="text-xl md:text-2xl">🌱</span>
+        <span className="font-extrabold text-lg md:text-xl text-primary tracking-tight font-sans whitespace-nowrap hidden sm:block">
           {t('appName')}
         </span>
       </Link>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         {/* Language Selector */}
-        <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1">
-          <Globe className="w-4 h-4 text-gray-500" />
+        <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-1 py-1 md:px-2">
+          <Globe className="w-3 h-3 md:w-4 md:h-4 text-gray-500 hidden sm:block" />
           <select
             value={i18n.language}
             onChange={handleLanguageChange}
-            className="bg-transparent text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
+            className="bg-transparent text-xs md:text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
           >
             <option value="mr">मराठी</option>
             <option value="hi">हिन्दी</option>

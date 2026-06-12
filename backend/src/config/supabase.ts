@@ -23,6 +23,40 @@ const db: Record<string, any[]> = {
       taluka: 'Haveli',
       village: 'Manjri',
       role: 'farmer'
+    },
+    {
+      id: 'mock-shop-owner-profile-id',
+      user_id: 'mock-shop-owner-user-id',
+      full_name: 'Sanchit ShopOwner',
+      mobile: '9876543211',
+      email: 'shop@example.com',
+      state: 'Maharashtra',
+      district: 'Pune',
+      taluka: 'Haveli',
+      village: 'Manjri',
+      role: 'shop_owner'
+    },
+    {
+      id: 'mock-admin-profile-id',
+      user_id: 'mock-admin-user-id',
+      full_name: 'Sanchit Admin',
+      mobile: '9876543212',
+      email: 'admin@example.com',
+      state: 'Maharashtra',
+      district: 'Pune',
+      taluka: 'Haveli',
+      village: 'Manjri',
+      role: 'super_admin'
+    }
+  ],
+  shops: [
+    {
+      id: 'mock-shop-id',
+      owner_id: 'mock-shop-owner-user-id',
+      shop_name: 'Kadu Krushi Seva Kendra',
+      license_number: '27AADCB2230M1Z2',
+      address: 'Manjri, Haveli, Pune, Maharashtra',
+      is_approved: true
     }
   ],
   crops: [],
@@ -285,6 +319,21 @@ const createChainableQuery = (tableName: string) => {
     insert: (payload: any) => {
       const records = Array.isArray(payload) ? payload : [payload];
       const inserted = records.map(r => {
+        // Simulating UNIQUE constraints for mock DB
+        if (tableName === 'profiles' && r.mobile) {
+          const existingIdx = db.profiles.findIndex(p => p.mobile === r.mobile);
+          if (existingIdx !== -1) {
+            db.profiles[existingIdx] = { ...db.profiles[existingIdx], ...r };
+            return db.profiles[existingIdx];
+          }
+        }
+        if (tableName === 'shops' && r.owner_id) {
+          const existingIdx = db.shops.findIndex(s => s.owner_id === r.owner_id);
+          if (existingIdx !== -1) {
+            db.shops[existingIdx] = { ...db.shops[existingIdx], ...r };
+            return db.shops[existingIdx];
+          }
+        }
         const item = { id: Math.random().toString(36).substring(7), ...r, created_at: new Date().toISOString() };
         db[tableName].push(item);
         return item;
@@ -299,13 +348,25 @@ const createChainableQuery = (tableName: string) => {
       return query;
     },
     delete: () => {
-      const idsToDelete = currentFilter.map(item => item.id);
-      db[tableName] = db[tableName].filter(item => !idsToDelete.includes(item.id));
-      return { error: null };
+      query.isDelete = true;
+      return query;
+    },
+    ilike: (col: string, val: string) => {
+      const cleanVal = val.replace(/%/g, '').toLowerCase();
+      currentFilter = currentFilter.filter(item => 
+        (item[col] || '').toString().toLowerCase().includes(cleanVal)
+      );
+      return query;
     },
     // Allows direct await evaluation
     then: (onfulfilled: any) => {
-      onfulfilled({ data: currentFilter, count: currentFilter.length, error: null });
+      if (query.isDelete) {
+        const idsToDelete = currentFilter.map(item => item.id);
+        db[tableName] = db[tableName].filter(item => !idsToDelete.includes(item.id));
+        onfulfilled({ data: null, error: null });
+      } else {
+        onfulfilled({ data: currentFilter, count: currentFilter.length, error: null });
+      }
     }
   };
 
@@ -322,7 +383,16 @@ const mockSupabase = {
       const mobile = phone.replace('+91', '');
       return {
         data: {
-          session: { access_token: 'mock-session-token' }
+          session: { access_token: `mock-token-${mobile}` }
+        },
+        error: null
+      };
+    },
+    signInWithPassword: async ({ phone, password }: { phone: string; password: any }) => {
+      const mobile = phone.replace('+91', '');
+      return {
+        data: {
+          session: { access_token: `mock-token-${mobile}` }
         },
         error: null
       };
@@ -346,8 +416,23 @@ const mockSupabase = {
       }
     },
     getUser: async (token: string) => {
-      // Find matching user from mock profiles/users
-      const user = mockAuthUsers[0] || { id: 'mock-user-id', phone: '+919999999999' };
+      if (token && token.startsWith('mock-token-')) {
+        const mobile = token.replace('mock-token-', '');
+        const profile = db.profiles.find(p => p.mobile === mobile);
+        if (profile) {
+          return {
+            data: {
+              user: {
+                id: profile.user_id,
+                phone: `+91${mobile}`,
+                email: profile.email
+              }
+            },
+            error: null
+          };
+        }
+      }
+      const user = mockAuthUsers[0] || { id: 'mock-user-id', phone: '+919876543210' };
       return { data: { user }, error: null };
     }
   },

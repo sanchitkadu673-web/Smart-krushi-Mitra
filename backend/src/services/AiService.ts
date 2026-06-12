@@ -12,13 +12,13 @@ export class AiService {
    */
   public static async generateCropSchedule(cropName: string, sowingDate: string): Promise<any> {
     try {
-      if (apiKey === 'dummy_key' || !apiKey) {
+      if (!apiKey || apiKey === 'dummy_key') {
         console.warn('GEMINI_API_KEY is not set. Returning mock AI data.');
         return this.getMockData(cropName);
       }
 
-      // Using gemini-1.5-flash as it is fast and cost-effective
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      // Using gemini-2.0-flash-lite as it is fast and cost-effective
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
       const prompt = `
 You are an expert Indian agriculturist. 
@@ -58,8 +58,8 @@ Ensure the entire response is purely valid JSON without any \`\`\`json wrappers.
       text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
       return JSON.parse(text);
-    } catch (error) {
-      console.error('Error generating AI crop schedule:', error);
+    } catch (error: any) {
+      console.error('Error generating AI crop schedule:', error?.message || error);
       // Fallback to mock data if AI fails
       return this.getMockData(cropName);
     }
@@ -86,5 +86,88 @@ Ensure the entire response is purely valid JSON without any \`\`\`json wrappers.
         }
       ]
     };
+  }
+
+  /**
+   * Parse a base64 bill image to extract list of products.
+   */
+  public static async scanBill(base64Image: string, mimeType: string): Promise<any[]> {
+    try {
+      if (!apiKey || apiKey === 'dummy_key') {
+        console.warn('GEMINI_API_KEY is not set. Returning mock bill data.');
+        return this.getMockBillData();
+      }
+
+      // Extract raw base64 data if it contains data URI header
+      const base64Data = base64Image.includes(';base64,') 
+        ? base64Image.split(';base64,')[1] 
+        : base64Image;
+
+      // Using gemini-2.0-flash-lite since it supports multimodal input
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+
+      const prompt = `
+You are an expert agriculture inventory digitizer. Look at this dealer purchase invoice/bill image and extract the agricultural items (fertilizers, pesticides, seeds, farming equipment, etc.) listed in the bill.
+You must extract: product name, category, company, unit price, and quantity.
+Return a valid JSON array of objects. Do not wrap in markdown backticks, just return valid JSON.
+
+The JSON array MUST look exactly like this:
+[
+  {
+    "name": "product name (e.g., Urea, NPK 10:26:26, Neem Oil, etc.)",
+    "category": "Fertilizer | Pesticide | Seed | Equipment | Other",
+    "company": "company name (e.g., IFFCO, Mahadhan, Bayer, Syngenta, etc. or 'Unknown')",
+    "price": 1200, // item price per unit/bag as a number
+    "quantity": 10 // item quantity as a number
+  }
+]
+Only return valid JSON without markdown formatting.
+`;
+
+      const result = await model.generateContent([
+        {
+          inlineData: {
+            data: base64Data,
+            mimeType: mimeType || 'image/jpeg'
+          }
+        },
+        prompt
+      ]);
+
+      const response = await result.response;
+      let text = response.text();
+      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+      return JSON.parse(text);
+    } catch (error: any) {
+      console.error('Error scanning bill with Gemini:', error?.message || error);
+      return this.getMockBillData();
+    }
+  }
+
+  private static getMockBillData() {
+    return [
+      {
+        "name": "NPK 19:19:19",
+        "category": "Fertilizer",
+        "company": "Mahadhan",
+        "price": 850,
+        "quantity": 25
+      },
+      {
+        "name": "Neem Liquid",
+        "category": "Pesticide",
+        "company": "Multiplex",
+        "price": 420,
+        "quantity": 15
+      },
+      {
+        "name": "DAP 18:46:0",
+        "category": "Fertilizer",
+        "company": "IFFCO",
+        "price": 1350,
+        "quantity": 40
+      }
+    ];
   }
 }

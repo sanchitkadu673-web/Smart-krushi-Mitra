@@ -10,6 +10,11 @@ export class AdminController {
         .select('*', { count: 'exact', head: true })
         .eq('role', 'farmer');
 
+      const { count: totalShopOwners } = await supabaseAdmin
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'shop_owner');
+
       const { count: totalCrops } = await supabaseAdmin
         .from('crops')
         .select('*', { count: 'exact', head: true });
@@ -25,6 +30,7 @@ export class AdminController {
 
       return res.status(200).json({
         totalFarmers: totalFarmers || 0,
+        totalShopOwners: totalShopOwners || 0,
         totalCrops: totalCrops || 0,
         activeCrops: activeCrops || 0,
         notificationsSent: notificationsSent || 0

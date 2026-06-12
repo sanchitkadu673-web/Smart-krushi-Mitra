@@ -27,10 +27,7 @@ export const AddCrop: React.FC = () => {
       try {
         const res = await axios.get('/api/crops/masters');
         setMasters(res.data);
-        if (res.data.length > 0) {
-          setForm(f => ({ ...f, cropMasterId: res.data[0].id }));
-          setSearchQuery(res.data[0].name);
-        }
+        // Auto-select काढला - user ने स्वतः निवडायचे
       } catch (err) {
         const mockMasters = [
           { id: 'b30353c5-f761-460d-8521-4ea78e4726e6', name: 'Cotton (Kapus / कपास)' },
@@ -38,8 +35,7 @@ export const AddCrop: React.FC = () => {
           { id: 'f99617d1-e63d-4c8d-8fe0-cbb1fa0d7ff3', name: 'Wheat (Gahu / गेहूं)' }
         ];
         setMasters(mockMasters);
-        setForm(f => ({ ...f, cropMasterId: mockMasters[0].id }));
-        setSearchQuery(mockMasters[0].name);
+        // Auto-select काढला - user ने स्वतः निवडायचे
       }
     };
     fetchMasters();

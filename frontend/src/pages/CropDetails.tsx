@@ -700,6 +700,7 @@ export const CropDetails: React.FC = () => {
           <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm h-fit space-y-1">
             {[
               { id: 'master_chart', label: i18n.language === 'mr' ? 'संपूर्ण वेळापत्रक' : i18n.language === 'hi' ? 'संपूर्ण अनुसूची' : 'Master Chart', icon: Calendar },
+              { id: 'ai_schedule', label: i18n.language === 'mr' ? 'AI स्मार्ट वेळापत्रक' : i18n.language === 'hi' ? 'AI स्मार्ट अनुसूची' : 'AI Smart Schedule', icon: Sparkles },
               { id: 'fertilizer', label: t('fertilizers'), icon: Sparkles },
               { id: 'spray', label: t('sprays'), icon: Sprout },
               { id: 'irrigation', label: t('irrigation'), icon: Droplets },

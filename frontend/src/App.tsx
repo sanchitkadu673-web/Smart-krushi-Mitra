@@ -12,20 +12,29 @@ import { AddCrop } from './pages/AddCrop';
 import { CropDetails } from './pages/CropDetails';
 import { Profile } from './pages/Profile';
 import { AdminDashboard } from './pages/AdminDashboard';
+import { ShopDashboard } from './pages/shop-owner/ShopDashboard';
+import { ManageProducts } from './pages/shop-owner/ManageProducts';
 import './i18n/config'; // Init i18n
 import './index.css';
 
 const queryClient = new QueryClient();
 
-// Protected Route Guard
-const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({ children, adminOnly = false }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean; allowedRole?: string }> = ({ children, adminOnly = false, allowedRole }) => {
   const { token, profile } = useAuth();
   
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  if (adminOnly && profile?.role !== 'admin') {
+  if (adminOnly && profile?.role !== 'admin' && profile?.role !== 'super_admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (allowedRole && profile?.role !== allowedRole) {
+    // Redirect to their respective dashboards instead of generic /dashboard
+    if (profile?.role === 'shop_owner') return <Navigate to="/shop" replace />;
+    if (profile?.role === 'expert') return <Navigate to="/expert" replace />;
+    if (profile?.role === 'admin' || profile?.role === 'super_admin') return <Navigate to="/admin" replace />;
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -48,7 +57,7 @@ export const App: React.FC = () => {
             <Route 
               path="/dashboard" 
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRole="farmer">
                   <Dashboard />
                 </ProtectedRoute>
               } 
@@ -74,6 +83,24 @@ export const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Shop Owner Routes */}
+            <Route 
+              path="/shop" 
+              element={
+                <ProtectedRoute allowedRole="shop_owner">
+                  <ShopDashboard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/shop/products" 
+              element={
+                <ProtectedRoute allowedRole="shop_owner">
+                  <ManageProducts />
                 </ProtectedRoute>
               } 
             />

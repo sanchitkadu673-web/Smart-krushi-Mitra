@@ -8,7 +8,28 @@ export const registerSchema = z.object({
   district: z.string().min(1, 'District is required'),
   taluka: z.string().min(1, 'Taluka is required'),
   village: z.string().min(1, 'Village is required'),
-  role: z.enum(['farmer', 'admin']).optional().default('farmer')
+  role: z.enum(['farmer', 'admin', 'super_admin', 'shop_owner', 'expert']).optional().default('farmer'),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional().or(z.literal('')),
+  shopName: z.string().optional().or(z.literal('')),
+  gstNumber: z.string().optional().or(z.literal(''))
+}).superRefine((data, ctx) => {
+  if (data.role === 'shop_owner') {
+    if (!data.password) {
+      ctx.addIssue({ path: ['password'], code: z.ZodIssueCode.custom, message: 'Password is required for Shop Owners' });
+    }
+    if (!data.shopName) {
+      ctx.addIssue({ path: ['shopName'], code: z.ZodIssueCode.custom, message: 'Shop Name is required for Shop Owners' });
+    }
+    // GST number might be optional for some, but user requested it. We can make it required.
+    if (!data.gstNumber) {
+      ctx.addIssue({ path: ['gstNumber'], code: z.ZodIssueCode.custom, message: 'GST Number is required for Shop Owners' });
+    }
+  }
+});
+
+export const loginPasswordSchema = z.object({
+  mobile: z.string().regex(/^[6-9]\d{9}$/, 'Invalid Indian mobile number'),
+  password: z.string().min(6, 'Password required')
 });
 
 export const otpSendSchema = z.object({

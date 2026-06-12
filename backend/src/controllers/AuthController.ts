@@ -11,7 +11,7 @@ export class AuthController {
       // To keep it simple and robust, we can use password-less auth,
       // but to register metadata and profiles, we do it in public.profiles.
       // Let's create user in Auth system
-      const { data: userAuth, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      const userAuthParams: any = {
         phone: `+91${validated.mobile}`,
         email: validated.email || undefined,
         phone_confirm: true,
@@ -19,7 +19,13 @@ export class AuthController {
         user_metadata: {
           full_name: validated.fullName
         }
-      });
+      };
+
+      if (validated.role === 'shop_owner' && validated.password) {
+        userAuthParams.password = validated.password;
+      }
+
+      const { data: userAuth, error: authError } = await supabaseAdmin.auth.admin.createUser(userAuthParams);
 
       if (authError && authError.status !== 422) { // 422 if user already exists
         return res.status(400).json({ error: authError.message });
@@ -60,8 +66,60 @@ export class AuthController {
         return res.status(400).json({ error: profileError.message });
       }
 
+      // If shop_owner, create shop record too
+      if (validated.role === 'shop_owner') {
+        const address = `${validated.village}, ${validated.taluka}, ${validated.district}, ${validated.state}`;
+        const { error: shopError } = await supabaseAdmin
+          .from('shops')
+          .insert({
+            owner_id: userId,
+            shop_name: validated.shopName || '',
+            license_number: validated.gstNumber || '',
+            address: address,
+            is_approved: true // Auto-approve for easy development and usage
+          });
+        if (shopError) {
+          // Clean up the created profile if shop insertion fails
+          await supabaseAdmin.from('profiles').delete().eq('user_id', userId);
+          return res.status(400).json({ error: shopError.message });
+        }
+      }
+
       return res.status(201).json({
         message: 'Registration successful',
+        profile
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  public static async loginPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { mobile, password } = req.body;
+      if (!mobile || !password) {
+        return res.status(400).json({ error: 'Mobile and password required' });
+      }
+
+      const { data, error } = await supabaseAdmin.auth.signInWithPassword({
+        phone: `+91${mobile}`,
+        password
+      });
+
+      if (error || !data.session) {
+        return res.status(400).json({ error: error?.message || 'Invalid credentials' });
+      }
+
+      // Fetch user profile
+      const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('mobile', mobile).single();
+
+      if (!profile || profile.role !== 'shop_owner') {
+         return res.status(403).json({ error: 'This login is only for Shop Owners' });
+      }
+
+      return res.status(200).json({
+        message: 'Login successful',
+        token: data.session.access_token,
         profile
       });
     } catch (err) {

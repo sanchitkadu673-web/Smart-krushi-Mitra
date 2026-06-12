@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 import {
   CloudRain, Compass, Calendar, PlusCircle, AlertCircle,
   RefreshCw, Sprout, Wind, Droplets, Thermometer,
-  Sun, Cloud, CloudLightning, Snowflake, Eye
+  Sun, Cloud, CloudLightning, Snowflake, Eye, Building2, MapPin
 } from 'lucide-react';
 import i18n from 'i18next';
 
@@ -110,6 +110,7 @@ export const Dashboard: React.FC = () => {
   const [crops, setCrops] = useState<any[]>([]);
   const [weather, setWeather] = useState<any>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [linkedShopData, setLinkedShopData] = useState<{ shop: any; products: any[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -121,18 +122,49 @@ export const Dashboard: React.FC = () => {
     return () => clearInterval(id);
   }, []);
 
+  const handleDeleteCrop = async (cropId: string) => {
+    const confirmMessage = i18n.language === 'mr' 
+      ? 'तुम्हाला हे पीक खरोखर हटवायचे आहे का?' 
+      : i18n.language === 'hi' 
+      ? 'क्या आप वाकई इस फसल को हटाना चाहते हैं?' 
+      : 'Are you sure you want to delete this crop?';
+
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+    try {
+      await axios.delete(`/api/crops/${cropId}`);
+      const successMessage = i18n.language === 'mr' 
+        ? 'पीक यशस्वीरित्या हटवले!' 
+        : i18n.language === 'hi' 
+        ? 'फसल सफलतापूर्वक हटा दी गई!' 
+        : 'Crop deleted successfully!';
+      toast.success(successMessage);
+      fetchDashboardData(true);
+    } catch (err: any) {
+      const errorMessage = i18n.language === 'mr' 
+        ? 'पीक हटवण्यात अडचण आली' 
+        : i18n.language === 'hi' 
+        ? 'फसल हटाने में त्रुटि हुई' 
+        : 'Failed to delete crop';
+      toast.error(err.response?.data?.error || errorMessage);
+    }
+  };
+
   const fetchDashboardData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
     try {
-      const [cropsRes, weatherRes, notifRes] = await Promise.all([
+      const [cropsRes, weatherRes, notifRes, shopRes] = await Promise.all([
         axios.get('/api/crops'),
         axios.get('/api/weather/forecast'),
-        axios.get('/api/notifications')
+        axios.get('/api/notifications'),
+        axios.get('/api/shop/linked').catch(() => ({ data: { shop: null, products: [] } }))
       ]);
       setCrops(cropsRes.data);
       setWeather(weatherRes.data);
       setNotifications(notifRes.data);
+      setLinkedShopData(shopRes.data);
       setLastUpdated(new Date());
     } catch {
       if (!silent) toast.error('Dashboard data लोड होण्यात अडचण आली');
@@ -258,25 +290,94 @@ export const Dashboard: React.FC = () => {
                       (Date.now() - new Date(crop.sowing_date).getTime()) / (1000 * 60 * 60 * 24)
                     );
                     return (
-                      <Link
+                      <div
                         key={crop.id}
-                        to={`/crops/${crop.id}`}
-                        className="p-5 bg-background border border-gray-100 hover:border-primary/20 rounded-xl block transition-card"
+                        className="p-5 bg-[#F7FAF4] dark:bg-slate-850 border border-slate-100 dark:border-slate-800 hover:border-primary/20 rounded-2xl relative block transition-card shadow-sm text-left"
                       >
                         <div className="flex justify-between items-start mb-3">
-                          <h4 className="font-extrabold text-lg text-gray-900">{crop.crop_master.name}</h4>
-                          <span className="text-xs font-bold bg-green-100 text-green-800 px-2.5 py-1 rounded-full">
-                            {t('active')}
-                          </span>
+                          <h4 className="font-extrabold text-lg text-[#1A2E1A] dark:text-[#F7FAF4]">
+                            {crop.crop_master.name}
+                          </h4>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-bold bg-[#4CAF50]/15 text-[#1B5E20] dark:text-[#4CAF50] px-2.5 py-1 rounded-full">
+                              {t('active') || 'Active'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                handleDeleteCrop(crop.id);
+                              }}
+                              className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
+                              title="Delete Crop"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                            </button>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-500">{t('sowingDate')}: {crop.sowing_date}</p>
-                        <div className="mt-4 flex items-center justify-between text-xs font-semibold text-gray-600">
-                          <span>{t('age')}: {days} {t('days')}</span>
-                          <span className="text-primary">{t('viewTimeline')} →</span>
+                        <p className="text-sm text-gray-500 dark:text-slate-400">{t('sowingDate') || 'Sowing Date'}: {crop.sowing_date}</p>
+                        <div className="mt-4 flex items-center justify-between text-xs font-bold">
+                          <span className="text-[#1A2E1A]/70 dark:text-slate-300">{t('age') || 'Age'}: {days} {t('days') || 'Days'}</span>
+                          <Link to={`/crops/${crop.id}`} className="text-primary hover:underline flex items-center gap-1">
+                            {t('viewTimeline') || 'View Timeline'} →
+                          </Link>
                         </div>
-                      </Link>
+                      </div>
                     );
                   })}
+                </div>
+              )}
+            </div>
+
+            {/* Linked Shop Stock */}
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                <Building2 className="text-primary w-5 h-5" /> माझे जोडलेले दुकान (My Linked Shop)
+              </h3>
+              
+              {!linkedShopData?.shop ? (
+                <div className="text-center py-6 bg-slate-50/50 rounded-xl border border-slate-100 text-sm">
+                  <p className="text-gray-500 font-medium">तुमचे खाते अद्याप कोणत्याही दुकानाशी जोडलेले नाही.</p>
+                  <p className="text-gray-400 mt-1">तुमच्या गावातील दुकानदार तुम्हाला त्यांच्याकडे नोंदणी करतील, तेव्हा तुम्हाला त्यांचा स्टॉक आणि दर दिसतील.</p>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4 mb-4">
+                    <div>
+                      <h4 className="font-extrabold text-gray-900 text-lg">{linkedShopData.shop.shop_name}</h4>
+                      <p className="text-gray-500 text-xs flex items-center gap-1 mt-1">
+                        <MapPin className="w-3.5 h-3.5 text-primary" /> {linkedShopData.shop.address}
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full shrink-0">
+                      ✓ जोडलेले (Linked)
+                    </span>
+                  </div>
+
+                  <h5 className="font-bold text-sm text-gray-700 mb-3">उपलब्ध खते व औषधे (Available Stock)</h5>
+                  {linkedShopData.products.length === 0 ? (
+                    <p className="text-gray-400 text-xs text-center py-4 bg-slate-50 rounded-xl">दुकानदाराने अद्याप कोणतीही उत्पादने जोडलेली नाहीत.</p>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1">
+                      {linkedShopData.products.map(p => (
+                        <div key={p.id} className="p-3.5 border border-slate-100 rounded-xl bg-slate-50/50 flex justify-between items-center text-xs">
+                          <div>
+                            <p className="font-bold text-gray-900 text-sm">{p.name}</p>
+                            <p className="text-gray-400 font-medium mt-0.5">{p.company} · {p.category}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-black text-gray-800 text-sm">₹{p.price}</p>
+                            {p.stock_quantity <= 0 ? (
+                              <span className="text-red-500 font-bold text-[10px]">स्टॉक संपला</span>
+                            ) : (
+                              <span className="text-green-600 font-bold text-[10px]">शिल्लक: {p.stock_quantity}</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
