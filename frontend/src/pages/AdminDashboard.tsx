@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { Navbar } from '../components/navigation/Navbar';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { Settings, PlusCircle, Trash, BarChart3, Users, Sprout, Bell } from 'lucide-react';
+import { Settings, PlusCircle, Trash, BarChart3, Users, Sprout, Bell, Loader2 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const { profile } = useAuth();
@@ -68,6 +68,18 @@ export const AdminDashboard: React.FC = () => {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center">
         <p className="text-red-600 font-extrabold text-lg">Forbidden: Access Restricted to Admins</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex flex-col items-center justify-center py-32">
+          <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
+          <p className="text-gray-500 font-medium">Loading Admin Panel...</p>
+        </div>
       </div>
     );
   }
