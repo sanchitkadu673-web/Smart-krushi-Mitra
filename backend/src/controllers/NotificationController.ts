@@ -47,4 +47,29 @@ export class NotificationController {
       next(err);
     }
   }
+
+  public static async deleteNotification(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.id;
+      const { id } = req.params;
+
+      if (!id) {
+        return res.status(400).json({ error: 'Notification ID is required' });
+      }
+
+      const { error } = await supabaseAdmin
+        .from('notifications')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', userId);
+
+      if (error) {
+        return res.status(400).json({ error: error.message });
+      }
+
+      return res.status(200).json({ message: 'Notification deleted successfully' });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

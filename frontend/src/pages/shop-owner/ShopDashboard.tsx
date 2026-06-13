@@ -21,7 +21,9 @@ import {
   Sparkles,
   Upload,
   Edit,
-  Trash2
+  Trash2,
+  Menu,
+  Home
 } from 'lucide-react';
 
 export const ShopDashboard: React.FC = () => {
@@ -47,6 +49,25 @@ export const ShopDashboard: React.FC = () => {
     taluka: '',
     village: ''
   });
+
+  // Broadcast Alert Modal state
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  const [broadcasting, setBroadcasting] = useState(false);
+  const [broadcastForm, setBroadcastForm] = useState({
+    title: '',
+    message: '',
+    type: 'fertilizer'
+  });
+
+  // Sidebar state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('shopSidebarCollapsed') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('shopSidebarCollapsed', sidebarCollapsed.toString());
+  }, [sidebarCollapsed]);
 
   // File input ref
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -223,6 +244,38 @@ export const ShopDashboard: React.FC = () => {
     }
   };
 
+  const handleBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!broadcastForm.title.trim()) {
+      toast.error('Please enter a title');
+      return;
+    }
+    if (!broadcastForm.message.trim()) {
+      toast.error('Please enter a message');
+      return;
+    }
+
+    setBroadcasting(true);
+    try {
+      const response = await axios.post('/api/shop/broadcast', {
+        title: broadcastForm.title,
+        message: broadcastForm.message,
+        type: broadcastForm.type
+      });
+      toast.success(response.data.message || 'Alert broadcasted successfully!');
+      setShowBroadcastModal(false);
+      setBroadcastForm({
+        title: '',
+        message: '',
+        type: 'fertilizer'
+      });
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to broadcast message');
+    } finally {
+      setBroadcasting(false);
+    }
+  };
+
   const lowStockCount = products.filter(p => p.stock_quantity <= 10).length;
 
   // Filter lists based on search
@@ -238,6 +291,107 @@ export const ShopDashboard: React.FC = () => {
     p.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const renderSidebarContent = () => {
+    return (
+      <div className="flex flex-col h-full bg-white border-r border-slate-200">
+        {/* Sidebar Header */}
+        <div className="p-6 border-b border-slate-150 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="p-2 bg-emerald-50 text-emerald-700 rounded-xl">
+              <Building2 className="w-6 h-6" />
+            </span>
+            <div className="flex flex-col">
+              <span className="font-black text-slate-800 text-sm tracking-tight truncate max-w-[140px]">
+                {shop?.shop_name || 'Krushi Kendra'}
+              </span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Shop Panel
+              </span>
+            </div>
+          </div>
+          {/* Close/Collapse buttons */}
+          <button
+            onClick={() => {
+              if (window.innerWidth < 768) {
+                setMobileMenuOpen(false);
+              } else {
+                setSidebarCollapsed(true);
+              }
+            }}
+            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg cursor-pointer"
+            title="Sidebar लपवा (Hide Sidebar)"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Sidebar Quick Action Buttons */}
+        <div className="flex-1 px-4 py-6 space-y-6 overflow-y-auto">
+          <div>
+            <span className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest px-3 mb-3">
+              Shop Actions / कृती
+            </span>
+            <div className="space-y-1">
+              {/* Manage Products Button */}
+              <button
+                onClick={() => {
+                  navigate('/shop/products');
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-sm rounded-xl transition-all cursor-pointer mt-2"
+              >
+                <Package className="w-5 h-5 text-slate-500" />
+                <span>Inventory / स्टॉक व्यवस्थापन</span>
+              </button>
+
+              {/* Add Farmer Button */}
+              <button
+                onClick={() => {
+                  setShowAddModal(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-sm rounded-xl transition-all cursor-pointer mt-2"
+              >
+                <UserPlus className="w-5 h-5 text-slate-500" />
+                <span>Add Farmer / शेतकरी जोडा</span>
+              </button>
+
+              {/* Broadcast Alert Button */}
+              <button
+                onClick={() => {
+                  if (farmers.length === 0) {
+                    toast.error('शेतकऱ्यांना संदेश पाठवण्यासाठी आधी किमान एक शेतकरी जोडणे आवश्यक आहे. (Please add at least one farmer first to broadcast alerts.)');
+                    return;
+                  }
+                  setShowBroadcastModal(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-slate-700 hover:bg-slate-100 hover:text-slate-900 font-bold text-sm rounded-xl transition-all cursor-pointer mt-2"
+              >
+                <Bell className="w-5 h-5 text-slate-500" />
+                <span>Broadcast Alert / संदेश पाठवा</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar Footer Link to Home */}
+        <div className="p-4 border-t border-slate-150">
+          <button
+            onClick={() => {
+              navigate('/');
+              setMobileMenuOpen(false);
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-800 font-bold text-sm rounded-xl transition-colors cursor-pointer"
+          >
+            <Home className="w-5 h-5" />
+            <span>Home / मुख्यपृष्ठ</span>
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50">
@@ -251,270 +405,296 @@ export const ShopDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      <Navbar />
-      
-      {/* Top Hero Banner */}
-      <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-green-700 text-white py-12 px-4 shadow-md">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div>
-            <div className="flex items-center gap-3">
-              <span className="p-2 bg-white/10 backdrop-blur-md rounded-xl text-white">
-                <Building2 className="w-7 h-7" />
-              </span>
-              <h1 className="text-3xl font-black tracking-tight md:text-4xl">
-                {shop?.shop_name || 'My Krushi Seva Kendra'}
-              </h1>
-            </div>
-            <p className="text-emerald-100 mt-2 font-medium flex items-center gap-1.5 text-sm md:text-base">
-              <MapPin className="w-4 h-4 shrink-0" /> {shop?.address || 'Address not registered'}
-            </p>
-          </div>
-          
-          <div className="flex flex-wrap gap-3">
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
-              accept="image/*" 
-              className="hidden" 
-            />
-            <button 
-              onClick={triggerFileSelect}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-extrabold px-5 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm border border-amber-400/30"
-            >
-              <Sparkles className="w-4 h-4 text-white animate-pulse" />
-              Scan Bill (बिल स्कॅन करा)
-            </button>
-            <button 
-              onClick={() => navigate('/shop/products')}
-              className="bg-white hover:bg-emerald-50 text-emerald-800 font-extrabold px-5 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm"
-            >
-              <Package className="w-4 h-4" />
-              Manage Products
-            </button>
-            <button 
-              onClick={() => setShowAddModal(true)}
-              className="bg-emerald-500 hover:bg-emerald-400 text-white font-extrabold px-5 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-2 text-sm border border-emerald-400/30"
-            >
-              <UserPlus className="w-4 h-4" />
-              Add Farmer (शेतकरी जोडा)
-            </button>
-          </div>
+    <div className="flex min-h-screen bg-slate-50 text-slate-800">
+      {/* Hidden File input for scan bill */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        accept="image/*" 
+        className="hidden" 
+      />
+
+      {/* Desktop Persistent Sidebar */}
+      <aside className={`w-64 bg-white border-r border-slate-200 ${sidebarCollapsed ? 'hidden' : 'hidden md:flex'} flex-col fixed h-screen z-20 transition-all duration-300`}>
+        {renderSidebarContent()}
+      </aside>
+
+      {/* Mobile Drawer Sidebar */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex">
+          <div 
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setMobileMenuOpen(false)}
+          ></div>
+          <aside className="relative w-64 bg-white h-full flex flex-col border-r border-slate-200 shadow-2xl animate-in slide-in-from-left duration-200">
+            {renderSidebarContent()}
+          </aside>
         </div>
-      </div>
+      )}
 
-      <div className="max-w-6xl mx-auto px-4 py-8 -mt-6">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-all">
-            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
-              <Package className="w-6 h-6" />
-            </div>
+      {/* Main Content Pane */}
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:pl-0' : 'md:pl-64'}`}>
+        <Navbar />
+        
+        {/* Top Hero Banner */}
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-green-700 text-white py-12 px-4 shadow-md">
+          <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Products</p>
-              <h3 className="text-2xl font-black text-slate-800">{products.length}</h3>
-            </div>
-          </div>
-          
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-all">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${lowStockCount > 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-              <Bell className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Low Stock Items</p>
-              <h3 className="text-2xl font-black text-slate-800">{lowStockCount}</h3>
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-all">
-            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0">
-              <Users className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Linked Farmers</p>
-              <h3 className="text-2xl font-black text-slate-800">{farmers.length}</h3>
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-all">
-            <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Shop Status</p>
-              <h3 className={`text-sm font-extrabold ${shop?.is_approved ? 'text-green-600' : 'text-amber-500'}`}>
-                {shop?.is_approved ? 'Approved / सक्रीय' : 'Pending Approval'}
-              </h3>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all md:hidden cursor-pointer flex items-center justify-center"
+                  title="Menu"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+                {sidebarCollapsed && (
+                  <button
+                    onClick={() => setSidebarCollapsed(false)}
+                    className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all hidden md:flex items-center justify-center cursor-pointer"
+                    title="Sidebar दाखवा (Show Sidebar)"
+                  >
+                    <Menu className="w-5 h-5" />
+                  </button>
+                )}
+                <span className="p-2 bg-white/10 backdrop-blur-md rounded-xl text-white">
+                  <Building2 className="w-7 h-7" />
+                </span>
+                <h1 className="text-3xl font-black tracking-tight md:text-4xl">
+                  {shop?.shop_name || 'My Krushi Seva Kendra'}
+                </h1>
+              </div>
+              <p className="text-emerald-100 mt-2 font-medium flex items-center gap-1.5 text-sm md:text-base">
+                <MapPin className="w-4 h-4 shrink-0" /> {shop?.address || 'Address not registered'}
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Search & Tabs */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-slate-100 pb-5">
-            <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
-              <button
-                onClick={() => { setActiveTab('farmers'); setSearchQuery(''); }}
-                className={`px-5 py-2 text-sm font-bold rounded-lg transition-all flex items-center gap-2 ${
-                  activeTab === 'farmers' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Users className="w-4 h-4" />
-                Linked Farmers ({farmers.length})
-              </button>
-              <button
-                onClick={() => { setActiveTab('products'); setSearchQuery(''); }}
-                className={`px-5 py-2 text-sm font-bold rounded-lg transition-all flex items-center gap-2 ${
-                  activeTab === 'products' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                <Package className="w-4 h-4" />
-                Inventory Stock ({products.length})
-              </button>
+        <div className="max-w-6xl mx-auto px-4 py-8 -mt-6 w-full flex-grow">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-all">
+              <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
+                <Package className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Products</p>
+                <h3 className="text-2xl font-black text-slate-800">{products.length}</h3>
+              </div>
+            </div>
+            
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-all">
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${lowStockCount > 0 ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+                <Bell className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Low Stock Items</p>
+                <h3 className="text-2xl font-black text-slate-800">{lowStockCount}</h3>
+              </div>
             </div>
 
-            {/* Search Input */}
-            <div className="relative max-w-sm w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder={activeTab === 'farmers' ? "Search farmer name, village..." : "Search product name, category..."}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-              />
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-all">
+              <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center shrink-0">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Linked Farmers</p>
+                <h3 className="text-2xl font-black text-slate-800">{farmers.length}</h3>
+              </div>
+            </div>
+
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-all">
+              <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Shop Status</p>
+                <h3 className={`text-sm font-extrabold ${shop?.is_approved ? 'text-green-600' : 'text-amber-500'}`}>
+                  {shop?.is_approved ? 'Approved / सक्रीय' : 'Pending Approval'}
+                </h3>
+              </div>
             </div>
           </div>
 
-          {/* Tab Content */}
-          {activeTab === 'farmers' ? (
-            <div>
-              {filteredFarmers.length === 0 ? (
-                <div className="text-center py-16">
-                  <Users className="w-16 h-16 text-slate-300 mx-auto mb-4 stroke-1" />
-                  <h4 className="text-lg font-bold text-slate-700">No linked farmers found</h4>
-                  <p className="text-slate-500 mt-1 max-w-md mx-auto text-sm">
-                    {searchQuery ? "No farmers match your search criteria." : "Register your local farmers (शेतकरी) so they can view your stock and get notifications."}
-                  </p>
-                  {!searchQuery && (
-                    <button
-                      onClick={() => setShowAddModal(true)}
-                      className="mt-4 bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-primary-dark transition-all inline-flex items-center gap-1.5"
-                    >
-                      <Plus className="w-4 h-4" /> Add Farmer Now
-                    </button>
-                  )}
+          {/* Search & Tabs */}
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-slate-100 pb-5">
+              <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
+                <button
+                  onClick={() => { setActiveTab('farmers'); setSearchQuery(''); }}
+                  className={`px-5 py-2 text-sm font-bold rounded-lg transition-all flex items-center gap-2 ${
+                    activeTab === 'farmers' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  Linked Farmers ({farmers.length})
+                </button>
+                <button
+                  onClick={() => { setActiveTab('products'); setSearchQuery(''); }}
+                  className={`px-5 py-2 text-sm font-bold rounded-lg transition-all flex items-center gap-2 ${
+                    activeTab === 'products' ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Package className="w-4 h-4" />
+                  Inventory Stock ({products.length})
+                </button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto md:justify-end">
+                {activeTab === 'products' && (
+                  <button
+                    onClick={triggerFileSelect}
+                    className="flex items-center justify-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-sm rounded-xl transition-all shadow-sm shadow-amber-500/10 cursor-pointer border border-amber-400/20"
+                  >
+                    <Sparkles className="w-4 h-4 text-white animate-pulse" />
+                    <span>Scan Bill / बिल स्कॅन करा</span>
+                  </button>
+                )}
+                {/* Search Input */}
+                <div className="relative max-w-sm w-full">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder={activeTab === 'farmers' ? "Search farmer name, village..." : "Search product name, category..."}
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
+                  />
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredFarmers.map(farmer => (
-                    <div key={farmer.id} className="p-5 border border-slate-100 rounded-2xl bg-slate-50 hover:border-emerald-200 transition-all flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-extrabold text-slate-800 text-lg leading-tight">{farmer.full_name}</h4>
-                        <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md mt-1.5 inline-block">
-                          Farmer (शेतकरी)
-                        </span>
+              </div>
+            </div>
+
+            {/* Tab Content */}
+            {activeTab === 'farmers' ? (
+              <div>
+                {filteredFarmers.length === 0 ? (
+                  <div className="text-center py-16">
+                    <Users className="w-16 h-16 text-slate-300 mx-auto mb-4 stroke-1" />
+                    <h4 className="text-lg font-bold text-slate-700">No linked farmers found</h4>
+                    <p className="text-slate-500 mt-1 max-w-md mx-auto text-sm">
+                      {searchQuery ? "No farmers match your search criteria." : "Register your local farmers (शेतकरी) so they can view your stock and get notifications."}
+                    </p>
+                    {!searchQuery && (
+                      <button
+                        onClick={() => setShowAddModal(true)}
+                        className="mt-4 bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-primary-dark transition-all inline-flex items-center gap-1.5"
+                      >
+                        <Plus className="w-4 h-4" /> Add Farmer Now
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredFarmers.map(farmer => (
+                      <div key={farmer.id} className="p-5 border border-slate-100 rounded-2xl bg-slate-50 hover:border-emerald-200 transition-all flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-extrabold text-slate-800 text-lg leading-tight">{farmer.full_name}</h4>
+                          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md mt-1.5 inline-block">
+                            Farmer (शेतकरी)
+                          </span>
+                          
+                          <div className="mt-4 space-y-1 text-sm text-slate-500 font-medium">
+                            <p className="flex items-center gap-1.5">
+                              <span className="text-slate-400">Mobile:</span> +91 {farmer.mobile}
+                            </p>
+                            <p className="flex items-center gap-1.5">
+                              <span className="text-slate-400">Location:</span> {farmer.village}, {farmer.taluka}
+                            </p>
+                          </div>
+                        </div>
                         
-                        <div className="mt-4 space-y-1 text-sm text-slate-500 font-medium">
-                          <p className="flex items-center gap-1.5">
-                            <span className="text-slate-400">Mobile:</span> +91 {farmer.mobile}
-                          </p>
-                          <p className="flex items-center gap-1.5">
-                            <span className="text-slate-400">Location:</span> {farmer.village}, {farmer.taluka}
-                          </p>
+                        <div className="mt-4 pt-3 border-t border-slate-200/50 flex justify-between items-center text-xs text-slate-400">
+                          <span>Joined: {new Date(farmer.created_at).toLocaleDateString()}</span>
+                          <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Active Link
+                          </span>
                         </div>
                       </div>
-                      
-                      <div className="mt-4 pt-3 border-t border-slate-200/50 flex justify-between items-center text-xs text-slate-400">
-                        <span>Joined: {new Date(farmer.created_at).toLocaleDateString()}</span>
-                        <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5" /> Active Link
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div>
-              {filteredProducts.length === 0 ? (
-                <div className="text-center py-16">
-                  <Package className="w-16 h-16 text-slate-300 mx-auto mb-4 stroke-1" />
-                  <h4 className="text-lg font-bold text-slate-700">No products found</h4>
-                  <p className="text-slate-500 mt-1 text-sm">
-                    {searchQuery ? "No products match your search query." : "You haven't added any products to your inventory yet."}
-                  </p>
-                  <button
-                    onClick={() => navigate('/shop/products')}
-                    className="mt-4 bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-primary-dark transition-all inline-flex items-center gap-1.5"
-                  >
-                    <Plus className="w-4 h-4" /> Go to Stock Management
-                  </button>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm border-collapse">
-                    <thead>
-                      <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase text-xs">
-                        <th className="py-3 px-4">Product Name</th>
-                        <th className="py-3 px-4">Company</th>
-                        <th className="py-3 px-4">Category</th>
-                        <th className="py-3 px-4">Price</th>
-                        <th className="py-3 px-4">Stock Qty</th>
-                        <th className="py-3 px-4">Status</th>
-                        <th className="py-3 px-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-50 font-medium text-slate-700">
-                      {filteredProducts.map(p => (
-                        <tr key={p.id} className="hover:bg-slate-50/80">
-                          <td className="py-3.5 px-4 font-bold text-slate-900">{p.name}</td>
-                          <td className="py-3.5 px-4">{p.company}</td>
-                          <td className="py-3.5 px-4">
-                            <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-full text-xs font-semibold">
-                              {p.category}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-4 font-bold text-slate-800">₹{p.price}</td>
-                          <td className="py-3.5 px-4 font-bold">{p.stock_quantity} bags/units</td>
-                          <td className="py-3.5 px-4">
-                            {p.stock_quantity <= 0 ? (
-                              <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded-md text-xs font-bold">Out of Stock</span>
-                            ) : p.stock_quantity <= 10 ? (
-                              <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md text-xs font-bold">Low Stock</span>
-                            ) : (
-                              <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded-md text-xs font-bold">In Stock</span>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-4 text-right">
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => handleStartEdit(p)}
-                                className="text-slate-400 hover:text-emerald-600 p-1.5 hover:bg-slate-100 rounded-lg transition-all"
-                                title="Edit Entry"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteProduct(p.id)}
-                                className="text-slate-400 hover:text-red-600 p-1.5 hover:bg-slate-100 rounded-lg transition-all"
-                                title="Delete Entry"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                {filteredProducts.length === 0 ? (
+                  <div className="text-center py-16">
+                    <Package className="w-16 h-16 text-slate-300 mx-auto mb-4 stroke-1" />
+                    <h4 className="text-lg font-bold text-slate-700">No products found</h4>
+                    <p className="text-slate-500 mt-1 text-sm">
+                      {searchQuery ? "No products match your search query." : "You haven't added any products to your inventory yet."}
+                    </p>
+                    <button
+                      onClick={() => navigate('/shop/products')}
+                      className="mt-4 bg-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-primary-dark transition-all inline-flex items-center gap-1.5"
+                    >
+                      <Plus className="w-4 h-4" /> Go to Stock Management
+                    </button>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase text-xs">
+                          <th className="py-3 px-4">Product Name</th>
+                          <th className="py-3 px-4">Company</th>
+                          <th className="py-3 px-4">Category</th>
+                          <th className="py-3 px-4">Price</th>
+                          <th className="py-3 px-4">Stock Qty</th>
+                          <th className="py-3 px-4">Status</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50 font-medium text-slate-700">
+                        {filteredProducts.map(p => (
+                          <tr key={p.id} className="hover:bg-slate-50/80">
+                            <td className="py-3.5 px-4 font-bold text-slate-900">{p.name}</td>
+                            <td className="py-3.5 px-4">{p.company}</td>
+                            <td className="py-3.5 px-4">
+                              <span className="bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                                {p.category}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 font-bold text-slate-800">₹{p.price}</td>
+                            <td className="py-3.5 px-4 font-bold">{p.stock_quantity} bags/units</td>
+                            <td className="py-3.5 px-4">
+                              {p.stock_quantity <= 0 ? (
+                                <span className="text-red-600 bg-red-50 px-2 py-0.5 rounded-md text-xs font-bold">Out of Stock</span>
+                              ) : p.stock_quantity <= 10 ? (
+                                <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md text-xs font-bold">Low Stock</span>
+                              ) : (
+                                <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded-md text-xs font-bold">In Stock</span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => handleStartEdit(p)}
+                                  className="text-slate-400 hover:text-emerald-600 p-1.5 hover:bg-slate-100 rounded-lg transition-all"
+                                  title="Edit Entry"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteProduct(p.id)}
+                                  className="text-slate-400 hover:text-red-600 p-1.5 hover:bg-slate-100 rounded-lg transition-all"
+                                  title="Delete Entry"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
 
-                </div>
-              )}
-            </div>
-          )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -918,6 +1098,99 @@ export const ShopDashboard: React.FC = () => {
                     </>
                   ) : (
                     'Save Changes'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Broadcast Alert Modal */}
+      {showBroadcastModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-xl border border-slate-100 max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex justify-between items-center bg-slate-50 px-6 py-4 border-b border-slate-100">
+              <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <Bell className="w-5 h-5 text-teal-600" />
+                Broadcast to Farmers (शेतकऱ्यांना संदेश पाठवा)
+              </h3>
+              <button 
+                onClick={() => setShowBroadcastModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-150 rounded-lg transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleBroadcast} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Alert Category / वर्ग
+                </label>
+                <select
+                  value={broadcastForm.type}
+                  onChange={e => setBroadcastForm({ ...broadcastForm, type: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
+                >
+                  <option value="fertilizer">Fertilizer (खत व्यवस्थापन)</option>
+                  <option value="spray">Spray (फवारणी व्यवस्थापन)</option>
+                  <option value="weather">Weather (हवामान अंदाज)</option>
+                  <option value="pest">Pest (कीड नियंत्रण)</option>
+                  <option value="disease">Disease (रोग नियंत्रण)</option>
+                  <option value="irrigation">Irrigation (पाणी व्यवस्थापन)</option>
+                  <option value="harvest">Harvest (काढणी नियोजन)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Message Title / विषय
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. New Fertilizer Stock Available (नवीन खत उपलब्ध)"
+                  value={broadcastForm.title}
+                  onChange={e => setBroadcastForm({ ...broadcastForm, title: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                  Message Details / संदेश
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="e.g. Urea and 10:26:26 are available in stock. Visit today! (आमच्याकडे युरिया आणि १०:२६:२६ चा स्टॉक उपलब्ध आहे. आजच भेट द्या!)"
+                  value={broadcastForm.message}
+                  onChange={e => setBroadcastForm({ ...broadcastForm, message: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowBroadcastModal(false)}
+                  className="px-5 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={broadcasting}
+                  className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-2.5 rounded-xl transition-all flex items-center gap-2 text-sm shadow-sm"
+                >
+                  {broadcasting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Message'
                   )}
                 </button>
               </div>

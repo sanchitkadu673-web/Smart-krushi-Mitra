@@ -354,4 +354,65 @@ export class ShopController {
       next(err);
     }
   }
+
+  public static async broadcastToFarmers(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.id;
+      const { title, message, type } = req.body;
+
+      if (!title || !message || !type) {
+        return res.status(400).json({ error: 'Title, message, and type are required' });
+      }
+
+      // 1. Get shop details for the owner
+      const { data: shop, error: shopErr } = await supabaseAdmin
+        .from('shops')
+        .select('id, shop_name')
+        .eq('owner_id', userId)
+        .single();
+
+      if (shopErr || !shop) {
+        return res.status(400).json({ error: 'Shop not found. Please register your shop first.' });
+      }
+
+      // 2. Fetch linked farmers
+      const { data: farmers, error: fetchErr } = await supabaseAdmin
+        .from('profiles')
+        .select('user_id')
+        .eq('shop_id', shop.id)
+        .eq('role', 'farmer');
+
+      if (fetchErr) {
+        return res.status(400).json({ error: fetchErr.message });
+      }
+
+      if (!farmers || farmers.length === 0) {
+        return res.status(400).json({ error: 'No farmers are currently linked to your shop.' });
+      }
+
+      // 3. Insert notification for each farmer
+      const formattedTitle = `[${shop.shop_name}] ${title}`;
+      const notificationsToInsert = farmers.map((f: any) => ({
+        user_id: f.user_id,
+        title: formattedTitle,
+        message,
+        type,
+        is_read: false
+      }));
+
+      const { error: insertErr } = await supabaseAdmin
+        .from('notifications')
+        .insert(notificationsToInsert);
+
+      if (insertErr) {
+        return res.status(400).json({ error: insertErr.message });
+      }
+
+      return res.status(200).json({
+        message: 'Notification broadcasted successfully to all linked farmers!'
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

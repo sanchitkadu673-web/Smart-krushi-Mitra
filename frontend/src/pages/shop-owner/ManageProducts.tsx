@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navbar } from '../../components/navigation/Navbar';
 import { useAuth } from '../../context/AuthContext';
-import { Package, Plus, Search, Trash2, Edit } from 'lucide-react';
+import { Package, Plus, Search, Trash2, Edit, Sparkles, Upload, X, CheckCircle2, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
@@ -31,9 +31,73 @@ export const ManageProducts: React.FC = () => {
     stock_quantity: ''
   });
 
+  // Scan Bill state variables
+  const [showScanModal, setShowScanModal] = useState(false);
+  const [scanningState, setScanningState] = useState<'idle' | 'uploading' | 'processing' | 'success' | 'error'>('idle');
+  const [scannedFileName, setScannedFileName] = useState('');
+  const [scanResults, setScanResults] = useState<any[]>([]);
+  const [scanErrorMessage, setScanErrorMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  const triggerFileSelect = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setScannedFileName(file.name);
+    setShowScanModal(true);
+    setScanningState('uploading');
+    setScanErrorMessage('');
+    setScanResults([]);
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const base64Data = event.target?.result as string;
+        if (!base64Data) {
+          throw new Error('Failed to read file contents');
+        }
+
+        setScanningState('processing');
+
+        const response = await axios.post('/api/shop/scan-bill', {
+          billImage: base64Data,
+          mimeType: file.type
+        });
+
+        setScanResults(response.data.products || []);
+        setScanningState('success');
+        toast.success(response.data.message || 'Bill scanned successfully!');
+        fetchProducts();
+      } catch (err: any) {
+        console.error('Scan error:', err);
+        setScanningState('error');
+        setScanErrorMessage(err.response?.data?.error || err.message || 'Failed to scan the bill. Please try again.');
+        toast.error('Bill scanning failed');
+      } finally {
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
+    };
+
+    reader.onerror = () => {
+      setScanningState('error');
+      setScanErrorMessage('Could not read the selected image file.');
+      toast.error('File reading failed');
+    };
+
+    reader.readAsDataURL(file);
+  };
 
   const fetchProducts = async () => {
     try {
@@ -89,12 +153,21 @@ export const ManageProducts: React.FC = () => {
             <h1 className="text-3xl font-extrabold text-gray-900">Manage Inventory</h1>
             <p className="text-gray-500 mt-1">Add or update your shop products.</p>
           </div>
-          <button 
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2"
-          >
-            {showAddForm ? 'Cancel' : <><Plus className="w-5 h-5" /> Add Product</>}
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={triggerFileSelect}
+              className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer border border-amber-400/20"
+            >
+              <Sparkles className="w-5 h-5 text-white animate-pulse" />
+              <span>Scan Bill / बिल स्कॅन करा</span>
+            </button>
+            <button 
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+            >
+              {showAddForm ? 'Cancel' : <><Plus className="w-5 h-5" /> Add Product</>}
+            </button>
+          </div>
         </div>
 
         {showAddForm && (
@@ -189,6 +262,164 @@ export const ManageProducts: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Hidden File input for scan bill */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        accept="image/*" 
+        className="hidden" 
+      />
+
+      {/* AI Scan Bill Modal */}
+      {showScanModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-xl border border-slate-100 max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex justify-between items-center bg-slate-50 px-6 py-4 border-b border-slate-100">
+              <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-500 animate-pulse" />
+                AI Bill Scanner (बिल स्कॅन रिपोर्ट)
+              </h3>
+              <button 
+                onClick={() => setShowScanModal(false)}
+                disabled={scanningState === 'uploading' || scanningState === 'processing'}
+                className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-150 rounded-lg transition-all disabled:opacity-40"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scanning States */}
+            {(scanningState === 'uploading' || scanningState === 'processing') && (
+              <div className="p-8 flex flex-col items-center justify-center text-center space-y-6">
+                <div className="relative">
+                  <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+                    <Upload className="w-10 h-10 animate-bounce" />
+                  </div>
+                  <div className="absolute inset-0 border-2 border-emerald-500 rounded-2xl animate-ping opacity-25"></div>
+                </div>
+                <div>
+                  <h4 className="text-lg font-extrabold text-slate-800">
+                    {scanningState === 'uploading' ? 'Reading invoice image...' : 'AI is parsing products & stocks...'}
+                  </h4>
+                  <p className="text-slate-500 text-sm mt-1 max-w-xs truncate">
+                    File: {scannedFileName}
+                  </p>
+                </div>
+                <div className="w-full max-w-xs bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full bg-emerald-600 transition-all duration-700 ${
+                      scanningState === 'uploading' ? 'w-1/3' : 'w-3/4'
+                    }`}
+                  ></div>
+                </div>
+                <div className="space-y-1 text-slate-500 font-medium">
+                  <p className={`text-xs font-bold transition-all ${scanningState === 'uploading' ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    • Uploading and encoding image
+                  </p>
+                  <p className={`text-xs font-bold transition-all ${scanningState === 'processing' ? 'text-emerald-600 animate-pulse' : 'text-slate-400'}`}>
+                    • Gemini API digitizing invoice products
+                  </p>
+                  <p className="text-xs font-bold text-slate-400">
+                    • Synchronizing inventory stock quantities
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Error State */}
+            {scanningState === 'error' && (
+              <div className="p-8 flex flex-col items-center justify-center text-center space-y-4">
+                <div className="w-16 h-16 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center">
+                  <X className="w-8 h-8" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-extrabold text-red-600">Scan Failed</h4>
+                  <p className="text-slate-500 text-sm mt-2 max-w-md">
+                    {scanErrorMessage || 'Something went wrong while scanning the bill. Please check your internet connection and verify that the file is a valid image.'}
+                  </p>
+                </div>
+                <div className="pt-4 flex gap-3">
+                  <button
+                    onClick={triggerFileSelect}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all"
+                  >
+                    Try Another File
+                  </button>
+                  <button
+                    onClick={() => setShowScanModal(false)}
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-2.5 rounded-xl text-sm transition-all"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Success State */}
+            {scanningState === 'success' && (
+              <div className="p-6">
+                <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-5 flex items-start gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-bold text-emerald-800">Scan Successful!</h4>
+                    <p className="text-xs text-emerald-700 mt-0.5">
+                      Gemini processed the dealer bill. Stock details are synchronized.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="max-h-[300px] overflow-y-auto border border-slate-100 rounded-2xl mb-6">
+                  <table className="w-full text-left text-sm border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase text-xs">
+                        <th className="py-2.5 px-4">Item Name</th>
+                        <th className="py-2.5 px-4">Company</th>
+                        <th className="py-2.5 px-4">Qty Added</th>
+                        <th className="py-2.5 px-4">New Stock Qty</th>
+                        <th className="py-2.5 px-4 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 font-medium text-slate-700">
+                      {scanResults.map((item, idx) => (
+                        <tr key={idx} className="hover:bg-slate-50/50">
+                          <td className="py-2.5 px-4 font-bold text-slate-900">{item.name}</td>
+                          <td className="py-2.5 px-4">{item.company}</td>
+                          <td className="py-2.5 px-4 font-bold text-emerald-600">+{item.quantity}</td>
+                          <td className="py-2.5 px-4">
+                            {item.newQty !== undefined ? `${item.newQty} units` : `${item.quantity} units`}
+                          </td>
+                          <td className="py-2.5 px-4 text-right">
+                            {item.status === 'updated' ? (
+                              <span className="text-[10px] font-bold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200">
+                                Incremented
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
+                                New Product
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="pt-4 border-t border-slate-100 flex justify-end">
+                  <button
+                    onClick={() => setShowScanModal(false)}
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl transition-all shadow-sm text-sm"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

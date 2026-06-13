@@ -15,7 +15,15 @@ import {
   Menu, 
   X, 
   LayoutDashboard, 
-  Home 
+  Home,
+  Plus,
+  Edit2,
+  Trash2,
+  CheckCircle,
+  Ban,
+  Download,
+  Bug,
+  ShieldAlert
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -25,14 +33,70 @@ export const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Layout Tab State: overview, farmers, shops, broadcast
-  const [activeTab, setActiveTab] = useState<'overview' | 'farmers' | 'shops' | 'broadcast'>('overview');
+  // Layout Tab State: overview, farmers, shops, broadcast, crops, stages, diseases, pests
+  const [activeTab, setActiveTab] = useState<'overview' | 'farmers' | 'shops' | 'broadcast' | 'crops' | 'stages' | 'diseases' | 'pests'>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('adminSidebarCollapsed') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('adminSidebarCollapsed', sidebarCollapsed.toString());
+  }, [sidebarCollapsed]);
 
   // Directory lists state
   const [farmers, setFarmers] = useState<any[]>([]);
   const [shops, setShops] = useState<any[]>([]);
+  const [crops, setCrops] = useState<any[]>([]);
+  const [stages, setStages] = useState<any[]>([]);
+  const [diseases, setDiseases] = useState<any[]>([]);
+  const [pests, setPests] = useState<any[]>([]);
   const [listLoading, setListLoading] = useState(false);
+
+  // Diseases Modal State
+  const [diseaseModalOpen, setDiseaseModalOpen] = useState(false);
+  const [selectedDisease, setSelectedDisease] = useState<any>(null);
+  const [selectedCropFilterForDiseases, setSelectedCropFilterForDiseases] = useState<string>('all');
+  const [diseaseForm, setDiseaseForm] = useState({
+    crop_master_id: '',
+    name: '',
+    symptoms: '',
+    treatment: ''
+  });
+
+  // Pests Modal State
+  const [pestModalOpen, setPestModalOpen] = useState(false);
+  const [selectedPest, setSelectedPest] = useState<any>(null);
+  const [selectedCropFilterForPests, setSelectedCropFilterForPests] = useState<string>('all');
+  const [pestForm, setPestForm] = useState({
+    crop_master_id: '',
+    name: '',
+    symptoms: '',
+    control_method: ''
+  });
+
+  // Crop Master Modal State
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [selectedCrop, setSelectedCrop] = useState<any>(null);
+  const [cropForm, setCropForm] = useState({
+    name: '',
+    category: '',
+    duration_days: '',
+    expected_yield: '',
+    description: '',
+    varieties: ''
+  });
+
+  // Crop Stage Modal State
+  const [stageModalOpen, setStageModalOpen] = useState(false);
+  const [selectedStage, setSelectedStage] = useState<any>(null);
+  const [selectedCropFilter, setSelectedCropFilter] = useState<string>('all');
+  const [stageForm, setStageForm] = useState({
+    crop_master_id: '',
+    stage_name: '',
+    start_day: '',
+    end_day: ''
+  });
 
   // Broadcast Alert Form State
   const [alertTitle, setAlertTitle] = useState('');
@@ -71,6 +135,288 @@ export const AdminDashboard: React.FC = () => {
   const handleTabClick = (tab: 'farmers' | 'shops') => {
     setActiveTab(tab);
     fetchList(tab);
+  };
+
+  const fetchCrops = async () => {
+    setListLoading(true);
+    try {
+      const res = await axios.get('/api/admin/crops');
+      setCrops(res.data);
+    } catch (err) {
+      toast.error('Failed to load crop masters');
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  const fetchStages = async () => {
+    setListLoading(true);
+    try {
+      const res = await axios.get('/api/admin/stages');
+      setStages(res.data);
+    } catch (err) {
+      toast.error('Failed to load crop stages');
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  const handleCropSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        name: cropForm.name,
+        category: cropForm.category,
+        duration_days: parseInt(cropForm.duration_days),
+        expected_yield: cropForm.expected_yield,
+        description: cropForm.description || null,
+        varieties: cropForm.varieties || null
+      };
+      if (selectedCrop) {
+        const res = await axios.put(`/api/admin/crops/${selectedCrop.id}`, payload);
+        setCrops(prev => prev.map(c => c.id === selectedCrop.id ? res.data : c));
+        toast.success('Crop master updated successfully');
+      } else {
+        const res = await axios.post('/api/admin/crops', payload);
+        setCrops(prev => [...prev, res.data]);
+        toast.success('Crop master created successfully');
+      }
+      setCropModalOpen(false);
+      fetchData(); // Refresh stats
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to save crop master');
+    }
+  };
+
+  const handleDeleteCrop = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this crop master? This may affect linked stages and schedules.')) return;
+    try {
+      await axios.delete(`/api/admin/crops/${id}`);
+      setCrops(prev => prev.filter(c => c.id !== id));
+      toast.success('Crop master deleted');
+      fetchData(); // Refresh stats
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to delete crop master');
+    }
+  };
+
+  const handleStageSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        crop_master_id: stageForm.crop_master_id,
+        stage_name: stageForm.stage_name,
+        start_day: parseInt(stageForm.start_day),
+        end_day: parseInt(stageForm.end_day)
+      };
+      if (selectedStage) {
+        const res = await axios.put(`/api/admin/stages/${selectedStage.id}`, payload);
+        setStages(prev => prev.map(s => s.id === selectedStage.id ? res.data : s));
+        toast.success('Crop stage updated successfully');
+      } else {
+        const res = await axios.post('/api/admin/stages', payload);
+        setStages(prev => [...prev, res.data]);
+        toast.success('Crop stage created successfully');
+      }
+      setStageModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to save crop stage');
+    }
+  };
+
+  const handleDeleteStage = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this crop stage?')) return;
+    try {
+      await axios.delete(`/api/admin/stages/${id}`);
+      setStages(prev => prev.filter(s => s.id !== id));
+      toast.success('Crop stage deleted');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to delete crop stage');
+    }
+  };
+
+  const handleDeleteFarmer = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this farmer? All linked crops, notifications, and data will be permanently removed.')) return;
+    try {
+      await axios.delete(`/api/admin/farmers/${id}`);
+      setFarmers(prev => prev.filter(f => f.id !== id));
+      toast.success('Farmer deleted successfully');
+      fetchData(); // Refresh stats count
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to delete farmer');
+    }
+  };
+
+  const handleDeleteShop = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this shop? The shop owner account and all products will be permanently removed.')) return;
+    try {
+      await axios.delete(`/api/admin/shops/${id}`);
+      setShops(prev => prev.filter(s => s.id !== id));
+      toast.success('Shop deleted successfully');
+      fetchData(); // Refresh stats count
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to delete shop');
+    }
+  };
+
+  const handleToggleShopApproval = async (id: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus;
+    const action = newStatus ? 'approve' : 'suspend';
+    if (!window.confirm(`Are you sure you want to ${action} this shop?`)) return;
+    try {
+      const res = await axios.put(`/api/admin/shops/${id}/approve`, { is_approved: newStatus });
+      setShops(prev => prev.map(s => s.id === id ? { ...s, is_approved: res.data.is_approved } : s));
+      toast.success(`Shop ${newStatus ? 'approved' : 'suspended'} successfully`);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to update shop approval status');
+    }
+  };
+
+  const fetchDiseases = async () => {
+    setListLoading(true);
+    try {
+      const res = await axios.get('/api/admin/diseases');
+      setDiseases(res.data);
+    } catch (err) {
+      toast.error('Failed to load diseases database');
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  const fetchPests = async () => {
+    setListLoading(true);
+    try {
+      const res = await axios.get('/api/admin/pests');
+      setPests(res.data);
+    } catch (err) {
+      toast.error('Failed to load pests database');
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  const handleDiseaseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        crop_master_id: diseaseForm.crop_master_id,
+        name: diseaseForm.name,
+        symptoms: diseaseForm.symptoms,
+        treatment: diseaseForm.treatment
+      };
+      if (selectedDisease) {
+        const res = await axios.put(`/api/admin/diseases/${selectedDisease.id}`, payload);
+        setDiseases(prev => prev.map(d => d.id === selectedDisease.id ? res.data : d));
+        toast.success('Disease updated successfully');
+      } else {
+        const res = await axios.post('/api/admin/diseases', payload);
+        setDiseases(prev => [...prev, res.data]);
+        toast.success('Disease created successfully');
+      }
+      setDiseaseModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to save disease');
+    }
+  };
+
+  const handleDeleteDisease = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this disease?')) return;
+    try {
+      await axios.delete(`/api/admin/diseases/${id}`);
+      setDiseases(prev => prev.filter(d => d.id !== id));
+      toast.success('Disease deleted successfully');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to delete disease');
+    }
+  };
+
+  const handlePestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        crop_master_id: pestForm.crop_master_id,
+        name: pestForm.name,
+        symptoms: pestForm.symptoms,
+        control_method: pestForm.control_method
+      };
+      if (selectedPest) {
+        const res = await axios.put(`/api/admin/pests/${selectedPest.id}`, payload);
+        setPests(prev => prev.map(p => p.id === selectedPest.id ? res.data : p));
+        toast.success('Pest updated successfully');
+      } else {
+        const res = await axios.post('/api/admin/pests', payload);
+        setPests(prev => [...prev, res.data]);
+        toast.success('Pest created successfully');
+      }
+      setPestModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to save pest');
+    }
+  };
+
+  const handleDeletePest = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this pest?')) return;
+    try {
+      await axios.delete(`/api/admin/pests/${id}`);
+      setPests(prev => prev.filter(p => p.id !== id));
+      toast.success('Pest deleted successfully');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to delete pest');
+    }
+  };
+
+  const exportToCSV = (data: any[], filename: string, headers: string[], keys: string[]) => {
+    const csvRows = [];
+    csvRows.push(headers.join(','));
+    for (const row of data) {
+      const values = keys.map(key => {
+        const val = key.split('.').reduce((obj, k) => obj && obj[k], row);
+        const escaped = ('' + (val ?? '')).replace(/"/g, '""');
+        return `"${escaped}"`;
+      });
+      csvRows.push(values.join(','));
+    }
+    const csvContent = "\uFEFF" + csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${filename}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportPDF = async (title: string, headers: string[], rows: any[][], filename: string) => {
+    try {
+      const jsPDFModule = await import('jspdf');
+      const jsPDF = jsPDFModule.default;
+      const autoTableModule = await import('jspdf-autotable');
+      const autoTable = autoTableModule.default;
+      
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text(title, 14, 20);
+      doc.setFontSize(10);
+      doc.setTextColor(120);
+      doc.text(`Generated on ${new Date().toLocaleDateString()}`, 14, 26);
+      
+      autoTable(doc, {
+        head: [headers],
+        body: rows,
+        startY: 32,
+        theme: 'striped',
+        headStyles: { fillColor: [27, 94, 32], halign: 'left' },
+        styles: { fontSize: 8 }
+      });
+      doc.save(`${filename}.pdf`);
+      toast.success('PDF downloaded successfully');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to generate PDF');
+    }
   };
 
   const handleBroadcast = async (e: React.FormEvent) => {
@@ -136,6 +482,26 @@ export const AdminDashboard: React.FC = () => {
       icon: <Building2 className="w-5 h-5" />,
       badge: stats?.totalShopOwners 
     },
+    { 
+      id: 'crops' as const, 
+      label: 'पिकांचे प्रकार (Crop Masters)', 
+      icon: <Sprout className="w-5 h-5" />
+    },
+    { 
+      id: 'stages' as const, 
+      label: 'पिकांचे टप्पे (Crop Stages)', 
+      icon: <Settings className="w-5 h-5" />
+    },
+    { 
+      id: 'diseases' as const, 
+      label: 'रोग नियंत्रण (Diseases DB)', 
+      icon: <ShieldAlert className="w-5 h-5" />
+    },
+    { 
+      id: 'pests' as const, 
+      label: 'कीड नियंत्रण (Pests DB)', 
+      icon: <Bug className="w-5 h-5" />
+    },
     { id: 'broadcast' as const, label: t('broadcastGlobalAlert') || 'Broadcast Alert', icon: <Bell className="w-5 h-5" /> },
   ];
 
@@ -151,8 +517,15 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </div>
         <button 
-          onClick={() => setMobileMenuOpen(false)}
-          className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-350 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 md:hidden"
+          onClick={() => {
+            if (window.innerWidth < 768) {
+              setMobileMenuOpen(false);
+            } else {
+              setSidebarCollapsed(true);
+            }
+          }}
+          className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-350 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
+          title="Sidebar लपवा (Hide Sidebar)"
         >
           <X className="w-5 h-5" />
         </button>
@@ -169,6 +542,17 @@ export const AdminDashboard: React.FC = () => {
                 setActiveTab(item.id);
                 if (item.id === 'farmers' || item.id === 'shops') {
                   fetchList(item.id);
+                } else if (item.id === 'crops') {
+                  fetchCrops();
+                } else if (item.id === 'stages') {
+                  fetchCrops();
+                  fetchStages();
+                } else if (item.id === 'diseases') {
+                  fetchCrops();
+                  fetchDiseases();
+                } else if (item.id === 'pests') {
+                  fetchCrops();
+                  fetchPests();
                 }
                 setMobileMenuOpen(false);
               }}
@@ -213,7 +597,7 @@ export const AdminDashboard: React.FC = () => {
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
       
       {/* Desktop Persistent Sidebar */}
-      <aside className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-850 hidden md:flex flex-col fixed h-screen z-20">
+      <aside className={`w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-850 ${sidebarCollapsed ? 'hidden' : 'hidden md:flex'} flex-col fixed h-screen z-20 transition-all duration-300`}>
         {renderSidebarContent()}
       </aside>
 
@@ -231,7 +615,7 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       {/* Main Content Pane */}
-      <div className="flex-1 md:pl-64 flex flex-col min-h-screen">
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:pl-0' : 'md:pl-64'}`}>
         <Navbar />
 
         <main className="p-4 md:p-8 flex-grow">
@@ -249,10 +633,21 @@ export const AdminDashboard: React.FC = () => {
 
           {/* Page Title & Desc */}
           <div className="mb-8 hidden md:block">
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <Settings className="text-[#1B5E20] dark:text-[#4CAF50] w-8 h-8" /> 
-              {activeTab === 'overview' ? t('adminPanel') : activeTab === 'farmers' ? t('farmersList') : activeTab === 'shops' ? t('shopsList') : t('broadcastGlobalAlert')}
-            </h1>
+            <div className="flex items-center gap-3">
+              {sidebarCollapsed && (
+                <button
+                  onClick={() => setSidebarCollapsed(false)}
+                  className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-850 rounded-xl shadow-sm transition-all flex items-center justify-center cursor-pointer"
+                  title="Sidebar दाखवा (Show Sidebar)"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+              )}
+              <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Settings className="text-[#1B5E20] dark:text-[#4CAF50] w-8 h-8" /> 
+                {activeTab === 'overview' ? t('adminPanel') : activeTab === 'farmers' ? t('farmersList') : activeTab === 'shops' ? t('shopsList') : activeTab === 'crops' ? 'पिकांचे प्रकार (Crop Masters)' : activeTab === 'stages' ? 'पिकांचे टप्पे (Crop Stages)' : activeTab === 'diseases' ? 'रोग नियंत्रण (Diseases DB)' : activeTab === 'pests' ? 'कीड नियंत्रण (Pests DB)' : t('broadcastGlobalAlert')}
+              </h1>
+            </div>
             <p className="text-slate-500 dark:text-slate-400 mt-1">{t('adminPanelDesc')}</p>
           </div>
 
@@ -408,9 +803,35 @@ export const AdminDashboard: React.FC = () => {
           {/* ACTIVE TAB: FARMERS LIST */}
           {activeTab === 'farmers' && (
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm animate-in fade-in duration-300">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">
-                {t('farmersList')}
-              </h3>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  {t('farmersList')}
+                </h3>
+                <div className="flex gap-2 self-end sm:self-auto">
+                  <button
+                    onClick={() => exportToCSV(
+                      farmers, 
+                      'farmers_list', 
+                      ['Full Name', 'Mobile Number', 'State', 'District', 'Taluka', 'Village'],
+                      ['full_name', 'mobile', 'state', 'district', 'taluka', 'village']
+                    )}
+                    className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-emerald-200/50"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export Excel
+                  </button>
+                  <button
+                    onClick={() => handleExportPDF(
+                      'Farmers Directory',
+                      ['Full Name', 'Mobile', 'State', 'District', 'Taluka', 'Village'],
+                      farmers.map(f => [f.full_name, f.mobile, f.state, f.district, f.taluka, f.village]),
+                      'farmers_list'
+                    )}
+                    className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-red-200/50"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export PDF
+                  </button>
+                </div>
+              </div>
 
               {listLoading ? (
                 <div className="flex flex-col items-center justify-center py-20">
@@ -430,6 +851,7 @@ export const AdminDashboard: React.FC = () => {
                         <th className="py-3 px-4">{t('district')}</th>
                         <th className="py-3 px-4">{t('taluka')}</th>
                         <th className="py-3 px-4">{t('village')}</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
@@ -441,6 +863,15 @@ export const AdminDashboard: React.FC = () => {
                           <td className="py-3.5 px-4">{f.district}</td>
                           <td className="py-3.5 px-4">{f.taluka}</td>
                           <td className="py-3.5 px-4">{f.village}</td>
+                          <td className="py-3.5 px-4 text-right">
+                            <button
+                              onClick={() => handleDeleteFarmer(f.id)}
+                              className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-650 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
+                              title="Delete Farmer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -453,9 +884,35 @@ export const AdminDashboard: React.FC = () => {
           {/* ACTIVE TAB: SHOPS LIST */}
           {activeTab === 'shops' && (
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm animate-in fade-in duration-300">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">
-                {t('shopsList')}
-              </h3>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  {t('shopsList')}
+                </h3>
+                <div className="flex gap-2 self-end sm:self-auto">
+                  <button
+                    onClick={() => exportToCSV(
+                      shops, 
+                      'shops_list', 
+                      ['Shop Name', 'Owner Name', 'Mobile Number', 'Status', 'License Number', 'Address'],
+                      ['shop_name', 'owner.full_name', 'owner.mobile', 'is_approved', 'license_number', 'address']
+                    )}
+                    className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-emerald-200/50"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export Excel
+                  </button>
+                  <button
+                    onClick={() => handleExportPDF(
+                      'Shops Directory',
+                      ['Shop Name', 'Owner Name', 'Mobile', 'Status', 'License No', 'Address'],
+                      shops.map(s => [s.shop_name, s.owner?.full_name || 'N/A', s.owner?.mobile || 'N/A', s.is_approved ? 'Approved' : 'Pending', s.license_number, s.address]),
+                      'shops_list'
+                    )}
+                    className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-red-200/50"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export PDF
+                  </button>
+                </div>
+              </div>
 
               {listLoading ? (
                 <div className="flex flex-col items-center justify-center py-20">
@@ -472,8 +929,10 @@ export const AdminDashboard: React.FC = () => {
                         <th className="py-3 px-4">{t('shopName')}</th>
                         <th className="py-3 px-4">{t('ownerName')}</th>
                         <th className="py-3 px-4">{t('mobileNumber')}</th>
+                        <th className="py-3 px-4">Status</th>
                         <th className="py-3 px-4">{t('licenseNumber')}</th>
                         <th className="py-3 px-4">{t('address')}</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
@@ -482,10 +941,475 @@ export const AdminDashboard: React.FC = () => {
                           <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{s.shop_name}</td>
                           <td className="py-3.5 px-4 font-bold text-slate-700 dark:text-slate-300">{s.owner?.full_name || t('notAvailable')}</td>
                           <td className="py-3.5 px-4">{s.owner?.mobile || t('notAvailable')}</td>
+                          <td className="py-3.5 px-4">
+                            <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${
+                              s.is_approved 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-950/45 dark:text-green-400' 
+                                : 'bg-amber-100 text-amber-850 dark:bg-amber-950/45 dark:text-amber-400'
+                            }`}>
+                              {s.is_approved ? 'Approved' : 'Pending'}
+                            </span>
+                          </td>
                           <td className="py-3.5 px-4 text-xs font-mono">{s.license_number}</td>
-                          <td className="py-3.5 px-4 text-xs">{s.address}</td>
+                          <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={s.address}>{s.address}</td>
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => handleToggleShopApproval(s.id, s.is_approved)}
+                                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                                  s.is_approved 
+                                    ? 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/30 dark:hover:bg-amber-900/40 text-amber-600 dark:text-amber-400' 
+                                    : 'bg-green-50 hover:bg-green-100 dark:bg-green-950/30 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400'
+                                }`}
+                                title={s.is_approved ? 'Suspend Shop' : 'Approve Shop'}
+                              >
+                                {s.is_approved ? <Ban className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                              </button>
+                              <button
+                                onClick={() => handleDeleteShop(s.id)}
+                                className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-650 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
+                                title="Delete Shop"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ACTIVE TAB: CROP MASTERS */}
+          {activeTab === 'crops' && (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm animate-in fade-in duration-300">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  पिकांचे प्रकार (Crop Masters)
+                </h3>
+                <div className="flex flex-wrap gap-2 self-end sm:self-auto">
+                  <button
+                    onClick={() => exportToCSV(
+                      crops, 
+                      'crop_masters', 
+                      ['Crop Name', 'Category', 'Duration (Days)', 'Expected Yield', 'Varieties'],
+                      ['name', 'category', 'duration_days', 'expected_yield', 'varieties']
+                    )}
+                    className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-emerald-200/50"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export Excel
+                  </button>
+                  <button
+                    onClick={() => handleExportPDF(
+                      'Crop Masters Database',
+                      ['Crop Name', 'Category', 'Duration', 'Expected Yield', 'Varieties'],
+                      crops.map(c => [c.name, c.category, `${c.duration_days} Days`, c.expected_yield, c.varieties || 'N/A']),
+                      'crop_masters'
+                    )}
+                    className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-red-200/50"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export PDF
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedCrop(null);
+                      setCropForm({
+                        name: '',
+                        category: '',
+                        duration_days: '',
+                        expected_yield: '',
+                        description: '',
+                        varieties: ''
+                      });
+                      setCropModalOpen(true);
+                    }}
+                    className="bg-[#1B5E20] hover:bg-[#124115] text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Crop Master
+                  </button>
+                </div>
+              </div>
+
+              {listLoading ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Loader2 className="w-10 h-10 text-[#1B5E20] dark:text-[#4CAF50] animate-spin mb-4" />
+                  <p className="text-slate-400 text-sm font-medium">{t('loading')}</p>
+                </div>
+              ) : crops.length === 0 ? (
+                <p className="text-slate-400 dark:text-slate-500 font-medium py-12 text-center">No Crop Masters found</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs">
+                        <th className="py-3 px-4">Name</th>
+                        <th className="py-3 px-4">Category</th>
+                        <th className="py-3 px-4">Duration</th>
+                        <th className="py-3 px-4">Expected Yield</th>
+                        <th className="py-3 px-4">Varieties</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
+                      {crops.map(c => (
+                        <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                          <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{c.name}</td>
+                          <td className="py-3.5 px-4">{c.category}</td>
+                          <td className="py-3.5 px-4">{c.duration_days} Days</td>
+                          <td className="py-3.5 px-4">{c.expected_yield}</td>
+                          <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={c.varieties}>{c.varieties || 'N/A'}</td>
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => {
+                                  setSelectedCrop(c);
+                                  setCropForm({
+                                    name: c.name,
+                                    category: c.category,
+                                    duration_days: c.duration_days.toString(),
+                                    expected_yield: c.expected_yield,
+                                    description: c.description || '',
+                                    varieties: c.varieties || ''
+                                  });
+                                  setCropModalOpen(true);
+                                }}
+                                className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                                title="Edit"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCrop(c.id)}
+                                className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-650 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ACTIVE TAB: CROP STAGES */}
+          {activeTab === 'stages' && (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm animate-in fade-in duration-300">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    पिकांचे टप्पे (Crop Stages)
+                  </h3>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-xs text-slate-400 font-bold uppercase">Filter By Crop:</span>
+                    <select
+                      value={selectedCropFilter}
+                      onChange={e => setSelectedCropFilter(e.target.value)}
+                      className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-855 dark:text-slate-200 text-xs font-bold focus:outline-none"
+                    >
+                      <option value="all">सर्व पीक प्रकार (All Crop Masters)</option>
+                      {crops.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedStage(null);
+                    setStageForm({
+                      crop_master_id: selectedCropFilter !== 'all' ? selectedCropFilter : (crops[0]?.id || ''),
+                      stage_name: '',
+                      start_day: '',
+                      end_day: ''
+                    });
+                    setStageModalOpen(true);
+                  }}
+                  className="bg-[#1B5E20] hover:bg-[#124115] text-white font-extrabold text-sm px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors cursor-pointer self-start sm:self-center shadow-sm"
+                >
+                  <Plus className="w-4 h-4" /> Add Crop Stage
+                </button>
+              </div>
+
+              {listLoading ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Loader2 className="w-10 h-10 text-[#1B5E20] dark:text-[#4CAF50] animate-spin mb-4" />
+                  <p className="text-slate-400 text-sm font-medium">{t('loading')}</p>
+                </div>
+              ) : stages.length === 0 ? (
+                <p className="text-slate-400 dark:text-slate-500 font-medium py-12 text-center">No Crop Stages found</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs">
+                        <th className="py-3 px-4">Crop Type</th>
+                        <th className="py-3 px-4">Stage Name</th>
+                        <th className="py-3 px-4">Start Day</th>
+                        <th className="py-3 px-4">End Day</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
+                      {stages
+                        .filter(s => selectedCropFilter === 'all' || s.crop_master_id === selectedCropFilter)
+                        .map(s => {
+                          const cropName = crops.find(c => c.id === s.crop_master_id)?.name || 'Unknown Crop';
+                          return (
+                            <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                              <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{cropName}</td>
+                              <td className="py-3.5 px-4 font-bold text-[#1B5E20] dark:text-[#4CAF50]">{s.stage_name}</td>
+                              <td className="py-3.5 px-4">Day {s.start_day}</td>
+                              <td className="py-3.5 px-4">Day {s.end_day}</td>
+                              <td className="py-3.5 px-4 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedStage(s);
+                                      setStageForm({
+                                        crop_master_id: s.crop_master_id,
+                                        stage_name: s.stage_name,
+                                        start_day: s.start_day.toString(),
+                                        end_day: s.end_day.toString()
+                                      });
+                                      setStageModalOpen(true);
+                                    }}
+                                    className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                                    title="Edit"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteStage(s.id)}
+                                    className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-650 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
+                                    title="Delete"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ACTIVE TAB: DISEASES DATABASE */}
+          {activeTab === 'diseases' && (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm animate-in fade-in duration-300">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    रोग नियंत्रण (Diseases DB)
+                  </h3>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-xs text-slate-400 font-bold uppercase">Filter By Crop:</span>
+                    <select
+                      value={selectedCropFilterForDiseases}
+                      onChange={e => setSelectedCropFilterForDiseases(e.target.value)}
+                      className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-855 dark:text-slate-200 text-xs font-bold focus:outline-none"
+                    >
+                      <option value="all">सर्व पीक प्रकार (All Crop Masters)</option>
+                      {crops.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedDisease(null);
+                    setDiseaseForm({
+                      crop_master_id: selectedCropFilterForDiseases !== 'all' ? selectedCropFilterForDiseases : (crops[0]?.id || ''),
+                      name: '',
+                      symptoms: '',
+                      treatment: ''
+                    });
+                    setDiseaseModalOpen(true);
+                  }}
+                  className="bg-[#1B5E20] hover:bg-[#124115] text-white font-extrabold text-sm px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors cursor-pointer self-start sm:self-center shadow-sm"
+                >
+                  <Plus className="w-4 h-4" /> Add Disease Record
+                </button>
+              </div>
+
+              {listLoading ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Loader2 className="w-10 h-10 text-[#1B5E20] dark:text-[#4CAF50] animate-spin mb-4" />
+                  <p className="text-slate-400 text-sm font-medium">{t('loading')}</p>
+                </div>
+              ) : diseases.length === 0 ? (
+                <p className="text-slate-400 dark:text-slate-500 font-medium py-12 text-center">No Disease records found</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs">
+                        <th className="py-3 px-4">Crop Type</th>
+                        <th className="py-3 px-4">Disease Name</th>
+                        <th className="py-3 px-4">Symptoms</th>
+                        <th className="py-3 px-4">Treatment / Solution</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
+                      {diseases
+                        .filter(d => selectedCropFilterForDiseases === 'all' || d.crop_master_id === selectedCropFilterForDiseases)
+                        .map(d => {
+                          const cropName = crops.find(c => c.id === d.crop_master_id)?.name || 'Unknown Crop';
+                          return (
+                            <tr key={d.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                              <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{cropName}</td>
+                              <td className="py-3.5 px-4 font-bold text-red-600 dark:text-red-400">{d.name}</td>
+                              <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={d.symptoms}>{d.symptoms}</td>
+                              <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={d.treatment}>{d.treatment}</td>
+                              <td className="py-3.5 px-4 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedDisease(d);
+                                      setDiseaseForm({
+                                        crop_master_id: d.crop_master_id,
+                                        name: d.name,
+                                        symptoms: d.symptoms,
+                                        treatment: d.treatment
+                                      });
+                                      setDiseaseModalOpen(true);
+                                    }}
+                                    className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                                    title="Edit"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteDisease(d.id)}
+                                    className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-650 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
+                                    title="Delete"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ACTIVE TAB: PESTS DATABASE */}
+          {activeTab === 'pests' && (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm animate-in fade-in duration-300">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                    कीड नियंत्रण (Pests DB)
+                  </h3>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="text-xs text-slate-400 font-bold uppercase">Filter By Crop:</span>
+                    <select
+                      value={selectedCropFilterForPests}
+                      onChange={e => setSelectedCropFilterForPests(e.target.value)}
+                      className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-855 dark:text-slate-200 text-xs font-bold focus:outline-none"
+                    >
+                      <option value="all">सर्व पीक प्रकार (All Crop Masters)</option>
+                      {crops.map(c => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedPest(null);
+                    setPestForm({
+                      crop_master_id: selectedCropFilterForPests !== 'all' ? selectedCropFilterForPests : (crops[0]?.id || ''),
+                      name: '',
+                      symptoms: '',
+                      control_method: ''
+                    });
+                    setPestModalOpen(true);
+                  }}
+                  className="bg-[#1B5E20] hover:bg-[#124115] text-white font-extrabold text-sm px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors cursor-pointer self-start sm:self-center shadow-sm"
+                >
+                  <Plus className="w-4 h-4" /> Add Pest Record
+                </button>
+              </div>
+
+              {listLoading ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Loader2 className="w-10 h-10 text-[#1B5E20] dark:text-[#4CAF50] animate-spin mb-4" />
+                  <p className="text-slate-400 text-sm font-medium">{t('loading')}</p>
+                </div>
+              ) : pests.length === 0 ? (
+                <p className="text-slate-400 dark:text-slate-500 font-medium py-12 text-center">No Pest records found</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs">
+                        <th className="py-3 px-4">Crop Type</th>
+                        <th className="py-3 px-4">Pest Name</th>
+                        <th className="py-3 px-4">Symptoms</th>
+                        <th className="py-3 px-4">Control Method</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
+                      {pests
+                        .filter(p => selectedCropFilterForPests === 'all' || p.crop_master_id === selectedCropFilterForPests)
+                        .map(p => {
+                          const cropName = crops.find(c => c.id === p.crop_master_id)?.name || 'Unknown Crop';
+                          return (
+                            <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                              <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{cropName}</td>
+                              <td className="py-3.5 px-4 font-bold text-amber-650 dark:text-amber-500">{p.name}</td>
+                              <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={p.symptoms}>{p.symptoms}</td>
+                              <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={p.control_method}>{p.control_method}</td>
+                              <td className="py-3.5 px-4 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedPest(p);
+                                      setPestForm({
+                                        crop_master_id: p.crop_master_id,
+                                        name: p.name,
+                                        symptoms: p.symptoms,
+                                        control_method: p.control_method
+                                      });
+                                      setPestModalOpen(true);
+                                    }}
+                                    className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                                    title="Edit"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeletePest(p.id)}
+                                    className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-650 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
+                                    title="Delete"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>
@@ -573,6 +1497,348 @@ export const AdminDashboard: React.FC = () => {
 
         </main>
       </div>
+      {/* Crop Master Add/Edit Modal */}
+      {cropModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 p-6 max-w-lg w-full relative animate-in fade-in zoom-in-95 duration-150 overflow-y-auto max-h-[90vh]">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+              {selectedCrop ? 'Edit Crop Master' : 'Add New Crop Master'}
+            </h3>
+            <p className="text-sm text-slate-500 mb-6">Manage global crop settings in the master database.</p>
+
+            <form onSubmit={handleCropSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Crop Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Cotton (Kapus)"
+                    value={cropForm.name}
+                    onChange={e => setCropForm({ ...cropForm, name: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Category</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Cash Crop, Cereal"
+                    value={cropForm.category}
+                    onChange={e => setCropForm({ ...cropForm, category: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Duration (Days)</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="e.g. 150"
+                    value={cropForm.duration_days}
+                    onChange={e => setCropForm({ ...cropForm, duration_days: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Expected Yield</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. 10-12 Quintals/Acre"
+                    value={cropForm.expected_yield}
+                    onChange={e => setCropForm({ ...cropForm, expected_yield: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Recommended Varieties (Comma separated)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Bt Cotton (Kanak, Bunny), Non-Bt"
+                  value={cropForm.varieties}
+                  onChange={e => setCropForm({ ...cropForm, varieties: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Description</label>
+                <textarea
+                  rows={3}
+                  placeholder="Provide general information about the crop"
+                  value={cropForm.description}
+                  onChange={e => setCropForm({ ...cropForm, description: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setCropModalOpen(false)}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-2 bg-[#1B5E20] hover:bg-[#124115] text-white font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer shadow-sm"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Crop Stage Add/Edit Modal */}
+      {stageModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 p-6 max-w-md w-full relative animate-in fade-in zoom-in-95 duration-150">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+              {selectedStage ? 'Edit Crop Stage' : 'Add New Crop Stage'}
+            </h3>
+            <p className="text-sm text-slate-500 mb-6">Manage timeline stages for recommendations schedule.</p>
+
+            <form onSubmit={handleStageSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Select Crop Master</label>
+                <select
+                  disabled={!!selectedStage}
+                  value={stageForm.crop_master_id}
+                  onChange={e => setStageForm({ ...stageForm, crop_master_id: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm font-semibold"
+                >
+                  {crops.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Stage Name (English / Localised)</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Sowing & Germination (पेरणी आणि उगवण)"
+                  value={stageForm.stage_name}
+                  onChange={e => setStageForm({ ...stageForm, stage_name: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Start Day</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="e.g. 1"
+                    value={stageForm.start_day}
+                    onChange={e => setStageForm({ ...stageForm, start_day: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">End Day</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="e.g. 15"
+                    value={stageForm.end_day}
+                    onChange={e => setStageForm({ ...stageForm, end_day: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setStageModalOpen(false)}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-2 bg-[#1B5E20] hover:bg-[#124115] text-white font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer shadow-sm"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Disease Add/Edit Modal */}
+      {diseaseModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 p-6 max-w-md w-full relative animate-in fade-in zoom-in-95 duration-150">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+              {selectedDisease ? 'Edit Disease Record' : 'Add New Disease Record'}
+            </h3>
+            <p className="text-sm text-slate-500 mb-6">Manage crop disease specifications and treatments.</p>
+
+            <form onSubmit={handleDiseaseSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Select Crop Master</label>
+                <select
+                  disabled={!!selectedDisease}
+                  value={diseaseForm.crop_master_id}
+                  onChange={e => setDiseaseForm({ ...diseaseForm, crop_master_id: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm font-semibold"
+                >
+                  {crops.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Disease Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Leaf Spot (पानावरील ठिपके)"
+                  value={diseaseForm.name}
+                  onChange={e => setDiseaseForm({ ...diseaseForm, name: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Symptoms</label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="Describe the visible symptoms of the disease..."
+                  value={diseaseForm.symptoms}
+                  onChange={e => setDiseaseForm({ ...diseaseForm, symptoms: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Treatment / Solution</label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="Specify chemical spray, fertilizer adjustments, or local organic remedies..."
+                  value={diseaseForm.treatment}
+                  onChange={e => setDiseaseForm({ ...diseaseForm, treatment: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setDiseaseModalOpen(false)}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-2 bg-[#1B5E20] hover:bg-[#124115] text-white font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer shadow-sm"
+                >
+                  Save Record
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Pest Add/Edit Modal */}
+      {pestModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 p-6 max-w-md w-full relative animate-in fade-in zoom-in-95 duration-150">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2">
+              {selectedPest ? 'Edit Pest Record' : 'Add New Pest Record'}
+            </h3>
+            <p className="text-sm text-slate-500 mb-6">Manage crop pests details and control methods.</p>
+
+            <form onSubmit={handlePestSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Select Crop Master</label>
+                <select
+                  disabled={!!selectedPest}
+                  value={pestForm.crop_master_id}
+                  onChange={e => setPestForm({ ...pestForm, crop_master_id: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm font-semibold"
+                >
+                  {crops.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Pest Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Aphids (मावा)"
+                  value={pestForm.name}
+                  onChange={e => setPestForm({ ...pestForm, name: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Symptoms</label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="Describe the damages or visible symptoms on leaves/crops..."
+                  value={pestForm.symptoms}
+                  onChange={e => setPestForm({ ...pestForm, symptoms: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Control Method</label>
+                <textarea
+                  required
+                  rows={3}
+                  placeholder="Specify chemical spray, bio-pesticides or physical removal methods..."
+                  value={pestForm.control_method}
+                  onChange={e => setPestForm({ ...pestForm, control_method: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-[#1B5E20] text-sm resize-none"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setPestModalOpen(false)}
+                  className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-2 bg-[#1B5E20] hover:bg-[#124115] text-white font-bold py-2.5 rounded-xl text-sm transition-colors cursor-pointer shadow-sm"
+                >
+                  Save Record
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

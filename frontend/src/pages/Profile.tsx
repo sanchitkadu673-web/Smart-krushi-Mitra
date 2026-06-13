@@ -6,7 +6,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 
 export const Profile: React.FC = () => {
-  const { profile } = useAuth();
+  const { profile, updateProfileState } = useAuth();
   const { t } = useTranslation();
 
   const [form, setForm] = useState({
@@ -14,7 +14,9 @@ export const Profile: React.FC = () => {
     state: profile?.state || '',
     district: profile?.district || '',
     taluka: profile?.taluka || '',
-    village: profile?.village || ''
+    village: profile?.village || '',
+    shopName: profile?.shop_name || '',
+    gstNumber: profile?.license_number || ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -22,13 +24,16 @@ export const Profile: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.put('/api/profile', {
+      const response = await axios.put('/api/profile', {
         full_name: form.fullName,
         state: form.state,
         district: form.district,
         taluka: form.taluka,
-        village: form.village
+        village: form.village,
+        shop_name: form.shopName,
+        license_number: form.gstNumber
       });
+      updateProfileState(response.data);
       toast.success('Profile updated successfully!');
     } catch (err) {
       toast.error('Failed to update profile');
@@ -126,6 +131,36 @@ export const Profile: React.FC = () => {
                 />
               </div>
             </div>
+
+            {profile?.role === 'shop_owner' && (
+              <div className="space-y-6 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                <h3 className="font-bold text-slate-800">Shop Details (दुकानाची माहिती)</h3>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Shop Name (दुकानाचे नाव)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.shopName}
+                    onChange={e => setForm({ ...form, shopName: e.target.value })}
+                    className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    GST Number / License No. (परवाना क्रमांक)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.gstNumber}
+                    onChange={e => setForm({ ...form, gstNumber: e.target.value })}
+                    className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary bg-white"
+                  />
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"

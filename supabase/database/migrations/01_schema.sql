@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS public.crops (
     sowing_date DATE NOT NULL,
     area NUMERIC(10, 2),
     variety TEXT,
+    farming_type TEXT DEFAULT 'irrigated',
     status crop_status NOT NULL DEFAULT 'active',
     ai_schedule_data JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
@@ -189,7 +190,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM public.profiles
-    WHERE user_id = auth.uid() AND role = 'admin'::user_role
+    WHERE user_id = auth.uid() AND (role = 'admin'::user_role OR role = 'super_admin'::user_role)
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

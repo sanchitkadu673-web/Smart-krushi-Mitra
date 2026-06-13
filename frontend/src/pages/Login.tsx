@@ -21,18 +21,7 @@ export const Login: React.FC = () => {
   const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
 
-  const handleAutofill = () => {
-    if (role === 'farmer') {
-      setMobile('9876543210');
-      if (step === 2) setOtp('123456');
-    } else if (role === 'shop_owner') {
-      setMobile('9876543211');
-      setPassword('password123');
-    } else if (role === 'super_admin') {
-      setMobile('9876543212');
-      if (step === 2) setOtp('123456');
-    }
-  };
+
 
 
   const handleSendOtp = async (e: React.FormEvent) => {
@@ -277,47 +266,36 @@ export const Login: React.FC = () => {
           </form>
         )}
 
-        {/* Dynamic Credentials Helper Box */}
-        <div className="mt-6 p-4 bg-amber-50/75 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/40 rounded-[1.5rem] text-left space-y-3 shadow-inner">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-amber-800 dark:text-amber-300 tracking-wide uppercase flex items-center gap-1.5">
-              <span className="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-              Login Details (डेमो माहिती)
-            </span>
-            <button
-              type="button"
-              onClick={handleAutofill}
-              className="text-xs bg-[#1B5E20] hover:bg-[#124115] text-white font-bold px-3 py-1.5 rounded-lg transition-all shadow-sm cursor-pointer"
-            >
-              Autofill Details
-            </button>
-          </div>
-          <div className="text-sm font-semibold text-slate-700 dark:text-slate-350 space-y-1">
-            <div>
-              <span className="text-slate-400 dark:text-slate-500 font-medium">Role:</span>{' '}
-              <span className="capitalize text-slate-800 dark:text-slate-200">
-                {role === 'farmer' ? 'Farmer / User' : role === 'shop_owner' ? 'Shop Owner' : 'Super Admin'}
+        {role === 'super_admin' && (
+          <div className="mt-6 p-4 bg-emerald-50/75 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-900/40 rounded-[1.5rem] text-left space-y-3 shadow-inner">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-emerald-800 dark:text-emerald-350 tracking-wide uppercase flex items-center gap-1.5">
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Admin Credentials (डेमो माहिती)
               </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setMobile('9876543212');
+                  if (step === 2) setOtp('123456');
+                }}
+                className="text-xs bg-[#1B5E20] hover:bg-[#124115] text-white font-bold px-3 py-1.5 rounded-lg transition-all shadow-sm cursor-pointer"
+              >
+                Autofill
+              </button>
             </div>
-            <div>
-              <span className="text-slate-400 dark:text-slate-500 font-medium">Mobile:</span>{' '}
-              <span className="font-mono text-slate-800 dark:text-slate-200">
-                {role === 'farmer' ? '9876543210' : role === 'shop_owner' ? '9876543211' : '9876543212'}
-              </span>
-            </div>
-            {role === 'shop_owner' ? (
+            <div className="text-sm font-semibold text-slate-700 dark:text-slate-350 space-y-1">
               <div>
-                <span className="text-slate-400 dark:text-slate-500 font-medium">Password:</span>{' '}
-                <span className="font-mono text-slate-800 dark:text-slate-200">password123</span>
+                <span className="text-slate-400 dark:text-slate-500 font-medium">Mobile:</span>{' '}
+                <span className="font-mono text-slate-800 dark:text-slate-200">9876543212</span>
               </div>
-            ) : (
               <div>
                 <span className="text-slate-400 dark:text-slate-500 font-medium">OTP:</span>{' '}
                 <span className="font-mono text-slate-800 dark:text-slate-200">123456</span>
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-8 text-center text-sm">
           <Link to="/register" className="text-[#1B5E20] dark:text-[#4CAF50] font-bold hover:underline">

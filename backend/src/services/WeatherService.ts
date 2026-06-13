@@ -39,13 +39,50 @@ export class WeatherService {
     let lat = 18.5204; // default Pune
     let lon = 73.8567;
 
-    if (location.includes(',')) {
+    if (location && !location.includes(',')) {
+      // Named location
+      try {
+        const geoResponse = await axios.get(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`
+        );
+        if (geoResponse.data?.results?.[0]) {
+          lat = geoResponse.data.results[0].latitude;
+          lon = geoResponse.data.results[0].longitude;
+        }
+      } catch (geoError) {
+        console.error('Geocoding error for location:', location, geoError);
+      }
+    } else if (location && location.includes(',')) {
       const parts = location.split(',');
       const parsedLat = parseFloat(parts[0]);
       const parsedLon = parseFloat(parts[1]);
       if (!isNaN(parsedLat) && !isNaN(parsedLon)) {
         lat = parsedLat;
         lon = parsedLon;
+      } else {
+        // It's a named location containing commas! e.g., "Manjri, Haveli, Pune, Maharashtra"
+        try {
+          // Try to geocode the whole string first
+          let geoResponse = await axios.get(
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=en&format=json`
+          );
+          if (geoResponse.data?.results?.[0]) {
+            lat = geoResponse.data.results[0].latitude;
+            lon = geoResponse.data.results[0].longitude;
+          } else {
+            // Fallback: search by the first part (e.g. "Manjri")
+            const firstPart = parts[0].trim();
+            geoResponse = await axios.get(
+              `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(firstPart)}&count=1&language=en&format=json`
+            );
+            if (geoResponse.data?.results?.[0]) {
+              lat = geoResponse.data.results[0].latitude;
+              lon = geoResponse.data.results[0].longitude;
+            }
+          }
+        } catch (geoError) {
+          console.error('Geocoding error for location with commas:', location, geoError);
+        }
       }
     }
 

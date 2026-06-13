@@ -11,6 +11,9 @@ interface Profile {
   taluka: string;
   village: string;
   role: 'farmer' | 'admin' | 'super_admin' | 'shop_owner' | 'expert';
+  shop_name?: string;
+  license_number?: string;
+  shop_address?: string;
 }
 
 interface AuthContextType {
@@ -21,6 +24,7 @@ interface AuthContextType {
   loginPassword: (mobile: string, password: string) => Promise<Profile>;
   register: (data: any) => Promise<void>;
   logout: () => void;
+  updateProfileState: (updatedProfile: Profile) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -110,8 +114,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setProfile(null);
   };
 
+  const updateProfileState = (updatedProfile: Profile) => {
+    localStorage.setItem('profile', JSON.stringify(updatedProfile));
+    setProfile(updatedProfile);
+  };
+
   return (
-    <AuthContext.Provider value={{ token, profile, loading, login, loginPassword, register, logout }}>
+    <AuthContext.Provider value={{ token, profile, loading, login, loginPassword, register, logout, updateProfileState }}>
       {children}
     </AuthContext.Provider>
   );

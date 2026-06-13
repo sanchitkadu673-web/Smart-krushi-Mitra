@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
@@ -22,7 +24,8 @@ const db: Record<string, any[]> = {
       district: 'Pune',
       taluka: 'Haveli',
       village: 'Manjri',
-      role: 'farmer'
+      role: 'farmer',
+      shop_id: 'mock-shop-id'
     },
     {
       id: 'mock-shop-owner-profile-id',
@@ -47,6 +50,18 @@ const db: Record<string, any[]> = {
       taluka: 'Haveli',
       village: 'Manjri',
       role: 'super_admin'
+    },
+    {
+      id: 'mock-shop-owner-profile-id-kanha',
+      user_id: 'mock-shop-owner-user-id-kanha',
+      full_name: 'kanha patil',
+      mobile: '8767366337',
+      email: 'kanha@example.com',
+      state: 'Maharashtra',
+      district: 'Akola',
+      taluka: 'Akot',
+      village: 'Akola',
+      role: 'shop_owner'
     }
   ],
   shops: [
@@ -57,6 +72,49 @@ const db: Record<string, any[]> = {
       license_number: '27AADCB2230M1Z2',
       address: 'Manjri, Haveli, Pune, Maharashtra',
       is_approved: true
+    },
+    {
+      id: 'mock-shop-id-kanha',
+      owner_id: 'mock-shop-owner-user-id-kanha',
+      shop_name: 'kanha krushi seva kendr',
+      license_number: '27ABCD14541565',
+      address: 'akola, Akot, Akola, Maharashtra',
+      is_approved: true
+    }
+  ],
+  products: [
+    {
+      id: 'mock-product-1',
+      shop_id: 'mock-shop-id',
+      name: 'Urea 46%',
+      company: 'IFFCO',
+      category: 'Fertilizer',
+      price: 266.50,
+      stock_quantity: 50,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'mock-product-2',
+      shop_id: 'mock-shop-id',
+      name: '10:26:26 NPK',
+      company: 'IFFCO',
+      category: 'Fertilizer',
+      price: 1470.00,
+      stock_quantity: 30,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: 'mock-product-3',
+      shop_id: 'mock-shop-id',
+      name: 'Neem Oil',
+      company: 'Growell',
+      category: 'Pesticide',
+      price: 350.00,
+      stock_quantity: 15,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
   ],
   crops: [],
@@ -272,8 +330,72 @@ const mockAuthUsers: any[] = [
     user_metadata: {
       full_name: 'Sanchit Kadu'
     }
+  },
+  {
+    id: 'mock-shop-owner-user-id',
+    phone: '+919876543211',
+    email: 'shop@example.com',
+    user_metadata: {
+      full_name: 'Sanchit ShopOwner'
+    }
+  },
+  {
+    id: 'mock-admin-user-id',
+    phone: '+919876543212',
+    email: 'admin@example.com',
+    user_metadata: {
+      full_name: 'Sanchit Admin'
+    }
+  },
+  {
+    id: 'mock-shop-owner-user-id-kanha',
+    phone: '+918767366337',
+    email: 'kanha@example.com',
+    user_metadata: {
+      full_name: 'kanha patil'
+    }
   }
 ];
+
+const DB_FILE = path.join(__dirname, '../../.dev-database.json');
+
+function saveToFile() {
+  try {
+    const data = {
+      db,
+      mockAuthUsers
+    };
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Error saving dev database to file:', err);
+  }
+}
+
+function loadFromFile() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const dataStr = fs.readFileSync(DB_FILE, 'utf-8');
+      const data = JSON.parse(dataStr);
+      if (data.db) {
+        for (const key of Object.keys(data.db)) {
+          if (Array.isArray(data.db[key])) {
+            db[key] = data.db[key];
+          }
+        }
+      }
+      if (Array.isArray(data.mockAuthUsers)) {
+        mockAuthUsers.length = 0;
+        mockAuthUsers.push(...data.mockAuthUsers);
+      }
+      console.log('Successfully loaded dev database from file.');
+    }
+  } catch (err) {
+    console.error('Error loading dev database from file:', err);
+  }
+}
+
+// Load database from file at startup
+loadFromFile();
 
 // Helper to create chainable query builders
 const createChainableQuery = (tableName: string) => {
@@ -281,7 +403,8 @@ const createChainableQuery = (tableName: string) => {
   let currentFilter = [...list];
 
   const query: any = {
-    select: (columns?: string) => {
+    select: (columns?: string, options?: { count?: string; head?: boolean }) => {
+      query.selectOptions = options;
       // Mock joins
       if (columns && columns.includes('*') && columns.includes('crop_master')) {
         currentFilter = currentFilter.map(item => {
@@ -311,12 +434,16 @@ const createChainableQuery = (tableName: string) => {
       return query;
     },
     single: async () => {
+      if (query.isWrite) {
+        saveToFile();
+      }
       if (currentFilter.length === 0) {
         return { data: null, error: { message: 'Row not found' } };
       }
       return { data: currentFilter[0], error: null };
     },
     insert: (payload: any) => {
+      query.isWrite = true;
       const records = Array.isArray(payload) ? payload : [payload];
       const inserted = records.map(r => {
         // Simulating UNIQUE constraints for mock DB
@@ -342,6 +469,7 @@ const createChainableQuery = (tableName: string) => {
       return query;
     },
     update: (payload: any) => {
+      query.isWrite = true;
       currentFilter.forEach(item => {
         Object.assign(item, payload);
       });
@@ -349,6 +477,7 @@ const createChainableQuery = (tableName: string) => {
     },
     delete: () => {
       query.isDelete = true;
+      query.isWrite = true;
       return query;
     },
     ilike: (col: string, val: string) => {
@@ -363,9 +492,17 @@ const createChainableQuery = (tableName: string) => {
       if (query.isDelete) {
         const idsToDelete = currentFilter.map(item => item.id);
         db[tableName] = db[tableName].filter(item => !idsToDelete.includes(item.id));
+        if (query.isWrite) {
+          saveToFile();
+        }
         onfulfilled({ data: null, error: null });
       } else {
-        onfulfilled({ data: currentFilter, count: currentFilter.length, error: null });
+        if (query.isWrite) {
+          saveToFile();
+        }
+        const data = query.selectOptions?.head ? null : currentFilter;
+        const count = currentFilter.length;
+        onfulfilled({ data, count, error: null });
       }
     }
   };
@@ -406,10 +543,19 @@ const mockSupabase = {
           user_metadata: payload.user_metadata
         };
         mockAuthUsers.push(user);
+        saveToFile();
         return { data: { user }, error: null };
       },
       listUsers: async () => {
         return { data: { users: mockAuthUsers }, error: null };
+      },
+      deleteUser: async (id: string) => {
+        const index = mockAuthUsers.findIndex(u => u.id === id);
+        if (index !== -1) {
+          mockAuthUsers.splice(index, 1);
+          saveToFile();
+        }
+        return { data: {}, error: null };
       },
       generateLink: async (payload: any) => {
         return { data: { properties: { action_link: '#' } }, error: null };
@@ -425,15 +571,17 @@ const mockSupabase = {
               user: {
                 id: profile.user_id,
                 phone: `+91${mobile}`,
-                email: profile.email
+                email: profile.email,
+                user_metadata: {
+                  full_name: profile.full_name
+                }
               }
             },
             error: null
           };
         }
       }
-      const user = mockAuthUsers[0] || { id: 'mock-user-id', phone: '+919876543210' };
-      return { data: { user }, error: null };
+      return { data: { user: null }, error: { message: 'User not found or invalid token' } };
     }
   },
   from: (tableName: string) => {

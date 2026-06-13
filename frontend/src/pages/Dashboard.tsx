@@ -211,7 +211,7 @@ export const Dashboard: React.FC = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              LIVE
+              {i18n.language === 'mr' ? 'थेट' : i18n.language === 'hi' ? 'लाइव' : 'LIVE'}
             </span>
 
             {/* Live clock */}
@@ -230,7 +230,7 @@ export const Dashboard: React.FC = () => {
               onClick={() => fetchDashboardData(true)}
               disabled={refreshing}
               className="p-2.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl shadow-sm text-gray-600 hover:text-primary transition-colors disabled:opacity-50"
-              title="ताजे करा"
+              title={i18n.language === 'mr' ? 'ताजे करा' : i18n.language === 'hi' ? 'ताज़ा करें' : 'Refresh'}
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
@@ -259,7 +259,7 @@ export const Dashboard: React.FC = () => {
                   <Sprout className="text-primary w-5 h-5" /> {t('myCrops')}
                   {!loading && (
                     <span className="ml-2 text-xs bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full">
-                      {activeCrops.length} सक्रिय
+                      {activeCrops.length} {i18n.language === 'mr' ? 'सक्रिय' : i18n.language === 'hi' ? 'सक्रिय' : 'Active'}
                     </span>
                   )}
                 </h3>
@@ -280,7 +280,7 @@ export const Dashboard: React.FC = () => {
                 <div className="text-center py-10 border-2 border-dashed border-gray-100 rounded-2xl">
                   <p className="text-gray-400 text-sm mb-4">{t('noCrops')}</p>
                   <Link to="/crops/add" className="text-primary font-bold hover:underline">
-                    Add your first crop now →
+                    {i18n.language === 'mr' ? 'तुमचे पहिले पीक आता जोडा →' : i18n.language === 'hi' ? 'अपनी पहली फसल अभी जोड़ें →' : 'Add your first crop now →'}
                   </Link>
                 </div>
               ) : (
@@ -310,7 +310,7 @@ export const Dashboard: React.FC = () => {
                                 handleDeleteCrop(crop.id);
                               }}
                               className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
-                              title="Delete Crop"
+                              title={i18n.language === 'mr' ? 'पीक हटवा' : i18n.language === 'hi' ? 'फसल हटाएं' : 'Delete Crop'}
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                             </button>
@@ -333,13 +333,17 @@ export const Dashboard: React.FC = () => {
             {/* Linked Shop Stock */}
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
               <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Building2 className="text-primary w-5 h-5" /> माझे जोडलेले दुकान (My Linked Shop)
+                <Building2 className="text-primary w-5 h-5" /> {i18n.language === 'mr' ? 'माझे जोडलेले दुकान' : i18n.language === 'hi' ? 'मेरी जुड़ी हुई दुकान' : 'My Linked Shop'}
               </h3>
               
               {!linkedShopData?.shop ? (
                 <div className="text-center py-6 bg-slate-50/50 rounded-xl border border-slate-100 text-sm">
-                  <p className="text-gray-500 font-medium">तुमचे खाते अद्याप कोणत्याही दुकानाशी जोडलेले नाही.</p>
-                  <p className="text-gray-400 mt-1">तुमच्या गावातील दुकानदार तुम्हाला त्यांच्याकडे नोंदणी करतील, तेव्हा तुम्हाला त्यांचा स्टॉक आणि दर दिसतील.</p>
+                  <p className="text-gray-500 font-medium">
+                    {i18n.language === 'mr' ? 'तुमचे खाते अद्याप कोणत्याही दुकानाशी जोडलेले नाही.' : i18n.language === 'hi' ? 'आपका खाता अभी किसी दुकान से नहीं जुड़ा है।' : 'Your account is not linked to any shop yet.'}
+                  </p>
+                  <p className="text-gray-400 mt-1">
+                    {i18n.language === 'mr' ? 'तुमच्या गावातील दुकानदार तुम्हाला त्यांच्याकडे नोंदणी करतील, तेव्हा तुम्हाला त्यांचा स्टॉक आणि दर दिसतील.' : i18n.language === 'hi' ? 'जब आपके गांव के दुकानदार आपको अपने साथ पंजीकृत करेंगे, तो आप उनका स्टॉक और दरें देख पाएंगे।' : 'Once a shop owner in your village registers you, you will see their stock and prices here.'}
+                  </p>
                 </div>
               ) : (
                 <div>
@@ -351,13 +355,17 @@ export const Dashboard: React.FC = () => {
                       </p>
                     </div>
                     <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full shrink-0">
-                      ✓ जोडलेले (Linked)
+                      ✓ {i18n.language === 'mr' ? 'जोडलेले' : i18n.language === 'hi' ? 'जुड़ा हुआ' : 'Linked'}
                     </span>
                   </div>
 
-                  <h5 className="font-bold text-sm text-gray-700 mb-3">उपलब्ध खते व औषधे (Available Stock)</h5>
+                  <h5 className="font-bold text-sm text-gray-700 mb-3">
+                    {i18n.language === 'mr' ? 'उपलब्ध खते व औषधे' : i18n.language === 'hi' ? 'उपलब्ध उर्वरक और दवाएं' : 'Available Fertilizers & Sprays'}
+                  </h5>
                   {linkedShopData.products.length === 0 ? (
-                    <p className="text-gray-400 text-xs text-center py-4 bg-slate-50 rounded-xl">दुकानदाराने अद्याप कोणतीही उत्पादने जोडलेली नाहीत.</p>
+                    <p className="text-gray-400 text-xs text-center py-4 bg-slate-50 rounded-xl">
+                      {i18n.language === 'mr' ? 'दुकानदाराने अद्याप कोणतीही उत्पादने जोडलेली नाहीत.' : i18n.language === 'hi' ? 'दुकानदार ने अभी तक कोई उत्पाद नहीं जोड़ा है।' : 'No products added by the shop owner yet.'}
+                    </p>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1">
                       {linkedShopData.products.map(p => (
@@ -369,9 +377,13 @@ export const Dashboard: React.FC = () => {
                           <div className="text-right">
                             <p className="font-black text-gray-800 text-sm">₹{p.price}</p>
                             {p.stock_quantity <= 0 ? (
-                              <span className="text-red-500 font-bold text-[10px]">स्टॉक संपला</span>
+                              <span className="text-red-500 font-bold text-[10px]">
+                                {i18n.language === 'mr' ? 'स्टॉक संपला' : i18n.language === 'hi' ? 'स्टॉक समाप्त' : 'Out of Stock'}
+                              </span>
                             ) : (
-                              <span className="text-green-600 font-bold text-[10px]">शिल्लक: {p.stock_quantity}</span>
+                              <span className="text-green-600 font-bold text-[10px]">
+                                {i18n.language === 'mr' ? `शिल्लक: ${p.stock_quantity}` : i18n.language === 'hi' ? `शेष: ${p.stock_quantity}` : `Stock: ${p.stock_quantity}`}
+                              </span>
                             )}
                           </div>
                         </div>
@@ -394,7 +406,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               ) : notifications.length === 0 ? (
                 <p className="text-gray-400 text-sm text-center py-6">
-                  सध्या कोणत्याही शिफारसी नाहीत.
+                  {i18n.language === 'mr' ? 'सध्या कोणत्याही शिफारसी नाहीत.' : i18n.language === 'hi' ? 'वर्तमान में कोई सिफारिशें नहीं हैं।' : 'No recommendations at the moment.'}
                 </p>
               ) : (
                 <div className="space-y-4">

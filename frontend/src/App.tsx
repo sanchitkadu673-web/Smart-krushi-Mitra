@@ -14,6 +14,7 @@ import { Profile } from './pages/Profile';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { ShopDashboard } from './pages/shop-owner/ShopDashboard';
 import { ManageProducts } from './pages/shop-owner/ManageProducts';
+import { Notifications } from './pages/Notifications';
 import './i18n/config'; // Init i18n
 import './index.css';
 
@@ -83,6 +84,14 @@ export const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/notifications" 
+              element={
+                <ProtectedRoute>
+                  <Notifications />
                 </ProtectedRoute>
               } 
             />

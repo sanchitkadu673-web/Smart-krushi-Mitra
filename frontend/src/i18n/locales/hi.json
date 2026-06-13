@@ -149,5 +149,7 @@
   "loading": "लोड हो रहा है...",
   "noFarmersFound": "कोई किसान नहीं मिला",
   "noShopsFound": "कोई दुकान नहीं मिली",
-  "notAvailable": "उपलब्ध नहीं"
+  "notAvailable": "उपलब्ध नहीं",
+  "alertCardTitle": "विशेषज्ञ प्रमाणित",
+  "alertCardDesc": "सभी फसल कार्यक्रम हमारे विशेषज्ञों द्वारा प्रमाणित हैं।"
 }

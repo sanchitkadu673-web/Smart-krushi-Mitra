@@ -175,4 +175,170 @@ export class AdminController {
       return res.status(200).json({ message: 'Alert broadcasted successfully to all users!' });
     } catch (err) { next(err); }
   }
+
+  // Delete a farmer profile and auth account
+  public static async deleteFarmer(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { data: profile, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('user_id')
+        .eq('id', id)
+        .single();
+        
+      if (profileError || !profile) {
+        return res.status(404).json({ error: 'Farmer profile not found' });
+      }
+      
+      const userId = profile.user_id;
+      
+      // Delete the profile (cascading tables will clean up local data)
+      const { error: deleteProfileError } = await supabaseAdmin
+        .from('profiles')
+        .delete()
+        .eq('id', id);
+        
+      if (deleteProfileError) {
+        return res.status(400).json({ error: deleteProfileError.message });
+      }
+      
+      // Delete user from Supabase Auth
+      const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+      if (deleteAuthError) {
+        console.warn('Could not delete user from auth (likely mock user):', deleteAuthError.message);
+      }
+      
+      return res.status(200).json({ message: 'Farmer deleted successfully' });
+    } catch (err) { next(err); }
+  }
+
+  // Delete a shop, its owner's profile, and auth account
+  public static async deleteShop(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { data: shop, error: shopError } = await supabaseAdmin
+        .from('shops')
+        .select('owner_id')
+        .eq('id', id)
+        .single();
+        
+      if (shopError || !shop) {
+        return res.status(404).json({ error: 'Shop not found' });
+      }
+      
+      const ownerId = shop.owner_id;
+      
+      // Delete the shop
+      const { error: deleteShopError } = await supabaseAdmin
+        .from('shops')
+        .delete()
+        .eq('id', id);
+        
+      if (deleteShopError) {
+        return res.status(400).json({ error: deleteShopError.message });
+      }
+      
+      // Delete owner profile
+      await supabaseAdmin
+        .from('profiles')
+        .delete()
+        .eq('user_id', ownerId);
+        
+      // Delete owner from Auth
+      const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(ownerId);
+      if (deleteAuthError) {
+        console.warn('Could not delete owner from auth:', deleteAuthError.message);
+      }
+      
+      return res.status(200).json({ message: 'Shop and owner deleted successfully' });
+    } catch (err) { next(err); }
+  }
+
+  // Toggle approval status for a shop
+  public static async toggleShopApproval(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { is_approved } = req.body;
+      
+      const { data, error } = await supabaseAdmin
+        .from('shops')
+        .update({ is_approved })
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(200).json(data);
+    } catch (err) { next(err); }
+  }
+
+  // Diseases CRUD
+  public static async listDiseases(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { data, error } = await supabaseAdmin.from('diseases').select('*');
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(200).json(data);
+    } catch (err) { next(err); }
+  }
+
+  public static async createDisease(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { data, error } = await supabaseAdmin.from('diseases').insert(req.body).select().single();
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(201).json(data);
+    } catch (err) { next(err); }
+  }
+
+  public static async updateDisease(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { data, error } = await supabaseAdmin.from('diseases').update(req.body).eq('id', id).select().single();
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(200).json(data);
+    } catch (err) { next(err); }
+  }
+
+  public static async deleteDisease(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { error } = await supabaseAdmin.from('diseases').delete().eq('id', id);
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(200).json({ message: 'Disease deleted successfully' });
+    } catch (err) { next(err); }
+  }
+
+  // Pests CRUD
+  public static async listPests(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { data, error } = await supabaseAdmin.from('pests').select('*');
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(200).json(data);
+    } catch (err) { next(err); }
+  }
+
+  public static async createPest(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { data, error } = await supabaseAdmin.from('pests').insert(req.body).select().single();
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(201).json(data);
+    } catch (err) { next(err); }
+  }
+
+  public static async updatePest(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { data, error } = await supabaseAdmin.from('pests').update(req.body).eq('id', id).select().single();
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(200).json(data);
+    } catch (err) { next(err); }
+  }
+
+  public static async deletePest(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { error } = await supabaseAdmin.from('pests').delete().eq('id', id);
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(200).json({ message: 'Pest deleted successfully' });
+    } catch (err) { next(err); }
+  }
 }

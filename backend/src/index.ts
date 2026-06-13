@@ -25,11 +25,15 @@ app.use(cors({
   credentials: true
 }));
 
-// Rate Limiting
+// Rate Limiting – more relaxed in development
+const isDev = process.env.NODE_ENV !== 'production';
+
+// General API limiter – high for development comfort
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: { error: 'Too many requests, please try again later.' }
+  max: isDev ? 2000 : 300,   // 2000 req/15min in dev, 300 in production
+  message: { error: 'Too many requests, please try again later.' },
+  skip: () => isDev           // Completely skip rate limiting in dev mode
 });
 app.use('/api/', limiter);
 

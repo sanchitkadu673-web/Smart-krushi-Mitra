@@ -19,6 +19,7 @@ router.post('/scan-bill', requireAuth, requireRole(['shop_owner']), ShopControll
 // Shop Farmers (Shetkari Users)
 router.get('/farmers', requireAuth, requireRole(['shop_owner']), ShopController.getFarmers);
 router.post('/farmers', requireAuth, requireRole(['shop_owner']), ShopController.registerFarmer);
+router.post('/broadcast', requireAuth, requireRole(['shop_owner']), ShopController.broadcastToFarmers);
 
 // Farmer link route
 router.get('/linked', requireAuth, requireRole(['farmer']), ShopController.getLinkedShopForFarmer);

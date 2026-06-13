@@ -33,3 +33,6 @@ lerna-debug.log*
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local mock DB persistence file
+.dev-database.json

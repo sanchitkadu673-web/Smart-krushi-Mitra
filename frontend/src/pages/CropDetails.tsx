@@ -4,345 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { Navbar } from '../components/navigation/Navbar';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Activity, Calendar, Droplets, ShieldAlert, Sparkles, Sprout } from 'lucide-react';
+import { ArrowLeft, Activity, Calendar, Droplets, ShieldAlert, Sparkles, Sprout, ChevronDown } from 'lucide-react';
 
-const cropTranslations: Record<string, {
-  mr: {
-    description: string;
-    varieties: string;
-    seedBrands: string;
-    expectedYield: string;
-    category: string;
-  };
-  hi: {
-    description: string;
-    varieties: string;
-    seedBrands: string;
-    expectedYield: string;
-    category: string;
-  };
-}> = {
-  'Cotton (Kapus / कपास)': {
-    mr: {
-      category: 'नगदी पीक',
-      expectedYield: '१०-१२ क्विंटल/एकर',
-      description: 'कापूस हे भारतातील एक प्रमुख नगदी पीक आहे, जे उष्ण आणि उपोष्णकटिबंधीय प्रदेशात घेतले जाते. यासाठी पाण्याचा उत्तम निचरा होणारी काळी कसदार जमीन (रेगूर) आवश्यक असते.',
-      varieties: 'बीटी कॉटन (कनक, बनी, मारुती), नॉन-बीटी (एनएचएच-४४)',
-      seedBrands: 'राशी सीड्स (नियो, आरसीएच-६५९), माहिस्को (कनक), कावेरी सीड्स (जादू), नुझिवीडू सीड्स (भक्ती)'
-    },
-    hi: {
-      category: 'नकदी फसल',
-      expectedYield: '10-12 क्विंटल/एकड़',
-      description: 'कपास भारत की एक प्रमुख नकदी फसल है, जो उष्णकटिबंधीय और उपोष्णकटिबंधीय क्षेत्रों में उगाई जाती है। इसके लिए जल निकासी वाली गहरी काली मिट्टी आवश्यक है।',
-      varieties: 'बीटी कपास (कनक, बन्नी, मारुति), नॉन-बीटी (एनएचएच-44)',
-      seedBrands: 'रासी सीड्स, माहिस्को, कावेरी सीड्स, नुजीविदु सीड्स'
-    }
-  },
-  'Soybean (सोयाबीन)': {
-    mr: {
-      category: 'तेलबिया',
-      expectedYield: '८-१० क्विंटल/एकर',
-      description: 'सोयाबीन हे प्रथिनांनी समृद्ध असलेले एक महत्त्वाचे तेलबिया पीक आहे, ज्याची खरीप हंगामात मध्य भारतात मोठ्या प्रमाणावर लागवड केली जाते.',
-      varieties: 'जेएस ३३५, जेएस ९३-०५, एमएसीएस ११८८, फुले संगम (केडीएस-७२६)',
-      seedBrands: 'महाबीज, ईगल सीड्स, राशी सीड्स, राजकुमार सीड्स'
-    },
-    hi: {
-      category: 'तिलहन',
-      expectedYield: '8-10 क्विंटल/एकड़',
-      description: 'सोयाबीन प्रोटीन से भरपूर एक महत्वपूर्ण तिलहन फसल है, जिसकी खेती मुख्य रूप से खरीफ सीजन में की जाती है।',
-      varieties: 'जेएस 335, जेएस 93-05, एमएसीएस 1188, फुले संगम (केडीएस-726)',
-      seedBrands: 'महाबीज, ईगल सीड्स, रासी सीड्स'
-    }
-  },
-  'Wheat (Gahu / गेहूं)': {
-    mr: {
-      category: 'तृणधान्य',
-      expectedYield: '१५-२० क्विंटल/एकर',
-      description: 'गहू हे रब्बी हंगामातील एक महत्त्वाचे तृणधान्य पीक आहे, ज्यासाठी थंड हवामान, मध्यम पाऊस आणि चिकणमातीची जमीन आवश्यक असते.',
-      varieties: 'लोक-१, जीडब्ल्यू ४९६, एचडी २१८९, एमएसीएस २४९६',
-      seedBrands: 'महाबीज, श्रीराम सीड्स, जेके सीड्स, पायोनिअर'
-    },
-    hi: {
-      category: 'अनाज',
-      expectedYield: '15-20 क्विंटल/एकड़',
-      description: 'गेहूं एक महत्वपूर्ण रबी अनाज फसल है, जिसे ठंडी जलवायु और दोमट मिट्टी की आवश्यकता होती है।',
-      varieties: 'लोक-1, जीडब्ल्यू 496, एचडी 2189, एमएसीएस 2496',
-      seedBrands: 'महाबीज, श्रीराम सीड्स, जेके सीड्स'
-    }
-  },
-  'Rice (Bhat / धान / भात)': {
-    mr: {
-      category: 'तृणधान्य',
-      expectedYield: '१८-२२ क्विंटल/एकर',
-      description: 'भात हे मुख्य खरीप पीक असून त्यासाठी जास्त तापमान, जास्त आर्द्रता आणि सुरुवातीच्या काळात शेतात साठलेले पाणी आवश्यक असते.',
-      varieties: 'इंद्रायणी, बासमती ३७०, जया, फुले समृद्धी',
-      seedBrands: 'सिंजेंटा, बायर, माहिस्को, महाबीज'
-    },
-    hi: {
-      category: 'अनाज',
-      expectedYield: '18-22 क्विंटल/एकड़',
-      description: 'धान (चावल) मुख्य खरीप फसल है जिसे उच्च तापमान, अधिक आर्द्रता और शुरुआती चरणों में पानी की आवश्यकता होती है।',
-      varieties: 'इंद्रायणी, बासमती 370, जया, फुले समृद्धि',
-      seedBrands: 'सिंजेंटा, बायर, माहिस्को, महाबीज'
-    }
-  },
-  'Sugarcane (Us / ऊस)': {
-    mr: {
-      category: 'नगदी पीक',
-      expectedYield: '४०-५० टन/एकर',
-      description: 'ऊस हे दीर्घ मुदतीचे उष्णकटिबंधीय नगदी पीक असून त्यासाठी जास्त तापमान, मुबलक पाणी आणि सुपीक जमीन लागते.',
-      varieties: 'को ८६०३२ (नीरा), कोएम ०२६५ (फुले २६५), को ९२००५',
-      seedBrands: 'स्थानिक सहकारी साखर कारखाने, वसंतदादा शुगर इन्स्टिट्यूट (VSI) रोपवाटिका'
-    },
-    hi: {
-      category: 'नकदी फसल',
-      expectedYield: '40-50 टन/एकड़',
-      description: 'गन्ना एक लंबी अवधि की उष्णकटिबंधीय नकदी फसल है जिसके लिए उच्च तापमान और प्रचुर पानी की आवश्यकता होती है।',
-      varieties: 'को 86032, कोएम 0265, को 92005',
-      seedBrands: 'स्थानीय सहकारी चीनी मिलें, वीएसआई नर्सरी'
-    }
-  },
-  'Tur / Pigeon Pea (तूर)': {
-    mr: {
-      category: 'कडधान्य / डाळ',
-      expectedYield: '६-८ क्विंटल/एकर',
-      description: 'तूर हे प्रथिनांनी समृद्ध असलेले एक महत्त्वाचे कडधान्य पीक आहे, जे प्रामुख्याने निम-कोरड्या भागात कोरडवाहू पीक म्हणून घेतले जाते.',
-      varieties: 'विपुला, बीडीएन ७११, बीएसएमआर ७३६ (मारुती), फुले राजेश्वरी',
-      seedBrands: 'महाबीज, फुले सीड्स, स्थानिक मान्यताप्राप्त विक्रेते'
-    },
-    hi: {
-      category: 'दलहन',
-      expectedYield: '6-8 क्विंटल/एकड़',
-      description: 'अरहर (तूर) प्रोटीन से भरपूर एक महत्वपूर्ण दलहन फसल है, जो मुख्य रूप से वर्षा आधारित क्षेत्रों में उगाई जाती है।',
-      varieties: 'विपुला, बीडीएन 711, बीएसएमआर 736, फुले राजेश्वरी',
-      seedBrands: 'महाबीज, फुले सीड्स'
-    }
-  },
-  'Chickpea / Harbhara (हरभरा)': {
-    mr: {
-      category: 'कडधान्य / डाळ',
-      expectedYield: '७-९ क्विंटल/एकर',
-      description: 'हरभरा हे रब्बी हंगामातील मुख्य कडधान्य पीक असून ते थंड हवामान आणि जमिनीतील उरलेल्या ओलाव्यावर चांगले वाढते.',
-      varieties: 'विजय, दिग्विजय, जेएकेआय ९२१८, फुले विक्रम',
-      seedBrands: 'महाबीज, स्थानिक शेतकरी सहकारी संस्था'
-    },
-    hi: {
-      category: 'दलहन',
-      expectedYield: '7-9 क्विंटल/एकड़',
-      description: 'चना (हरभरा) रबी सीजन की मुख्य दलहनी फसल है जो ठंडे मौसम और मिट्टी की अवशिष्ट नमी पर निर्भर करती है।',
-      varieties: 'विजय, दिग्विजय, जेएकेआई 9218, फुले विक्रम',
-      seedBrands: 'महाबीज, स्थानीय समितियों'
-    }
-  },
-  'Groundnut (Bhuimug / भुईमूग)': {
-    mr: {
-      category: 'तेलबिया',
-      expectedYield: '१०-१२ क्विंटल/एकर',
-      description: 'भुईमूग हे एक महत्त्वाचे तेलबिया पीक आहे जे वालुकामय लोम मातीमध्ये चांगले वाढते आणि त्याला मध्यम पावसाची आवश्यकता असते.',
-      varieties: 'टीएजी २४, फुले व्यास, एसबी ११, टीजी ३७ए',
-      seedBrands: 'महाबीज, ईगल सीड्स, स्थानिक बियाणे विक्रेते'
-    },
-    hi: {
-      category: 'तिलहन',
-      expectedYield: '10-12 क्विंटल/एकड़',
-      description: 'मूंगफली एक आवश्यक तिलहन फसल है जो बलुई दोमट मिट्टी में अच्छी तरह बढ़ती है और इसे मध्यम बारिश की आवश्यकता होती है।',
-      varieties: 'टीएजी 24, फुले व्यास, एसबी 11, टीजी 37ए',
-      seedBrands: 'महाबीज, ईगल सीड्स'
-    }
-  },
-  'Onion (Kanda / कांदा)': {
-    mr: {
-      category: 'भाजीपाला',
-      expectedYield: '१००-१२० क्विंटल/एकर',
-      description: 'कांदा हे एक महत्त्वाचे नगदी भाजीपाला पीक असून ते चांगला निचरा होणाऱ्या मध्यम ते हलक्या जमिनीत तिन्ही हंगामात (खरीप, रांगडा, रब्बी) घेतले जाते.',
-      varieties: 'एन-२-४-१, बसवंत ७८०, फुले सुवर्णा, भीमा किरण',
-      seedBrands: 'पंचगंगा सीड्स, कलश सीड्स, सफल सीड्स, भीमा रेड (DOGR)'
-    },
-    hi: {
-      category: 'सब्जी',
-      expectedYield: '100-120 क्विंटल/एकड़',
-      description: 'प्याज़ एक उच्च मूल्य वाली सब्जी फसल है जिसे जल निकास वाली दोमट मिट्टी में कई मौसमों में उगाया जाता है।',
-      varieties: 'एन-2-4-1, बसवंत 780, फुले सुवर्णा, भीमा किरण',
-      seedBrands: 'पंचगंगा सीड्स, कलश सीड्स, सफल सीड्स'
-    }
-  },
-  'Tomato (टोमॅटो)': {
-    mr: {
-      category: 'भाजीपाला',
-      expectedYield: '१५०-२०० क्विंटल/एकर',
-      description: 'टोमॅटो हे मोठ्या प्रमाणावर घेतले जाणारे व्यावसायिक भाजीपाला पीक असून ते जास्त थंडी आणि पाणी साठून राहण्यास संवेदनशील असते.',
-      varieties: 'अभिनव, जयश्री, फुले राजा, वैशाली',
-      seedBrands: 'सिंजेंटा, सेमिनिस (बायर), नामधारी सीड्स'
-    },
-    hi: {
-      category: 'सब्जी',
-      expectedYield: '150-200 क्विंटल/एकड़',
-      description: 'टमाटर एक व्यापक रूप से उगाई जाने वाली व्यावसायिक सब्जी है जो पाले और जलजमाव के प्रति संवेदनशील होती है।',
-      varieties: 'अभिनव, जयश्री, फुले राजा, वैशाली',
-      seedBrands: 'सिंजेंटा, सेमिनिस (बायर), नामधारी सीड्स'
-    }
-  },
-  'Maize (Maka / मका)': {
-    mr: {
-      category: 'तृणधान्य',
-      expectedYield: '२०-२५ क्विंटल/एकर',
-      description: 'मका हे अन्नधान्य, चारा आणि औद्योगिक वापरासाठी लागणारे एक महत्त्वाचे पीक असून ते वेगवेगळ्या हवामानात चांगले येते.',
-      varieties: 'राजर्षी, गंगा ११, पायोनिअर ३०V९२, डिकालब ९१०८',
-      seedBrands: 'पायोनिअर, डिकालब/बायर, सिंजेंटा'
-    },
-    hi: {
-      category: 'अनाज',
-      expectedYield: '20-25 क्विंटल/एकड़',
-      description: 'मक्का भोजन, चारा और औद्योगिक उपयोग के लिए उगाई जाने वाली बहुमुखी फसल है जो विभिन्न जलवायु में बढ़ती है।',
-      varieties: 'राजर्षि, गंगा 11, पायनियर 30वी92, डेकाल्ब 9108',
-      seedBrands: 'पायनियर, डेकाल्ब (बायर), सिंजेंटा'
-    }
-  },
-  'Bajra (बाजरी)': {
-    mr: {
-      category: 'तृणधान्य',
-      expectedYield: '८-१० क्विंटल/एकर',
-      description: 'बाजरी हे कमी पावसात आणि हलक्या वालुकामय जमिनीत येणारे एक महत्त्वाचे दुष्काळ सहन करणारे तृणधान्य पीक आहे.',
-      varieties: 'आयसीटीपी ८२०३, फुले आदिशक्ती, पायोनिअर ८६M८६, श्रद्धा',
-      seedBrands: 'पायोनिअर, कावेरी सीड्स, देवगेन, श्रद्धा (माहिको)'
-    },
-    hi: {
-      category: 'अनाज',
-      expectedYield: '8-10 क्विंटल/एकड़',
-      description: 'बाजरा एक सूखा-सहनशील अनाज फसल है जो रेतीली मिट्टी और गर्म क्षेत्रों में उगाई जाती है।',
-      varieties: 'आईसीटीपी 8203, फुले आदिशक्ति, पायनियर 86एम86, श्रद्धा',
-      seedBrands: 'पायनियर, कावेरी सीड्स, देवगेन'
-    }
-  },
-  'Jowar (ज्वारी)': {
-    mr: {
-      category: 'तृणधान्य',
-      expectedYield: '१०-१२ क्विंटल/एकर',
-      description: 'ज्वारी हे कमी पाण्यात येणारे मुख्य अन्नधान्य आणि चारा पीक असून ते खरीप व रब्बी दोन्ही हंगामात घेतले जाते.',
-      varieties: 'दगडी, फुले वसुधा, सीएसव्ही २०, मालदांडी (एम-३५-१)',
-      seedBrands: 'माहिको, कावेरी सीड्स, महाबीज'
-    },
-    hi: {
-      category: 'अनाज',
-      expectedYield: '10-12 क्विंटल/एकड़',
-      description: 'ज्वार एक सूखा-प्रतिरोधी खाद्य और चारा फसल है जो खरीफ और रबी दोनों मौसमों में उगाई जाती है।',
-      varieties: 'दगड़ी, फुले वसुधा, सीएसवी 20, मालदांडी (एम-35-1)',
-      seedBrands: 'माहिको, कावेरी सीड्स, महाबीज'
-    }
-  },
-  'Grapes (Drakshe / द्राक्षे)': {
-    mr: {
-      category: 'फळ पीक',
-      expectedYield: '१०-१२ टन/एकर',
-      description: 'द्राक्षे हे एक उच्च दर्जाचे व्यावसायिक फळ पीक असून त्यासाठी उष्ण, कोरडे हवामान आणि मंडप/तार पद्धतीची आवश्यकता असते.',
-      varieties: 'थॉमसन सीडलेस, शरद सीडलेस, तास-ए-गणेश, माणिक चमन',
-      seedBrands: 'राष्ट्रीय द्राक्ष संशोधन केंद्र (NRC) पुणे, अधिकृत नर्सरी'
-    },
-    hi: {
-      category: 'फल',
-      expectedYield: '10-12 टन/एकड़',
-      description: 'अंगूर एक उच्च मूल्य वाली व्यावसायिक फल फसल है जिसके लिए गर्म, शुष्क मौसम की आवश्यकता होती है।',
-      varieties: 'थॉम्पसन सीडलेस, शरद सीडलेस, तस-ए-गणेश, माणिक चमन',
-      seedBrands: 'एनआरसी अंगूर पुणे, प्रमाणित नर्सरी'
-    }
-  },
-  'Pomegranate (Dalimb / डाळिंब)': {
-    mr: {
-      category: 'फळ पीक',
-      expectedYield: '६-८ टन/एकर',
-      description: 'डाळिंब हे कोरड्या व निम-कोरड्या हवामानात येणारे एक अत्यंत फायदेशीर आणि पाण्याचा ताण सहन करणारे पीक आहे.',
-      varieties: 'भगवा (शेंदरी), गणेश, मृदुला, फुले आरक्ता',
-      seedBrands: 'महात्मा फुले कृषी विद्यापीठ (MPKV) राहुरी नर्सरी, टीशू कल्चर लॅब्स'
-    },
-    hi: {
-      category: 'फल',
-      expectedYield: '6-8 टन/एकड़',
-      description: 'अनार अर्ध-शुष्क क्षेत्रों के लिए उपयुक्त एक लचीली फल फसल है जो सूखे को सहन कर सकती है।',
-      varieties: 'भगवा (शेंदरी), गणेश, मृदुला, फुले अरक्ता',
-      seedBrands: 'एमपीकेवी राहुरी नर्सरी, टिशू कल्चर लैब'
-    }
-  },
-  'Mango (Amba / आंबा)': {
-    mr: {
-      category: 'फळ पीक',
-      expectedYield: '४-५ टन/एकर',
-      description: 'आंबा हा फळांचा राजा असून तो बहुवार्षिक फळझाड म्हणून उष्ण हवामानात आणि कोरड्या हंगामात चांगला वाढतो.',
-      varieties: 'हापूस (अल्फांसो), केशर, तोतापुरी, यारी',
-      seedBrands: 'बाळासाहेब सावंत कोकण कृषी विद्यापीठ, अधिकृत सरकारी नर्सरी'
-    },
-    hi: {
-      category: 'फल',
-      expectedYield: '4-5 टन/एकड़',
-      description: 'आम फलों का राजा है, जो गर्म जलवायु और फूल आने के दौरान शुष्क मौसम में बढ़ता है।',
-      varieties: 'अल्फांसो (हापुस), केसर, तोतापुरी, पायरी',
-      seedBrands: 'कृषि विश्वविद्यालय नर्सरी, सरकारी नर्सरी'
-    }
-  },
-  'Banana (Keli / केळी)': {
-    mr: {
-      category: 'फळ पीक',
-      expectedYield: '२५-३० टन/एकर',
-      description: 'केळी हे मुबलक पाणी आणि खते लागणारे उष्णकटिबंधीय फळ पीक असून त्यासाठी सुपीक कसदार जमीन आणि वारा नसलेली जागा हवी.',
-      varieties: 'ग्रँड नैन (जी-९), श्रीमंती, बसराई, रोबस्टा',
-      seedBrands: 'जैन इरिगेशन सिस्टीम्स (टीशू कल्चर), अधिकृत लॅबोरेटरीज'
-    },
-    hi: {
-      category: 'फल',
-      expectedYield: '25-30 टन/एकड़',
-      description: 'केला एक पानी-सघन उष्णकटिबंधीय फल है जिसके लिए उपजाऊ मिट्टी की आवश्यकता होती है।',
-      varieties: 'ग्रैंड नैन (जी-9), श्रीमंती, बसराई, रोबस्टा',
-      seedBrands: 'जैन इरीगेशन (टिशू कल्चर), अधिकृत लैब'
-    }
-  },
-  'Turmeric (Halad / हळद)': {
-    mr: {
-      category: 'मसाले',
-      expectedYield: '२०-२५ क्विंटल/एकर',
-      description: 'हळद हे जमिनीखाली येणाऱ्या औषधी कंदांसाठी लावले जाणारे एक महत्त्वाचे व्यावसायिक मसाल्याचे पीक आहे.',
-      varieties: 'सेलम, कृष्णा, फुले वायगाव, टेकुरपेट',
-      seedBrands: 'भारतीय मसाला संशोधन संस्था (IISR), स्थानिक प्रमाणित प्रगतीशील शेतकरी'
-    },
-    hi: {
-      category: 'मसाले',
-      expectedYield: '20-25 क्विंटल/एकड़',
-      description: 'हल्दी एक मूल्यवान व्यावसायिक मसाला फसल है जो अपनी औषधीय कंदों (rhizomes) के लिए उगाई जाती है।',
-      varieties: 'सेलम, कृष्णा, फुले वायगांव, टेकुरपेट',
-      seedBrands: 'आईआईएसआर कोझिकोड, प्रमाणित किसान'
-    }
-  },
-  'Ginger (Ale / आले)': {
-    mr: {
-      category: 'मसाले',
-      expectedYield: '१५-२० क्विंटल/एकर',
-      description: 'आले हे सावलीत आणि चांगला निचरा होणाऱ्या जमिनीत याणारे नगदी मसाल्याचे पीक असून त्याला उष्ण व दमट हवामान लागते.',
-      varieties: 'माहिम, वरदा, आयआयएसआर रजत, सुप्रभा',
-      seedBrands: 'भारतीय मसाला संशोधन संस्था (IISR), स्थानिक बेणे उत्पादक'
-    },
-    hi: {
-      category: 'मसाले',
-      expectedYield: '15-20 क्विंटल/एकड़',
-      description: 'अदरक एक महत्वपूर्ण नकदी मसाला फसल है जिसे गर्म, नम जलवायु और आंशिक छाया की आवश्यकता होती है।',
-      varieties: 'माहिम, वरदा, आईआईएसआर रजत, सुप्रभा',
-      seedBrands: 'आईआईएसआर कोझिकोड, स्थानीय उत्पादक'
-    }
-  },
-  'Chilli (Mirchi / मिरची)': {
-    mr: {
-      category: 'भाजीपाला',
-      expectedYield: '८-१० टन/एकर',
-      description: 'मिरची हे तिखट आणि भाजी म्हणून वापरले जाणारे पीक असून त्यासाठी उष्ण हवामान आणि पाण्याचा उत्तम निचरा लागते.',
-      varieties: 'ज्वाला, फुले मुक्ता, जी-४, संकेश्वरी',
-      seedBrands: 'सिंजेंटा (हॉट पेपर), सेमिनिस, नामधारी सीड्स'
-    },
-    hi: {
-      category: 'सब्जी',
-      expectedYield: '8-10 टन/एकड़',
-      description: 'मिर्च एक प्रमुख मसाला और सब्जी फसल है जिसे गर्म मौसम और अच्छी धूप की आवश्यकता होती है।',
-      varieties: 'ज्वाला, फुले मुक्ता, जी-4, संकेश्वरी',
-      seedBrands: 'सिंजेंटा, सेमिनिस, नामधारी सीड्स'
-    }
-  }
-};
+import { cropTranslations } from '../constants/cropTranslations';
 
 const translateStageName = (stageName: string, lang: string) => {
   if (!stageName) return '';
@@ -493,6 +157,7 @@ export const CropDetails: React.FC = () => {
 
   // Edit Crop fields state
   const [isEditing, setIsEditing] = useState(false);
+  const [isVarietyOpen, setIsVarietyOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     sowingDate: '',
     area: '',
@@ -500,6 +165,23 @@ export const CropDetails: React.FC = () => {
     farmingType: 'irrigated',
     status: 'active'
   });
+
+  const getVarietySuggestions = () => {
+    if (!crop || !crop.crop_master) return [];
+    const trans = cropTranslations[crop.crop_master.name]?.[i18n.language as 'mr' | 'hi'];
+    const rawVarieties = trans?.varieties || crop.crop_master.varieties || '';
+
+    if (!rawVarieties) return [];
+    return rawVarieties
+      .split(/,\s*(?![^()]*\))/)
+      .map((v: string) => v.trim())
+      .filter(Boolean);
+  };
+
+  const suggestions = getVarietySuggestions();
+  const filteredSuggestions = suggestions.filter((v: string) =>
+    v.toLowerCase().includes(editForm.variety.toLowerCase())
+  );
 
   const handleEditClick = () => {
     if (!crop) return;
@@ -602,9 +284,9 @@ export const CropDetails: React.FC = () => {
             <div>
               <h1 className="text-3xl font-extrabold text-gray-900">{crop.crop_master.name}</h1>
               <div className="text-sm text-gray-500 mt-1 flex flex-wrap gap-2 items-center">
-                <span>Sown on: {crop.sowing_date}</span>
+                <span>{i18n.language === 'mr' ? 'पेरणीची तारीख' : i18n.language === 'hi' ? 'बुवाई की तारीख' : 'Sown on'}: {crop.sowing_date}</span>
                 <span>•</span>
-                <span>{crop.area ? `${crop.area} ${i18n.language === 'mr' ? 'एकर' : i18n.language === 'hi' ? 'एकड़' : 'Acres'}` : 'No area specified'}</span>
+                <span>{crop.area ? `${crop.area} ${i18n.language === 'mr' ? 'एकर' : i18n.language === 'hi' ? 'एकड़' : 'Acres'}` : (i18n.language === 'mr' ? 'क्षेत्रफळ निर्दिष्ट नाही' : i18n.language === 'hi' ? 'कोई क्षेत्र निर्दिष्ट नहीं' : 'No area specified')}</span>
                 <span>•</span>
                 <span className="font-semibold text-primary">{crop.farming_type === 'rainfed' ? (i18n.language === 'mr' ? 'जिरायती/कोरडवाहू' : i18n.language === 'hi' ? 'वर्षा आधारित' : 'Rainfed') : (i18n.language === 'mr' ? 'बागायती' : i18n.language === 'hi' ? 'सिंचित' : 'Irrigated')}</span>
               </div>
@@ -612,7 +294,7 @@ export const CropDetails: React.FC = () => {
                 onClick={handleEditClick}
                 className="text-xs bg-primary/10 text-primary font-bold px-3 py-1.5 rounded-lg mt-2 hover:bg-primary/20 transition-all flex items-center gap-1.5"
               >
-                ✏️ Edit Details
+                ✏️ {i18n.language === 'mr' ? 'तपशील बदला' : i18n.language === 'hi' ? 'विवरण बदलें' : 'Edit Details'}
               </button>
             </div>
           </div>
@@ -644,21 +326,21 @@ export const CropDetails: React.FC = () => {
             <div className="space-y-4">
               <p className="text-gray-600 leading-relaxed">
                 <span className="font-bold text-gray-800 block mb-1">{i18n.language === 'mr' ? 'वर्णन' : i18n.language === 'hi' ? 'विवरण' : 'Description'}:</span>
-                {description || 'No description available.'}
+                {description || (i18n.language === 'mr' ? 'माहिती उपलब्ध नाही.' : i18n.language === 'hi' ? 'विवरण उपलब्ध नहीं है।' : 'No description available.')}
               </p>
               <p className="text-gray-600 leading-relaxed">
                 <span className="font-bold text-gray-800 block mb-1">{i18n.language === 'mr' ? 'लागवड व मशागत मार्गदर्शिका' : i18n.language === 'hi' ? 'जुताई व खेती गाइड' : 'Cultivation Guide'}:</span>
-                {cultivationGuide || 'General tillage practices recommended.'}
+                {cultivationGuide || (i18n.language === 'mr' ? 'सामान्य मशागत पद्धती सुचवल्या आहेत.' : i18n.language === 'hi' ? 'सामान्य कृषि पद्धतियां अनुशंसित हैं।' : 'General tillage practices recommended.')}
               </p>
             </div>
             <div className="space-y-4">
               <p className="text-gray-600">
                 <span className="font-bold text-gray-800 block">{i18n.language === 'mr' ? 'शिफारस केलेल्या जाती' : i18n.language === 'hi' ? 'अनुशंसित किस्में' : 'Recommended Varieties'}:</span>
-                <span className="text-primary font-semibold block mt-1">{varieties || 'N/A'}</span>
+                <span className="text-primary font-semibold block mt-1">{varieties || (i18n.language === 'mr' ? 'उपलब्ध नाही' : i18n.language === 'hi' ? 'उपलब्ध नहीं' : 'N/A')}</span>
               </p>
               <p className="text-gray-600">
                 <span className="font-bold text-gray-800 block">{i18n.language === 'mr' ? 'प्रमुख बियाणे कंपन्या व ब्रँड्स' : i18n.language === 'hi' ? 'प्रमुख बीज कंपनियां और ब्रांड' : 'Top Seed Companies & Brands'}:</span>
-                <span className="text-gray-750 font-semibold block mt-1">{seedBrands || 'N/A'}</span>
+                <span className="text-gray-750 font-semibold block mt-1">{seedBrands || (i18n.language === 'mr' ? 'उपलब्ध नाही' : i18n.language === 'hi' ? 'उपलब्ध नहीं' : 'N/A')}</span>
               </p>
               <div className="grid grid-cols-2 gap-4 pt-3 border-t border-gray-100">
                 <div>
@@ -864,7 +546,9 @@ export const CropDetails: React.FC = () => {
                             </div>
                             {stage.intercultural_operations && (
                               <div className="bg-purple-50/50 p-3 rounded-lg border border-purple-100/50">
-                                <p className="text-xs font-bold text-purple-800 uppercase mb-1">Weeding (मशागत)</p>
+                                <p className="text-xs font-bold text-purple-800 uppercase mb-1">
+                                  {i18n.language === 'mr' ? 'मशागत' : i18n.language === 'hi' ? 'निराई/जुताई' : 'Weeding'}
+                                </p>
                                 <p className="text-sm text-gray-800">{stage.intercultural_operations}</p>
                               </div>
                             )}
@@ -942,7 +626,9 @@ export const CropDetails: React.FC = () => {
               <div>
                 <h3 className="text-xl font-bold mb-6 text-gray-900">{i18n.language === 'mr' ? 'पाणी व्यवस्थापन वेळापत्रक' : i18n.language === 'hi' ? 'सिंचाई अनुसूची' : 'Complete Irrigation Schedule'}</h3>
                 {(!recommendations.allIrrigation || recommendations.allIrrigation.length === 0) ? (
-                  <p className="text-gray-400 text-sm">Standard rainfall suffices. No extra irrigation schedules active.</p>
+                  <p className="text-gray-400 text-sm">
+                    {i18n.language === 'mr' ? 'योग्य पाऊस पुरेसा आहे. कोणतेही अतिरिक्त पाणी वेळापत्रक सक्रिय नाही.' : i18n.language === 'hi' ? 'सामान्य वर्षा पर्याप्त है। कोई अतिरिक्त सिंचाई कार्यक्रम सक्रिय नहीं है।' : 'Standard rainfall suffices. No extra irrigation schedules active.'}
+                  </p>
                 ) : (
                   <div>
                     {recommendations.allStages.map((stage: any) => {
@@ -971,16 +657,24 @@ export const CropDetails: React.FC = () => {
 
             {activeTab === 'pests' && (
               <div>
-                <h3 className="text-xl font-bold mb-6 text-gray-900">Pests to watch out for</h3>
+                <h3 className="text-xl font-bold mb-6 text-gray-900">
+                  {i18n.language === 'mr' ? 'लक्ष ठेवण्यासारख्या किडी' : i18n.language === 'hi' ? 'ध्यान देने योग्य कीट' : 'Pests to watch out for'}
+                </h3>
                 {recommendations.pests.length === 0 ? (
-                  <p className="text-gray-400 text-sm">No common pests reported for this crop type.</p>
+                  <p className="text-gray-400 text-sm">
+                    {i18n.language === 'mr' ? 'या पिकासाठी कोणत्याही सामान्य किडींची नोंद नाही.' : i18n.language === 'hi' ? 'इस फसल के लिए कोई सामान्य कीट नहीं बताया गया है।' : 'No common pests reported for this crop type.'}
+                  </p>
                 ) : (
                   <div className="space-y-6">
                     {recommendations.pests.map((p: any) => (
                       <div key={p.id} className="p-5 rounded-xl border border-red-100 bg-red-50/10">
                         <h4 className="font-extrabold text-red-700 text-lg">{p.name}</h4>
-                        <p className="text-sm text-gray-600 mt-2"><span className="font-bold">Symptoms:</span> {p.symptoms}</p>
-                        <p className="text-sm text-gray-600 mt-1"><span className="font-bold">Control Method:</span> {p.control_method}</p>
+                        <p className="text-sm text-gray-600 mt-2">
+                          <span className="font-bold">{i18n.language === 'mr' ? 'लक्षणे' : i18n.language === 'hi' ? 'लक्षण' : 'Symptoms'}:</span> {p.symptoms}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          <span className="font-bold">{i18n.language === 'mr' ? 'नियंत्रण पद्धत' : i18n.language === 'hi' ? 'नियंत्रण विधि' : 'Control Method'}:</span> {p.control_method}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -990,16 +684,24 @@ export const CropDetails: React.FC = () => {
 
             {activeTab === 'diseases' && (
               <div>
-                <h3 className="text-xl font-bold mb-6 text-gray-900">Diseases risk & prevention</h3>
+                <h3 className="text-xl font-bold mb-6 text-gray-900">
+                  {i18n.language === 'mr' ? 'रोगाचा धोका आणि प्रतिबंध' : i18n.language === 'hi' ? 'रोग का खतरा और रोकथाम' : 'Diseases risk & prevention'}
+                </h3>
                 {recommendations.diseases.length === 0 ? (
-                  <p className="text-gray-400 text-sm">No common diseases reported for this crop type.</p>
+                  <p className="text-gray-400 text-sm">
+                    {i18n.language === 'mr' ? 'या पिकासाठी कोणत्याही सामान्य रोगांची नोंद नाही.' : i18n.language === 'hi' ? 'इस फसल के लिए कोई सामान्य बीमारी नहीं बताई गई है।' : 'No common diseases reported for this crop type.'}
+                  </p>
                 ) : (
                   <div className="space-y-6">
                     {recommendations.diseases.map((d: any) => (
                       <div key={d.id} className="p-5 rounded-xl border border-red-100 bg-red-50/10">
                         <h4 className="font-extrabold text-red-700 text-lg">{d.name}</h4>
-                        <p className="text-sm text-gray-600 mt-2"><span className="font-bold">Symptoms:</span> {d.symptoms}</p>
-                        <p className="text-sm text-gray-600 mt-1"><span className="font-bold">Treatment:</span> {d.treatment}</p>
+                        <p className="text-sm text-gray-600 mt-2">
+                          <span className="font-bold">{i18n.language === 'mr' ? 'लक्षणे' : i18n.language === 'hi' ? 'लक्षण' : 'Symptoms'}:</span> {d.symptoms}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          <span className="font-bold">{i18n.language === 'mr' ? 'उपचार / उपाय' : i18n.language === 'hi' ? 'उपचार / उपाय' : 'Treatment'}:</span> {d.treatment}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -1014,12 +716,18 @@ export const CropDetails: React.FC = () => {
       {isEditing && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl border border-gray-150 p-6 max-w-md w-full relative animate-in fade-in zoom-in-95 duration-150">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Edit Crop Details</h3>
-            <p className="text-sm text-gray-500 mb-6">Modify details for your registered crop. Sowing date shifts will recalculate the stages timeline.</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              {i18n.language === 'mr' ? 'पीक तपशील सुधारा' : i18n.language === 'hi' ? 'फसल विवरण संशोधित करें' : 'Edit Crop Details'}
+            </h3>
+            <p className="text-sm text-gray-500 mb-6">
+              {i18n.language === 'mr' ? 'नोंदणी केलेल्या पिकाचा तपशील बदला. पेरणीची तारीख बदलल्यास वेळापत्रक पुन्हा मोजले जाईल.' : i18n.language === 'hi' ? 'अपनी पंजीकृत फसल के विवरण को संशोधित करें। बुवाई की तारीख बदलने से चरणों की समयरेखा की पुनर्गणना होगी।' : 'Modify details for your registered crop. Sowing date shifts will recalculate the stages timeline.'}
+            </p>
 
             <form onSubmit={handleSaveEdit} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Sowing Date</label>
+                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+                  {i18n.language === 'mr' ? 'पेरणीची तारीख' : i18n.language === 'hi' ? 'बुवाई की तारीख' : 'Sowing Date'}
+                </label>
                 <input 
                   type="date"
                   required
@@ -1031,7 +739,9 @@ export const CropDetails: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Area (Acres)</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+                    {i18n.language === 'mr' ? 'क्षेत्रफळ (एकर)' : i18n.language === 'hi' ? 'क्षेत्रफल (एकड़)' : 'Area (Acres)'}
+                  </label>
                   <input 
                     type="number"
                     step="0.1"
@@ -1040,39 +750,81 @@ export const CropDetails: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Variety</label>
-                  <input 
-                    type="text"
-                    value={editForm.variety}
-                    onChange={e => setEditForm({ ...editForm, variety: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary"
-                  />
+                <div className="relative">
+                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+                    {i18n.language === 'mr' ? 'जात / वाण' : i18n.language === 'hi' ? 'किस्म (वैरायटी)' : 'Variety'}
+                  </label>
+                  <div className="relative">
+                    <input 
+                      type="text"
+                      value={editForm.variety}
+                      onChange={e => setEditForm({ ...editForm, variety: e.target.value })}
+                      onFocus={() => setIsVarietyOpen(true)}
+                      onBlur={() => {
+                        // Timeout to allow clicking suggestions list items
+                        setTimeout(() => setIsVarietyOpen(false), 200);
+                      }}
+                      className="w-full pr-8 pl-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary font-medium"
+                    />
+                    {suggestions.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setIsVarietyOpen(!isVarietyOpen)}
+                        className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                    )}
+                    
+                    {isVarietyOpen && filteredSuggestions.length > 0 && (
+                      <div className="absolute z-20 w-full mt-1 bg-white border border-gray-150 rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                        {filteredSuggestions.map((v: string, idx: number) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onMouseDown={() => {
+                              setEditForm(f => ({ ...f, variety: v }));
+                              setIsVarietyOpen(false);
+                            }}
+                            className={`w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors font-medium text-gray-800 text-sm ${
+                              editForm.variety === v ? 'bg-primary/5 text-primary border-l-4 border-primary' : ''
+                            }`}
+                          >
+                            {v}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Farming Type</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+                    {i18n.language === 'mr' ? 'शेतीचा प्रकार' : i18n.language === 'hi' ? 'खेती का प्रकार' : 'Farming Type'}
+                  </label>
                   <select
                     value={editForm.farmingType}
                     onChange={e => setEditForm({ ...editForm, farmingType: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary bg-white font-medium"
                   >
-                    <option value="irrigated">Irrigated (बागायती)</option>
-                    <option value="rainfed">Rainfed (जिरायती)</option>
+                    <option value="irrigated">{i18n.language === 'mr' ? 'बागायती (Irrigated)' : i18n.language === 'hi' ? 'सिंचित (Irrigated)' : 'Irrigated'}</option>
+                    <option value="rainfed">{i18n.language === 'mr' ? 'जिरायती (Rainfed)' : i18n.language === 'hi' ? 'वर्षा आधारित (Rainfed)' : 'Rainfed'}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Crop Status</label>
+                  <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">
+                    {i18n.language === 'mr' ? 'पिकाची स्थिती' : i18n.language === 'hi' ? 'फसल की स्थिति' : 'Crop Status'}
+                  </label>
                   <select
                     value={editForm.status}
                     onChange={e => setEditForm({ ...editForm, status: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary bg-white font-medium"
                   >
-                    <option value="active">Active (सक्रिय)</option>
-                    <option value="harvested">Harvested (काढणी झालेले)</option>
-                    <option value="abandoned">Abandoned (सोडून दिलेले)</option>
+                    <option value="active">{i18n.language === 'mr' ? 'सक्रिय (Active)' : i18n.language === 'hi' ? 'सक्रिय (Active)' : 'Active'}</option>
+                    <option value="harvested">{i18n.language === 'mr' ? 'काढणी झालेले' : i18n.language === 'hi' ? 'कटी हुई' : 'Harvested'}</option>
+                    <option value="abandoned">{i18n.language === 'mr' ? 'सोडून दिलेले' : i18n.language === 'hi' ? 'छोड़ी हुई' : 'Abandoned'}</option>
                   </select>
                 </div>
               </div>
@@ -1083,13 +835,13 @@ export const CropDetails: React.FC = () => {
                   onClick={() => setIsEditing(false)}
                   className="w-1/3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 rounded-xl text-sm transition-colors"
                 >
-                  Cancel
+                  {i18n.language === 'mr' ? 'रद्द करा' : i18n.language === 'hi' ? 'रद्द करें' : 'Cancel'}
                 </button>
                 <button 
                   type="submit"
                   className="w-2/3 bg-primary hover:bg-primary-dark text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-sm"
                 >
-                  Save Changes
+                  {i18n.language === 'mr' ? 'बदल जतन करा' : i18n.language === 'hi' ? 'बदलाव सहेजें' : 'Save Changes'}
                 </button>
               </div>
             </form>

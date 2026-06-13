@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Navbar } from '../components/navigation/Navbar';
 import { ShieldCheck, CloudSun, CalendarDays, Sprout, Milestone, HelpCircle, ArrowRight, Leaf, Users, Tractor, BarChart3, Star, MapPin, Building2, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 // High-fidelity vector leaf components with green-emerald gradients
 const MonsteraLeaf: React.FC<{ className?: string }> = ({ className }) => (
@@ -106,7 +107,7 @@ export const Home: React.FC = () => {
       <Navbar />
       
       {/* Dynamic Hero Section - Lush Forest & Sunlight rays theme */}
-      <section className="relative overflow-hidden pt-28 pb-32 px-4 md:px-8 flex flex-col items-center text-center min-h-[95vh] justify-center bg-gradient-to-b from-[#4CAF50]/10 via-[#F7FAF4] to-[#F7FAF4] dark:from-emerald-950/20 dark:to-slate-950">
+      <section className="relative overflow-hidden pt-36 pb-32 px-4 md:px-8 flex flex-col items-center text-center bg-gradient-to-b from-[#4CAF50]/10 via-[#F7FAF4] to-[#F7FAF4] dark:from-emerald-950/20 dark:to-slate-950">
         
         {/* Sun-Dappled Canopy Sunrays overlay */}
         <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_0%,transparent_0deg,rgba(245,158,11,0.06)_15deg,transparent_30deg,rgba(76,175,80,0.04)_45deg,transparent_60deg,rgba(245,158,11,0.06)_90deg,transparent_120deg,rgba(76,175,80,0.03)_150deg,transparent_180deg)] dark:bg-[conic-gradient(from_0deg_at_50%_0%,transparent_0deg,rgba(245,158,11,0.03)_15deg,transparent_30deg,rgba(76,175,80,0.02)_45deg,transparent_60deg,rgba(245,158,11,0.03)_90deg,transparent_120deg,rgba(76,175,80,0.01)_150deg,transparent_180deg)] opacity-80 animate-sunrays pointer-events-none origin-top z-0"></div>
@@ -214,7 +215,7 @@ export const Home: React.FC = () => {
         </div>
 
         {/* 3D Dashboard Mockup Preview - Multi-layered Overlapping Cards */}
-        <div className="relative w-full max-w-5xl mx-auto mt-28 z-10 perspective-1000 preserve-3d min-h-[520px] md:min-h-[440px] px-4">
+        <div className="relative w-full max-w-5xl mx-auto mt-16 z-10 perspective-1000 preserve-3d min-h-[520px] md:min-h-[440px] px-4">
           <div className="absolute inset-x-0 bottom-[-40px] h-32 bg-slate-500/10 dark:bg-black/20 rounded-[4rem] blur-3xl pointer-events-none"></div>
           
           {/* Subtle Green/Amber Background Glows behind the cards */}
@@ -229,23 +230,61 @@ export const Home: React.FC = () => {
                   <Sprout className="w-6 h-6 animate-float" />
                 </div>
                 <div className="flex-1 text-left">
-                  <div className="h-4 bg-[#1B5E20]/10 dark:bg-slate-700 rounded w-1/3 mb-1.5"></div>
-                  <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/2"></div>
+                  <h4 className="font-black text-sm text-[#1B5E20] dark:text-[#4CAF50]">
+                    {i18n.language === 'mr' ? 'सोयाबीन' : i18n.language === 'hi' ? 'सोयाबीन' : 'Soybean'}
+                  </h4>
+                  <p className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500">
+                    {i18n.language === 'mr' ? 'साप्ताहिक कामगिरी निर्देशांक' : i18n.language === 'hi' ? 'साप्ताहिक प्रदर्शन सूचकांक' : 'Weekly Performance Index'}
+                  </p>
                 </div>
                 <span className="text-xs font-bold text-[#1B5E20] dark:text-[#4CAF50] bg-[#4CAF50]/15 px-3 py-1 rounded-full">
-                  Active
+                  {t('active') || 'Active'}
                 </span>
               </div>
               
               {/* Graph inside Dashboard */}
               <div className="space-y-4">
-                <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-1/4"></div>
-                <div className="flex gap-2.5 h-28 items-end pt-2">
-                  {[35, 60, 45, 90, 55, 75, 50, 85].map((h, i) => (
-                    <div key={i} className="flex-1 bg-[#1B5E20]/5 dark:bg-green-950/20 rounded-t-md relative h-full">
-                      <div className="absolute bottom-0 w-full bg-gradient-to-t from-[#1B5E20] to-[#4CAF50] rounded-t-md transition-all duration-1000" style={{ height: `${h}%` }}></div>
-                    </div>
-                  ))}
+                <div className="flex justify-between items-center text-[10px] font-extrabold text-slate-400 uppercase tracking-wide">
+                  <span>
+                    {i18n.language === 'mr' ? 'साप्ताहिक पीक वाढ' : i18n.language === 'hi' ? 'साप्ताहिक फसल वृद्धि' : 'Weekly Crop Growth'}
+                  </span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    {i18n.language === 'mr' ? '+१५% या आठवड्यात' : i18n.language === 'hi' ? '+15% इस सप्ताह' : '+15% this week'}
+                  </span>
+                </div>
+                <div className="h-32 w-full pt-1">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={[
+                      { name: 'W1', growth: 30 },
+                      { name: 'W2', growth: 45 },
+                      { name: 'W3', growth: 60 },
+                      { name: 'W4', growth: 50 },
+                      { name: 'W5', growth: 75 },
+                      { name: 'W6', growth: 70 },
+                      { name: 'W7', growth: 90 },
+                      { name: 'W8', growth: 95 }
+                    ]} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorGrowth" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#1B5E20" stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor="#4CAF50" stopOpacity={0.0}/>
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="name" stroke="#94a3b8" fontSize={9} tickLine={false} axisLine={false} />
+                      <YAxis stroke="#94a3b8" fontSize={9} tickLine={false} axisLine={false} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                          border: 'none', 
+                          borderRadius: '12px', 
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)' 
+                        }}
+                        labelStyle={{ fontWeight: 'bold', color: '#1B5E20', fontSize: '10px' }}
+                        itemStyle={{ fontSize: '10px', color: '#334155' }}
+                      />
+                      <Area type="monotone" dataKey="growth" stroke="#1B5E20" strokeWidth={2.5} fillOpacity={1} fill="url(#colorGrowth)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             </div>
@@ -257,19 +296,23 @@ export const Home: React.FC = () => {
               <div>
                 <div className="text-4xl font-black tracking-tight text-[#F7FAF4]">28°C</div>
                 <div className="text-[#4CAF50] font-bold mt-1.5 flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-[#F59E0B]" /> Pune, IN
+                  <MapPin className="w-4 h-4 text-[#F59E0B]" /> {i18n.language === 'mr' ? 'पुणे, भारत' : i18n.language === 'hi' ? 'पुणे, भारत' : 'Pune, IN'}
                 </div>
               </div>
             </div>
 
             {/* 3. Alert Card (Bottom Right, Overlapping with Left Border Accent) */}
             <div className="relative md:absolute md:right-4 md:bottom-4 w-full md:w-[44%] bg-white/95 dark:bg-slate-900/90 p-5 rounded-2xl border-l-4 border-[#4CAF50] border-y border-r border-slate-200/80 dark:border-slate-800 shadow-premium-3d backdrop-blur-md layer-depth-2 hover:layer-depth-3 transition-all duration-500 z-20 flex gap-4 mt-6 md:mt-0 text-left">
-              <div className="p-3 bg-[#F59E0B]/10 text-[#F59E0B] rounded-xl h-fit">
+              <div className="p-3 bg-[#4CAF50]/10 text-[#1B5E20] dark:text-[#4CAF50] rounded-xl h-fit shrink-0">
                 <ShieldCheck className="w-6 h-6 animate-pulse" />
               </div>
-              <div className="space-y-2.5 flex-1 py-1">
-                <div className="h-4 bg-[#1A2E1A]/10 dark:bg-slate-700 rounded w-1/2"></div>
-                <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded w-full"></div>
+              <div className="flex-1 py-0.5 text-left">
+                <h5 className="font-bold text-xs text-[#1B5E20] dark:text-[#4CAF50] mb-0.5">
+                  {t('alertCardTitle') || 'Expert Verified'}
+                </h5>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-normal">
+                  {t('alertCardDesc') || 'All schedules are certified by agriculture experts.'}
+                </p>
               </div>
             </div>
           </div>
@@ -458,7 +501,7 @@ export const Home: React.FC = () => {
       {/* Role Selection Modal */}
       {showRoleModal && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl max-w-4xl w-full border border-slate-100 dark:border-slate-800 overflow-hidden relative p-8 md:p-12 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl max-w-3xl w-full border border-slate-100 dark:border-slate-800 overflow-hidden relative p-8 md:p-12 animate-in fade-in zoom-in-95 duration-200">
             {/* Background Glows */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-[#4CAF50]/10 rounded-full blur-3xl -z-10"></div>
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#F59E0B]/5 rounded-full blur-3xl -z-10"></div>
@@ -483,7 +526,7 @@ export const Home: React.FC = () => {
             </div>
 
             {/* Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Farmer Card */}
               <Link 
                 to="/register?role=farmer"
@@ -524,28 +567,6 @@ export const Home: React.FC = () => {
                   </p>
                 </div>
                 <div className="mt-8 text-sm font-bold text-[#F59E0B] group-hover:translate-x-1.5 transition-transform flex items-center gap-1">
-                  {i18n.language === 'mr' ? 'नोंदणी करा' : i18n.language === 'hi' ? 'पंजीकरण करें' : 'Register Now'} <ArrowRight className="w-4 h-4" />
-                </div>
-              </Link>
-
-              {/* Admin Card */}
-              <Link 
-                to="/register?role=super_admin"
-                onClick={() => setShowRoleModal(false)}
-                className="group p-6 rounded-3xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900 hover:bg-white dark:hover:bg-slate-800 hover:border-[#1B5E20] hover:shadow-xl hover:shadow-[#1B5E20]/5 transition-all duration-300 flex flex-col justify-between text-left"
-              >
-                <div>
-                  <div className="w-14 h-14 bg-[#1B5E20]/10 text-[#1B5E20] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner">
-                    <ShieldCheck className="w-7 h-7" />
-                  </div>
-                  <h4 className="text-xl font-bold text-[#1A2E1A] dark:text-[#F7FAF4] group-hover:text-[#1B5E20] transition-colors">
-                    {i18n.language === 'mr' ? 'प्रशासक (Admin)' : i18n.language === 'hi' ? 'प्रशासक (Admin)' : 'Admin'}
-                  </h4>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm mt-3 leading-relaxed">
-                    {i18n.language === 'mr' ? 'शेतकरी आणि कृषी सेवा केंद्रांच्या नोंदी तपासा व मॅनेज करा.' : i18n.language === 'hi' ? 'किसानों और कृषि सेवा केंद्रों के रिकॉर्ड की जांच और प्रबंधन करें।' : 'Monitor and manage farmers, shop records, and platform analytics.'}
-                  </p>
-                </div>
-                <div className="mt-8 text-sm font-bold text-[#1B5E20] group-hover:translate-x-1.5 transition-transform flex items-center gap-1">
                   {i18n.language === 'mr' ? 'नोंदणी करा' : i18n.language === 'hi' ? 'पंजीकरण करें' : 'Register Now'} <ArrowRight className="w-4 h-4" />
                 </div>
               </Link>

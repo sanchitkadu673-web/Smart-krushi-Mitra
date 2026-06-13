@@ -5,6 +5,7 @@ import { Navbar } from '../components/navigation/Navbar';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Search, ChevronDown } from 'lucide-react';
+import { cropTranslations } from '../constants/cropTranslations';
 
 export const AddCrop: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -21,6 +22,7 @@ export const AddCrop: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
+  const [isVarietyOpen, setIsVarietyOpen] = useState(false);
 
   useEffect(() => {
     const fetchMasters = async () => {
@@ -40,6 +42,26 @@ export const AddCrop: React.FC = () => {
     };
     fetchMasters();
   }, []);
+
+  const getVarietySuggestions = () => {
+    if (!form.cropMasterId) return [];
+    const selectedCrop = masters.find(m => m.id === form.cropMasterId);
+    if (!selectedCrop) return [];
+
+    const trans = cropTranslations[selectedCrop.name]?.[i18n.language as 'mr' | 'hi'];
+    const rawVarieties = trans?.varieties || selectedCrop.varieties || '';
+
+    if (!rawVarieties) return [];
+    return rawVarieties
+      .split(/,\s*(?![^()]*\))/)
+      .map((v: string) => v.trim())
+      .filter(Boolean);
+  };
+
+  const suggestions = getVarietySuggestions();
+  const filteredSuggestions = suggestions.filter((v: string) =>
+    v.toLowerCase().includes(form.variety.toLowerCase())
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,10 +99,10 @@ export const AddCrop: React.FC = () => {
       <div className="max-w-xl mx-auto px-4 py-12">
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
           <h2 className="text-2xl font-extrabold text-gray-900 mb-2">
-            Register New Crop
+            {i18n.language === 'mr' ? 'नवीन पिकाची नोंदणी करा' : i18n.language === 'hi' ? 'नई फसल का पंजीकरण करें' : 'Register New Crop'}
           </h2>
           <p className="text-sm text-gray-500 mb-8">
-            Provide sowing details to start getting automated updates on stages, fertilizer applications, and irrigation recommendations.
+            {i18n.language === 'mr' ? 'अवस्था, खत आणि पाणी व्यवस्थापनाचे स्वयंचलित इशारे मिळवण्यासाठी पेरणीचा तपशील द्या.' : i18n.language === 'hi' ? 'चरणों, उर्वरक उपयोग और सिंचाई सिफारिशों पर स्वचालित अपडेट प्राप्त करने के लिए बुवाई का विवरण प्रदान करें।' : 'Provide sowing details to start getting automated updates on stages, fertilizer applications, and irrigation recommendations.'}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -92,7 +114,7 @@ export const AddCrop: React.FC = () => {
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Type to search crop..."
+                  placeholder={i18n.language === 'mr' ? 'पीक शोधण्यासाठी टाईप करा...' : i18n.language === 'hi' ? 'फसल खोजने के लिए टाइप करें...' : 'Type to search crop...'}
                   value={searchQuery}
                   onChange={e => {
                     setSearchQuery(e.target.value);
@@ -145,7 +167,7 @@ export const AddCrop: React.FC = () => {
                     ))
                   ) : (
                     <div className="px-4 py-3 text-sm text-gray-500">
-                      No matching crops found
+                      {i18n.language === 'mr' ? 'जुळणारे पीक आढळले नाही' : i18n.language === 'hi' ? 'कोई मेल खाती फसल नहीं मिली' : 'No matching crops found'}
                     </div>
                   )}
                 </div>
@@ -183,7 +205,7 @@ export const AddCrop: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  {t('area')} (Optional)
+                  {t('area')} ({i18n.language === 'mr' ? 'पर्यायी' : i18n.language === 'hi' ? 'वैकल्पिक' : 'Optional'})
                 </label>
                 <input
                   type="number"
@@ -194,18 +216,54 @@ export const AddCrop: React.FC = () => {
                   className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  {t('variety')} (Optional)
-                </label>
+            <div className="relative">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                {t('variety')} ({i18n.language === 'mr' ? 'पर्यायी' : i18n.language === 'hi' ? 'वैकल्पिक' : 'Optional'})
+              </label>
+              <div className="relative">
                 <input
                   type="text"
                   value={form.variety}
                   onChange={e => setForm({ ...form, variety: e.target.value })}
+                  onFocus={() => setIsVarietyOpen(true)}
+                  onBlur={() => {
+                    // Timeout to allow clicking suggestions list items
+                    setTimeout(() => setIsVarietyOpen(false), 200);
+                  }}
                   placeholder="e.g. Bt Cotton"
-                  className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none"
+                  className="block w-full pr-10 pl-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none font-medium"
                 />
+                {suggestions.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsVarietyOpen(!isVarietyOpen)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                  >
+                    <ChevronDown className="w-5 h-5" />
+                  </button>
+                )}
+                
+                {isVarietyOpen && filteredSuggestions.length > 0 && (
+                  <div className="absolute z-20 w-full mt-1 bg-white border border-gray-150 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                    {filteredSuggestions.map((v: string, idx: number) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onMouseDown={() => {
+                          setForm(f => ({ ...f, variety: v }));
+                          setIsVarietyOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 hover:bg-gray-50 transition-colors font-medium text-gray-800 ${
+                          form.variety === v ? 'bg-primary/5 text-primary border-l-4 border-primary' : ''
+                        }`}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+            </div>
             </div>
 
             <button
@@ -213,7 +271,9 @@ export const AddCrop: React.FC = () => {
               disabled={loading}
               className="w-full bg-primary hover:bg-primary-dark text-white font-bold py-3.5 rounded-xl transition-all shadow-sm"
             >
-              {loading ? 'Registering...' : 'Register Crop'}
+              {loading 
+                ? (i18n.language === 'mr' ? 'नोंदणी करत आहे...' : i18n.language === 'hi' ? 'पंजीकरण किया जा रहा है...' : 'Registering...') 
+                : (i18n.language === 'mr' ? 'पीक नोंदणी करा' : i18n.language === 'hi' ? 'फसल पंजीकृत करें' : 'Register Crop')}
             </button>
           </form>
         </div>

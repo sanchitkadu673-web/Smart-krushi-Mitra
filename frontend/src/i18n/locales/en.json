@@ -149,5 +149,7 @@
   "loading": "Loading...",
   "noFarmersFound": "No Farmers Found",
   "noShopsFound": "No Shops Found",
-  "notAvailable": "N/A"
+  "notAvailable": "N/A",
+  "alertCardTitle": "Expert Verified",
+  "alertCardDesc": "All crop schedules are certified by agriculture experts."
 }

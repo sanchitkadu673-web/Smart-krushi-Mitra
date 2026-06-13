@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { Globe, LogOut, User, Bell, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import axios from 'axios';
 
 const transliterateName = (name: string, lang: string) => {
   if (lang !== 'mr' && lang !== 'hi') return name;
@@ -32,6 +33,25 @@ export const Navbar: React.FC = () => {
   const { t, i18n } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!profile) return;
+    const fetchUnreadCount = async () => {
+      try {
+        const res = await axios.get('/api/notifications');
+        const unread = res.data.filter((n: any) => !n.is_read).length;
+        setUnreadCount(unread);
+      } catch (err) {
+        console.error('Failed to fetch unread notifications count:', err);
+      }
+    };
+    fetchUnreadCount();
+    // Poll every 30 seconds
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [profile]);
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const lang = e.target.value;
@@ -83,14 +103,24 @@ export const Navbar: React.FC = () => {
 
         {profile ? (
           <>
-            <Link to="/dashboard" className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors hidden md:inline">
+            <Link 
+              to={
+                profile.role === 'shop_owner' ? '/shop' :
+                profile.role === 'expert' ? '/expert' :
+                profile.role === 'admin' || profile.role === 'super_admin' ? '/admin' :
+                '/dashboard'
+              } 
+              className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors hidden md:inline"
+            >
               {t('dashboard')}
             </Link>
-            <Link to="/crops" className="text-sm font-semibold text-gray-700 hover:text-primary transition-colors hidden md:inline">
-              {t('myCrops')}
-            </Link>
-            <Link to="/notifications" className="relative p-1 text-gray-600 hover:text-primary transition-colors">
+            <Link to="/notifications" className="relative p-1.5 text-gray-600 hover:text-primary transition-colors flex items-center justify-center">
               <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white ring-2 ring-white select-none">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </Link>
             <Link to="/profile" className="flex items-center gap-1 text-sm font-semibold text-gray-700 hover:text-primary transition-colors">
               <User className="w-5 h-5" />
