@@ -355,4 +355,22 @@ export class AdminController {
       next(err);
     }
   }
+
+  // Update landing page settings
+  public static async updateLandingPage(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('landing_page_settings')
+        .update(req.body)
+        .eq('id', 'landing_page_default')
+        .select()
+        .single();
+      if (error) {
+        return res.status(400).json({ error: error.message });
+      }
+      return res.status(200).json(data);
+    } catch (err) {
+      next(err);
+    }
+  }
 }

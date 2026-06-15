@@ -319,7 +319,24 @@ const db: Record<string, any[]> = {
   diseases: [],
   pests: [],
   notifications: [],
-  weather_cache: []
+  weather_cache: [],
+  landing_page_settings: [
+    {
+      id: 'landing_page_default',
+      hero_title_en: 'Grow Smarter with Smart Krushi Mitra',
+      hero_title_mr: 'स्मार्ट कृषी मित्र सोबत अधिक हुशार बना',
+      hero_title_hi: 'स्मार्ट कृषि मित्र के साथ स्मार्ट बनें',
+      hero_description_en: 'Empowering Indian farmers with automated crop scheduling, fertilizer guidance, disease prediction, and weather warnings from sowing to harvesting.',
+      hero_description_mr: 'पेरणीपासून कापणीपर्यंत स्वयंचलित पीक वेळापत्रक, खत मार्गदर्शन, रोग अंदाज आणि हवामान इशाऱ्यांसह भारतीय शेतकऱ्यांना सक्षम करणे.',
+      hero_description_hi: 'बुआई से लेकर कटाई तक स्वचालित फसल समय निर्धारण, उर्वरक मार्गदर्शन, रोग की भविष्यवाणी और मौसम की चेतावनी के साथ भारतीय किसानों को सशक्त बनाना।',
+      cta_title_en: 'Ready to transform your farming?',
+      cta_title_mr: 'आपली शेती बदलण्यास तयार आहात का?',
+      cta_title_hi: 'क्या आप अपनी खेती को बदलने के लिए तैयार हैं?',
+      cta_description_en: 'Join thousands of farmers who are already increasing their yield and profits with Smart Krushi Mitra.',
+      cta_description_mr: 'अशा हजारो शेतकऱ्यांमध्ये सामील व्हा जे आधीच स्मार्ट कृषी मित्र सोबत त्यांचे उत्पन्न आणि नफा वाढवत आहेत.',
+      cta_description_hi: 'उन हजारों किसानों में शामिल हों जो पहले से ही स्मार्ट कृषि मित्र के साथ अपनी उपज और मुनाफा बढ़ा रहे हैं।'
+    }
+  ]
 };
 
 const mockAuthUsers: any[] = [

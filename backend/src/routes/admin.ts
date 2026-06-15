@@ -9,6 +9,7 @@ router.use(requireAuth);
 router.use(requireRole(['admin', 'super_admin']));
 
 router.get('/stats', AdminController.getStats);
+router.put('/landing-page', AdminController.updateLandingPage);
 router.get('/farmers', AdminController.listFarmers);
 router.get('/shops', AdminController.listShops);
 router.post('/broadcast', AdminController.broadcastNotification);

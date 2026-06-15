@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 import { Navbar } from '../components/navigation/Navbar';
 import { ShieldCheck, CloudSun, CalendarDays, Sprout, Milestone, HelpCircle, ArrowRight, Leaf, Users, Tractor, BarChart3, Star, MapPin, Building2, X, TrendingUp, Award, Zap, Globe, ChevronDown, Phone, Mail, MessageSquare, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -161,6 +162,28 @@ export const Home: React.FC = () => {
   const [statsVisible, setStatsVisible] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [settings, setSettings] = useState<any>(null);
+
+  // Fetch dynamic landing page settings
+  useEffect(() => {
+    axios.get('/api/landing-page')
+      .then(res => {
+        if (res.data) {
+          setSettings(res.data);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load landing page settings:', err);
+      });
+  }, []);
+
+  const getDynamicText = (keyPrefix: string) => {
+    if (!settings) return null;
+    // Map code like 'mr-IN' or 'mr' to 'mr'
+    const currentLang = i18n.language.split('-')[0];
+    const key = `${keyPrefix}_${currentLang}`;
+    return settings[key] || null;
+  };
 
   // Parallax effect
   useEffect(() => {
@@ -238,12 +261,16 @@ export const Home: React.FC = () => {
           </div>
           
           <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-[#1A2E1A] dark:text-white tracking-tight leading-[1.1] mb-8 drop-shadow-sm">
-            {t('heroGrowPart1')}<span className="text-[#4CAF50]">{t('heroGrowPart2')}</span> <br className="hidden sm:block" />
-            {t('heroEarnPart1')}<span className="text-[#F59E0B]">{t('heroEarnPart2')}</span>
+            {getDynamicText('hero_title') || (
+              <>
+                {t('heroGrowPart1')}<span className="text-[#4CAF50]">{t('heroGrowPart2')}</span> <br className="hidden sm:block" />
+                {t('heroEarnPart1')}<span className="text-[#F59E0B]">{t('heroEarnPart2')}</span>
+              </>
+            )}
           </h1>
           
           <p className="text-lg md:text-xl text-[#1A2E1A]/80 dark:text-slate-350 max-w-2xl leading-relaxed mb-10 font-bold">
-            {t('heroDescription') || 'Smart Krushi Mitra is your complete digital farming assistant. Manage crops, get AI-powered schedules, connect with experts, and find nearby agriculture shops.'}
+            {getDynamicText('hero_description') || t('heroDescription') || 'Smart Krushi Mitra is your complete digital farming assistant. Manage crops, get AI-powered schedules, connect with experts, and find nearby agriculture shops.'}
           </p>
  
           <div className="flex flex-col sm:flex-row gap-4 w-full justify-center px-4">
@@ -1050,14 +1077,20 @@ export const Home: React.FC = () => {
             </span>
 
             <h2 className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight">
-              {lang === 'mr' ? 'तुमची शेती' : lang === 'hi' ? 'आपकी खेती को' : 'Transform Your'}{' '}
-              <span className="text-gradient-green">
-                {lang === 'mr' ? 'बदला' : lang === 'hi' ? 'बदलें' : 'Farming'}
-              </span>
-              <br />
-              {lang === 'mr' ? 'आजपासूनच!' : lang === 'hi' ? 'आज से ही!' : 'Starting Today!'}
+              {getDynamicText('cta_title') || (
+                <>
+                  {lang === 'mr' ? 'तुमची शेती' : lang === 'hi' ? 'आपकी खेती को' : 'Transform Your'}{' '}
+                  <span className="text-gradient-green">
+                    {lang === 'mr' ? 'बदला' : lang === 'hi' ? 'बदलें' : 'Farming'}
+                  </span>
+                  <br />
+                  {lang === 'mr' ? 'आजपासूनच!' : lang === 'hi' ? 'आज से ही!' : 'Starting Today!'}
+                </>
+              )}
             </h2>
-            <p className="text-white/70 text-xl mb-10 max-w-2xl mx-auto leading-relaxed">{t('ctaDesc')}</p>
+            <p className="text-white/70 text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
+              {getDynamicText('cta_description') || t('ctaDesc') || 'Join thousands of farmers who are already increasing their yield and profits with Smart Krushi Mitra.'}
+            </p>
 
             {/* Dual CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

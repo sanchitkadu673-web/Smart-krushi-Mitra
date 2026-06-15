@@ -24,7 +24,8 @@ import {
   Download,
   Bug,
   ShieldAlert,
-  Search
+  Search,
+  Globe
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -34,8 +35,8 @@ export const AdminDashboard: React.FC = () => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Layout Tab State: overview, farmers, shops, broadcast, crops, stages, diseases, pests
-  const [activeTab, setActiveTab] = useState<'overview' | 'farmers' | 'shops' | 'broadcast' | 'crops' | 'stages' | 'diseases' | 'pests'>('overview');
+  // Layout Tab State: overview, farmers, shops, broadcast, crops, stages, diseases, pests, landing-page
+  const [activeTab, setActiveTab] = useState<'overview' | 'farmers' | 'shops' | 'broadcast' | 'crops' | 'stages' | 'diseases' | 'pests' | 'landing-page'>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem('adminSidebarCollapsed') === 'true';
@@ -107,6 +108,63 @@ export const AdminDashboard: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState<'weather' | 'fertilizer' | 'spray' | 'pest' | 'disease'>('weather');
   const [broadcasting, setBroadcasting] = useState(false);
+
+  // Landing Page Editor State
+  const [landingPageForm, setLandingPageForm] = useState({
+    hero_title_en: '',
+    hero_title_mr: '',
+    hero_title_hi: '',
+    hero_description_en: '',
+    hero_description_mr: '',
+    hero_description_hi: '',
+    cta_title_en: '',
+    cta_title_mr: '',
+    cta_title_hi: '',
+    cta_description_en: '',
+    cta_description_mr: '',
+    cta_description_hi: ''
+  });
+  const [savingLandingPage, setSavingLandingPage] = useState(false);
+
+  const fetchLandingPageSettings = async () => {
+    setListLoading(true);
+    try {
+      const res = await axios.get('/api/landing-page');
+      if (res.data) {
+        setLandingPageForm({
+          hero_title_en: res.data.hero_title_en || '',
+          hero_title_mr: res.data.hero_title_mr || '',
+          hero_title_hi: res.data.hero_title_hi || '',
+          hero_description_en: res.data.hero_description_en || '',
+          hero_description_mr: res.data.hero_description_mr || '',
+          hero_description_hi: res.data.hero_description_hi || '',
+          cta_title_en: res.data.cta_title_en || '',
+          cta_title_mr: res.data.cta_title_mr || '',
+          cta_title_hi: res.data.cta_title_hi || '',
+          cta_description_en: res.data.cta_description_en || '',
+          cta_description_mr: res.data.cta_description_mr || '',
+          cta_description_hi: res.data.cta_description_hi || ''
+        });
+      }
+    } catch (err) {
+      toast.error('Failed to load landing page settings');
+    } finally {
+      setListLoading(false);
+    }
+  };
+
+  const handleLandingPageSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingLandingPage(true);
+    try {
+      await axios.put('/api/admin/landing-page', landingPageForm);
+      toast.success('Landing page settings updated successfully!');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to save settings');
+    } finally {
+      setSavingLandingPage(false);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -508,6 +566,11 @@ export const AdminDashboard: React.FC = () => {
       icon: <Bug className="w-5 h-5" />
     },
     { id: 'broadcast' as const, label: t('broadcastGlobalAlert') || 'Broadcast Alert', icon: <Bell className="w-5 h-5" /> },
+    { 
+      id: 'landing-page' as const, 
+      label: 'लँडिंग पेज (Landing Page)', 
+      icon: <Globe className="w-5 h-5" />
+    },
   ];
 
   const renderSidebarContent = (isCollapsed: boolean) => {
@@ -557,6 +620,8 @@ export const AdminDashboard: React.FC = () => {
                     } else if (item.id === 'pests') {
                       fetchCrops();
                       fetchPests();
+                    } else if (item.id === 'landing-page') {
+                      fetchLandingPageSettings();
                     }
                   }}
                   className={`p-3 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center relative group ${
@@ -642,6 +707,8 @@ export const AdminDashboard: React.FC = () => {
                   } else if (item.id === 'pests') {
                     fetchCrops();
                     fetchPests();
+                  } else if (item.id === 'landing-page') {
+                    fetchLandingPageSettings();
                   }
                   setMobileMenuOpen(false);
                 }}
@@ -1770,6 +1837,221 @@ export const AdminDashboard: React.FC = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {/* ACTIVE TAB: LANDING PAGE EDITOR */}
+          {activeTab === 'landing-page' && (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8 shadow-sm max-w-4xl mx-auto animate-in fade-in duration-300">
+              <div className="flex items-center gap-3 mb-8 border-b border-slate-100 dark:border-slate-800 pb-4">
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 text-[#1B5E20] dark:text-[#4CAF50] rounded-2xl">
+                  <Globe className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">
+                    लँडिंग पेज संपादन (Edit Landing Page)
+                  </h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">
+                    Configure the main titles and descriptions displayed on the landing page for all languages.
+                  </p>
+                </div>
+              </div>
+
+              {listLoading ? (
+                <div className="flex flex-col items-center justify-center py-20">
+                  <Loader2 className="w-10 h-10 text-[#1B5E20] dark:text-[#4CAF50] animate-spin mb-4" />
+                  <p className="text-slate-400 text-sm font-medium">{t('loading')}</p>
+                </div>
+              ) : (
+                <form onSubmit={handleLandingPageSubmit} className="space-y-8">
+                  {/* Hero Section settings */}
+                  <div className="space-y-6">
+                    <h4 className="text-sm font-extrabold text-[#1B5E20] dark:text-[#4CAF50] uppercase tracking-wider border-l-4 border-[#1B5E20] dark:border-[#4CAF50] pl-3">
+                      Hero Section (मुख्य विभाग)
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* English Hero */}
+                      <div className="space-y-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-805">
+                        <span className="text-xs font-black text-slate-450 dark:text-slate-500 uppercase">English</span>
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Hero Title</label>
+                          <input
+                            type="text"
+                            required
+                            value={landingPageForm.hero_title_en}
+                            onChange={e => setLandingPageForm(prev => ({ ...prev, hero_title_en: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">Hero Description</label>
+                          <textarea
+                            required
+                            rows={4}
+                            value={landingPageForm.hero_description_en}
+                            onChange={e => setLandingPageForm(prev => ({ ...prev, hero_description_en: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none font-semibold"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Marathi Hero */}
+                      <div className="space-y-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-805">
+                        <span className="text-xs font-black text-slate-450 dark:text-slate-500 uppercase">मराठी (Marathi)</span>
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">मुख्य शीर्षक (Title)</label>
+                          <input
+                            type="text"
+                            required
+                            value={landingPageForm.hero_title_mr}
+                            onChange={e => setLandingPageForm(prev => ({ ...prev, hero_title_mr: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">तपशील (Description)</label>
+                          <textarea
+                            required
+                            rows={4}
+                            value={landingPageForm.hero_description_mr}
+                            onChange={e => setLandingPageForm(prev => ({ ...prev, hero_description_mr: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none font-semibold"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Hindi Hero */}
+                      <div className="space-y-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-805">
+                        <span className="text-xs font-black text-slate-450 dark:text-slate-500 uppercase">हिन्दी (Hindi)</span>
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">मुख्य शीर्षक (Title)</label>
+                          <input
+                            type="text"
+                            required
+                            value={landingPageForm.hero_title_hi}
+                            onChange={e => setLandingPageForm(prev => ({ ...prev, hero_title_hi: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">विवरण (Description)</label>
+                          <textarea
+                            required
+                            rows={4}
+                            value={landingPageForm.hero_description_hi}
+                            onChange={e => setLandingPageForm(prev => ({ ...prev, hero_description_hi: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none font-semibold"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CTA Section settings */}
+                  <div className="space-y-6">
+                    <h4 className="text-sm font-extrabold text-[#1B5E20] dark:text-[#4CAF50] uppercase tracking-wider border-l-4 border-[#1B5E20] dark:border-[#4CAF50] pl-3">
+                      CTA Section (कृती विभाग)
+                    </h4>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* English CTA */}
+                      <div className="space-y-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-805">
+                        <span className="text-xs font-black text-slate-450 dark:text-slate-500 uppercase">English</span>
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">CTA Title</label>
+                          <input
+                            type="text"
+                            required
+                            value={landingPageForm.cta_title_en}
+                            onChange={e => setLandingPageForm(prev => ({ ...prev, cta_title_en: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">CTA Description</label>
+                          <textarea
+                            required
+                            rows={4}
+                            value={landingPageForm.cta_description_en}
+                            onChange={e => setLandingPageForm(prev => ({ ...prev, cta_description_en: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none font-semibold"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Marathi CTA */}
+                      <div className="space-y-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-805">
+                        <span className="text-xs font-black text-slate-450 dark:text-slate-500 uppercase">मराठी (Marathi)</span>
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">शीर्षक (Title)</label>
+                          <input
+                            type="text"
+                            required
+                            value={landingPageForm.cta_title_mr}
+                            onChange={e => setLandingPageForm(prev => ({ ...prev, cta_title_mr: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">तपशील (Description)</label>
+                          <textarea
+                            required
+                            rows={4}
+                            value={landingPageForm.cta_description_mr}
+                            onChange={e => setLandingPageForm(prev => ({ ...prev, cta_description_mr: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none font-semibold"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Hindi CTA */}
+                      <div className="space-y-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-100 dark:border-slate-805">
+                        <span className="text-xs font-black text-slate-450 dark:text-slate-500 uppercase">हिन्दी (Hindi)</span>
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">शीर्षक (Title)</label>
+                          <input
+                            type="text"
+                            required
+                            value={landingPageForm.cta_title_hi}
+                            onChange={e => setLandingPageForm(prev => ({ ...prev, cta_title_hi: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">विवरण (Description)</label>
+                          <textarea
+                            required
+                            rows={4}
+                            value={landingPageForm.cta_description_hi}
+                            onChange={e => setLandingPageForm(prev => ({ ...prev, cta_description_hi: e.target.value }))}
+                            className="w-full px-3 py-2 text-xs border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none font-semibold"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="submit"
+                      disabled={savingLandingPage}
+                      className="bg-[#1B5E20] hover:bg-[#124115] text-white font-extrabold text-sm px-8 py-3.5 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-[#1B5E20]/20 transition-all disabled:opacity-50 cursor-pointer w-full sm:w-auto"
+                    >
+                      {savingLandingPage ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>जतन होत आहे (Saving...)</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>बदल जतन करा (Save Changes)</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           )}
 

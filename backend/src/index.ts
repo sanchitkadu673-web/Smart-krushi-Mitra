@@ -13,6 +13,7 @@ import adminRoutes from './routes/admin';
 import shopRoutes from './routes/shop';
 import { errorHandler } from './middlewares/errorHandler';
 import { AdvisoryScheduler } from './services/AdvisoryScheduler';
+import { supabaseAdmin } from './config/supabase';
 
 dotenv.config();
 
@@ -48,6 +49,17 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
+app.get('/api/landing-page', async (req, res, next) => {
+  try {
+    const { data, error } = await supabaseAdmin.from('landing_page_settings').select('*');
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    return res.status(200).json(data && data.length > 0 ? data[0] : {});
+  } catch (err) {
+    next(err);
+  }
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/crops', cropRoutes);
