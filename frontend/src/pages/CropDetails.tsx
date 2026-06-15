@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Navbar } from '../components/navigation/Navbar';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Activity, Calendar, Droplets, ShieldAlert, Sparkles, Sprout, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Activity, Calendar, Droplets, ShieldAlert, Sparkles, Sprout, ChevronDown, Info, Edit2 } from 'lucide-react';
 
 import { cropTranslations } from '../constants/cropTranslations';
 
@@ -280,7 +280,7 @@ export const CropDetails: React.FC = () => {
         {/* Header Header */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex gap-4 items-center">
-            <span className="text-4xl">🌱</span>
+            <Sprout className="w-10 h-10 text-primary shrink-0" />
             <div>
               <h1 className="text-3xl font-extrabold text-gray-900">{crop.crop_master.name}</h1>
               <div className="text-sm text-gray-500 mt-1 flex flex-wrap gap-2 items-center">
@@ -294,7 +294,7 @@ export const CropDetails: React.FC = () => {
                 onClick={handleEditClick}
                 className="text-xs bg-primary/10 text-primary font-bold px-3 py-1.5 rounded-lg mt-2 hover:bg-primary/20 transition-all flex items-center gap-1.5"
               >
-                ✏️ {i18n.language === 'mr' ? 'तपशील बदला' : i18n.language === 'hi' ? 'विवरण बदलें' : 'Edit Details'}
+                <Edit2 className="w-3.5 h-3.5" /> {i18n.language === 'mr' ? 'तपशील बदला' : i18n.language === 'hi' ? 'विवरण बदलें' : 'Edit Details'}
               </button>
             </div>
           </div>
@@ -320,7 +320,7 @@ export const CropDetails: React.FC = () => {
         {/* Crop Information Section */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm mb-8">
           <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            ℹ️ {i18n.language === 'mr' ? 'पिकाची माहिती आणि मशागत मार्गदर्शिका' : i18n.language === 'hi' ? 'फसल की जानकारी और जुताई गाइड' : 'Crop Information & Cultivation Guide'}
+            <Info className="w-5 h-5 text-primary" /> {i18n.language === 'mr' ? 'पिकाची माहिती आणि मशागत मार्गदर्शिका' : i18n.language === 'hi' ? 'फसल की जानकारी और जुताई गाइड' : 'Crop Information & Cultivation Guide'}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
             <div className="space-y-4">

@@ -421,9 +421,15 @@ export const Dashboard: React.FC = () => {
                             : 'bg-green-50/20 border-green-100'
                         }`}
                       >
-                        <span className="text-xl">
-                          {notif.type === 'fertilizer' ? '🧪' : notif.type === 'spray' ? '💨' : '💧'}
-                        </span>
+                        <div className="shrink-0">
+                          {notif.type === 'fertilizer' ? (
+                            <Sprout className="w-5 h-5 text-green-600" />
+                          ) : notif.type === 'spray' ? (
+                            <Wind className="w-5 h-5 text-amber-500" />
+                          ) : (
+                            <Droplets className="w-5 h-5 text-blue-500" />
+                          )}
+                        </div>
                         <div>
                           <h4 className="font-bold text-gray-900">{translated.title}</h4>
                           <p className="text-sm text-gray-600 mt-1">{translated.message}</p>
@@ -465,7 +471,7 @@ export const Dashboard: React.FC = () => {
                         {weather.condition}
                       </p>
                     </div>
-                    <span className="text-5xl drop-shadow-sm">{getWeatherEmoji(weather.condition)}</span>
+                    <WeatherIcon condition={weather.condition} className="w-12 h-12 text-amber-500 shrink-0" />
                   </div>
 
                   {/* Stats grid */}
@@ -489,7 +495,8 @@ export const Dashboard: React.FC = () => {
                   {/* Rain alert */}
                   {weather.rainAlert && (
                     <div className="mb-4 p-3 bg-red-50 text-red-700 text-xs font-bold rounded-lg border border-red-100 flex items-center gap-2">
-                      ⚠️ {t('rainAlertWarning')}
+                      <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                      {t('rainAlertWarning')}
                     </div>
                   )}
 
@@ -508,13 +515,13 @@ export const Dashboard: React.FC = () => {
                             }`}
                           >
                             <span className="font-semibold text-gray-700 w-12">{formatDay(day.date, i18n.language)}</span>
-                            <span className="text-lg">{getWeatherEmoji(day.condition)}</span>
+                            <WeatherIcon condition={day.condition} className="w-5 h-5 text-slate-400" />
                             <div className="text-right tabular-nums">
                               <span className="font-bold text-gray-900">{day.tempMax}°</span>
                               <span className="text-gray-400 ml-1">{day.tempMin}°</span>
                             </div>
                             {day.rainAlert && (
-                              <span className="text-blue-500 text-xs font-bold ml-1">🌧️</span>
+                              <CloudRain className="w-4 h-4 text-blue-500 inline ml-1 shrink-0" />
                             )}
                           </div>
                         ))}

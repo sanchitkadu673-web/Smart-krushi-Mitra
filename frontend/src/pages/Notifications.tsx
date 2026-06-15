@@ -11,7 +11,13 @@ import {
   ArrowLeft,
   Calendar,
   Sprout,
-  Trash2
+  Trash2,
+  Wind,
+  Droplets,
+  CloudSun,
+  Bug,
+  Activity,
+  Sparkles
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import i18n from 'i18next';
@@ -142,22 +148,22 @@ export const Notifications: React.FC = () => {
   });
 
   const getEmojiIcon = (type: string, title: string) => {
-    if (title.startsWith('[')) return <Building2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />;
+    if (title.startsWith('[')) return <Building2 className="w-5 h-5 text-teal-650 dark:text-teal-400" />;
     switch (type) {
       case 'fertilizer':
-        return <span className="text-xl">🧪</span>;
+        return <Sparkles className="w-5 h-5 text-green-600 dark:text-green-400" />;
       case 'spray':
-        return <span className="text-xl">💨</span>;
+        return <Wind className="w-5 h-5 text-amber-500 dark:text-amber-400" />;
       case 'irrigation':
-        return <span className="text-xl">💧</span>;
+        return <Droplets className="w-5 h-5 text-blue-500 dark:text-blue-400" />;
       case 'weather':
-        return <span className="text-xl">☀️</span>;
+        return <CloudSun className="w-5 h-5 text-yellow-500 dark:text-yellow-400" />;
       case 'pest':
-        return <span className="text-xl">🐛</span>;
+        return <Bug className="w-5 h-5 text-orange-500 dark:text-orange-400" />;
       case 'disease':
-        return <span className="text-xl">🦠</span>;
+        return <Activity className="w-5 h-5 text-red-500 dark:text-red-400" />;
       default:
-        return <span className="text-xl">🔔</span>;
+        return <Bell className="w-5 h-5 text-slate-500 dark:text-slate-400" />;
     }
   };
 

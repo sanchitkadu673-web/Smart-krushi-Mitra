@@ -12,6 +12,7 @@ import weatherRoutes from './routes/weather';
 import adminRoutes from './routes/admin';
 import shopRoutes from './routes/shop';
 import { errorHandler } from './middlewares/errorHandler';
+import { AdvisoryScheduler } from './services/AdvisoryScheduler';
 
 dotenv.config();
 
@@ -63,6 +64,7 @@ app.use(errorHandler);
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`Smart Krushi Mitra server running on port ${PORT}`);
+    AdvisoryScheduler.start();
   });
 }
 

@@ -536,6 +536,10 @@ const mockSupabase = {
     },
     admin: {
       createUser: async (payload: any) => {
+        const existing = mockAuthUsers.find(u => u.phone === payload.phone);
+        if (existing) {
+          return { data: { user: existing }, error: null };
+        }
         const user = {
           id: Math.random().toString(36).substring(7),
           phone: payload.phone,

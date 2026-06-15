@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Globe, LogOut, User, Bell, Sun, Moon } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
+import { Globe, LogOut, User, Bell, Sprout } from 'lucide-react';
 import axios from 'axios';
 
 const transliterateName = (name: string, lang: string) => {
@@ -31,7 +30,6 @@ const transliterateName = (name: string, lang: string) => {
 export const Navbar: React.FC = () => {
   const { profile, logout } = useAuth();
   const { t, i18n } = useTranslation();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const [unreadCount, setUnreadCount] = useState(0);
@@ -67,7 +65,7 @@ export const Navbar: React.FC = () => {
   return (
     <nav className="glass-panel sticky top-0 z-50 bg-white/90 shadow-sm px-4 py-3 md:px-8 flex items-center justify-between">
       <Link to="/" className="flex items-center gap-1 md:gap-2">
-        <span className="text-xl md:text-2xl">🌱</span>
+        <Sprout className="w-6 h-6 md:w-7 md:h-7 text-primary shrink-0" />
         <span className="font-extrabold text-lg md:text-xl text-primary tracking-tight font-sans whitespace-nowrap hidden sm:block">
           {t('appName')}
         </span>
@@ -88,18 +86,7 @@ export const Navbar: React.FC = () => {
           </select>
         </div>
 
-        {/* Theme Toggle */}
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-lg bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 text-gray-700 dark:hover:bg-slate-700 transition-all focus:outline-none flex items-center justify-center cursor-pointer"
-          aria-label="Toggle Theme"
-        >
-          {theme === 'dark' ? (
-            <Sun className="w-4 h-4 text-amber-500 animate-pulse" />
-          ) : (
-            <Moon className="w-4 h-4 text-indigo-600" />
-          )}
-        </button>
+
 
         {profile ? (
           <>

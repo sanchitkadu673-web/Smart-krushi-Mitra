@@ -170,4 +170,34 @@ Only return valid JSON without markdown formatting.
       }
     ];
   }
+
+  /**
+   * Generate a localized weather advisory in Marathi for a district.
+   */
+  public static async generateWeatherAdvisory(district: string, forecastSummary: string): Promise<string> {
+    try {
+      if (!apiKey || apiKey === 'dummy_key') {
+        console.warn('GEMINI_API_KEY is not set. Returning mock weather advisory.');
+        return `पुढील ३ दिवसात ${district} जिल्ह्यात पावसाची शक्यता आहे. फवारणी पुढे ढकला आणि पिकांची योग्य काळजी घ्या.`;
+      }
+
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+
+      const prompt = `
+You are an expert agronomist in Maharashtra, India.
+For the district "${district}", the weather forecast for the next 3 days shows: "${forecastSummary}".
+Generate a short, urgent, and highly practical farming advice/alert in Marathi language.
+Keep it under 3-4 sentences. Mention what action farmers should take regarding their crops (e.g., postpone spraying, cover harvested crops, manage irrigation, protect from wind, etc.).
+Do not include any greeting or conversational filler, just return the Marathi text advisory.
+`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return response.text().trim();
+    } catch (error: any) {
+      console.error('Error generating weather advisory with Gemini:', error?.message || error);
+      return `पुढील ३ दिवसात ${district} जिल्ह्यात पावसाची शक्यता आहे. फवारणी पुढे ढकला आणि पिकांची योग्य काळजी घ्या.`;
+    }
+  }
 }
+

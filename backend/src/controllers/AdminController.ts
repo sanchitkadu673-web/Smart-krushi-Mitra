@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../middlewares/auth';
 import { supabaseAdmin } from '../config/supabase';
+import { AdvisoryScheduler } from '../services/AdvisoryScheduler';
 
 export class AdminController {
   public static async getStats(req: AuthenticatedRequest, res: Response, next: NextFunction) {
@@ -130,8 +131,7 @@ export class AdminController {
 
       const { data: profiles, error: profilesError } = await supabaseAdmin
         .from('profiles')
-        .select('*')
-        .eq('role', 'shop_owner');
+        .select('*');
       if (profilesError) return res.status(400).json({ error: profilesError.message });
 
       const joined = shops.map((shop: any) => {
@@ -340,5 +340,19 @@ export class AdminController {
       if (error) return res.status(400).json({ error: error.message });
       return res.status(200).json({ message: 'Pest deleted successfully' });
     } catch (err) { next(err); }
+  }
+
+  // Trigger weather advisory scan manually
+  public static async triggerWeatherAdvisories(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const result = await AdvisoryScheduler.checkAndSendAdvisories();
+      return res.status(200).json({
+        message: 'Weather advisories scan triggered successfully',
+        checkedDistricts: result.checked,
+        notificationsSent: result.sent
+      });
+    } catch (err) {
+      next(err);
+    }
   }
 }

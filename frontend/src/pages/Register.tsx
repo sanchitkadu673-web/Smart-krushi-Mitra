@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Navbar } from '../components/navigation/Navbar';
 import toast from 'react-hot-toast';
-import { Sprout, Store } from 'lucide-react';
+import { Sprout, Store, Leaf, ChevronLeft, User, Smartphone, MapPin, Building, Globe, LockKeyhole } from 'lucide-react';
 
 export const Register: React.FC = () => {
   const { register } = useAuth();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const lang = i18n.language;
 
   const [form, setForm] = useState({
     fullName: '',
@@ -72,266 +72,357 @@ export const Register: React.FC = () => {
   };
 
   const isShopOwner = form.role === 'shop_owner';
+  const accent = isShopOwner ? '#3B82F6' : '#10B981';
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="max-w-lg mx-auto my-12 p-8 bg-white rounded-2xl shadow-md border border-gray-100">
-        <h2 className="text-2xl font-extrabold text-gray-900 mb-2 text-center">
-          {t('register')} Account
-        </h2>
-        <p className="text-center text-gray-500 text-sm mb-6">
-          तुम्ही कोण आहात ते आधी निवडा
-        </p>
+    <div className="min-h-screen flex items-center justify-center bg-[#F7FAF4] dark:bg-slate-950 relative overflow-hidden font-sans py-12">
+      {/* Subtle background orbs */}
+      <div className="absolute top-0 right-0 w-72 h-72 rounded-full blur-[90px] -z-0 pointer-events-none" style={{ background: `${accent}08` }}></div>
+      <div className="absolute bottom-0 left-0 w-60 h-60 rounded-full blur-[70px] -z-0 pointer-events-none" style={{ background: `${accent}06` }}></div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-
-          {/* ── ROLE SELECTION – FIRST ── */}
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">
-              मी आहे... / I am a...
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              {/* Farmer card */}
-              <button
-                type="button"
-                onClick={() => setForm(prev => ({ ...prev, role: 'farmer', email: '' }))}
-                className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all cursor-pointer font-bold text-sm
-                  ${!isShopOwner
-                    ? 'border-emerald-500 bg-emerald-50 text-emerald-800 shadow-md shadow-emerald-100'
-                    : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-emerald-300 hover:bg-emerald-50/50'
-                  }`}
-              >
-                <span className={`p-2.5 rounded-xl ${!isShopOwner ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-400'}`}>
-                  <Sprout className="w-6 h-6" />
-                </span>
-                <span>शेतकरी</span>
-                <span className="text-xs font-normal opacity-75">Farmer</span>
-              </button>
-
-              {/* Shop Owner card */}
-              <button
-                type="button"
-                onClick={() => setForm(prev => ({ ...prev, role: 'shop_owner' }))}
-                className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all cursor-pointer font-bold text-sm
-                  ${isShopOwner
-                    ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-md shadow-blue-100'
-                    : 'border-gray-200 bg-gray-50 text-gray-500 hover:border-blue-300 hover:bg-blue-50/50'
-                  }`}
-              >
-                <span className={`p-2.5 rounded-xl ${isShopOwner ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>
-                  <Store className="w-6 h-6" />
-                </span>
-                <span>दुकानदार</span>
-                <span className="text-xs font-normal opacity-75">Shop Owner</span>
-              </button>
+      <div className="w-full max-w-lg px-6 relative z-10">
+        
+        {/* Top brand header */}
+        <div className="flex justify-between items-center mb-6">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-9 h-9 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-center shadow-sm">
+              <Leaf className="w-5 h-5" style={{ color: accent }} />
             </div>
-            {/* Hidden select to keep form value in sync */}
-            <input type="hidden" name="role" value={form.role} />
-          </div>
-
-          {/* ── DIVIDER ── */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-100" /></div>
-            <div className="relative flex justify-center">
-              <span className="px-3 bg-white text-xs text-gray-400 font-semibold uppercase tracking-widest">
-                {isShopOwner ? 'दुकानदार माहिती' : 'शेतकरी माहिती'}
-              </span>
-            </div>
-          </div>
-
-          {/* ── FULL NAME ── */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              {t('fullName')}
-            </label>
-            <input
-              type="text"
-              name="fullName"
-              required
-              value={form.fullName}
-              onChange={handleChange}
-              placeholder="Sanchit Patil"
-              className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none"
-            />
-          </div>
-
-          {/* ── MOBILE ── */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              {t('mobileNumber')}
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-gray-400 font-semibold text-sm">
-                +91
-              </span>
-              <input
-                type="tel"
-                name="mobile"
-                required
-                maxLength={10}
-                value={form.mobile}
-                onChange={handleChange}
-                placeholder="9876543210"
-                className="block w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* ── EMAIL (only for Shop Owner) ── */}
-          {isShopOwner && (
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Email Address <span className="text-red-500">*</span>
-                <span className="text-xs font-normal text-gray-400 ml-1">(दुकानदारांसाठी आवश्यक)</span>
-              </label>
-              <input
-                type="email"
-                name="email"
-                required
-                value={form.email}
-                onChange={handleChange}
-                placeholder="shop@example.com"
-                className="block w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 focus:outline-none bg-blue-50/30"
-              />
-            </div>
-          )}
-
-          {/* ── STATE & DISTRICT ── */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                {t('state')}
-              </label>
-              <input
-                type="text"
-                name="state"
-                required
-                value={form.state}
-                onChange={handleChange}
-                className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                {t('district')}
-              </label>
-              <input
-                type="text"
-                name="district"
-                required
-                value={form.district}
-                onChange={handleChange}
-                placeholder="Pune"
-                className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* ── TALUKA & VILLAGE ── */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                {t('taluka')}
-              </label>
-              <input
-                type="text"
-                name="taluka"
-                required
-                value={form.taluka}
-                onChange={handleChange}
-                placeholder="Haveli"
-                className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                {t('village')}
-              </label>
-              <input
-                type="text"
-                name="village"
-                required
-                value={form.village}
-                onChange={handleChange}
-                placeholder="Manjri"
-                className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-primary focus:border-primary focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* ── SHOP OWNER EXTRA FIELDS ── */}
-          {isShopOwner && (
-            <div className="space-y-4 bg-blue-50 p-5 rounded-2xl border border-blue-100">
-              <h3 className="font-bold text-blue-800 flex items-center gap-2 text-sm">
-                <Store className="w-4 h-4" />
-                Shop Details (दुकानाची माहिती)
-              </h3>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Shop Name (दुकानाचे नाव) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="shopName"
-                  required
-                  value={form.shopName}
-                  onChange={handleChange}
-                  placeholder="Krushi Seva Kendra"
-                  className="block w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 focus:outline-none bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  GST Number / License No. <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="gstNumber"
-                  required
-                  value={form.gstNumber}
-                  onChange={handleChange}
-                  placeholder="27AADCB2230M1Z2"
-                  className="block w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 focus:outline-none bg-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  Password (पासवर्ड) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  required
-                  minLength={6}
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="Minimum 6 characters"
-                  className="block w-full px-4 py-3 border border-blue-200 rounded-xl focus:ring-blue-500 focus:border-blue-500 focus:outline-none bg-white"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ── SUBMIT ── */}
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full font-bold py-3.5 rounded-xl transition-all shadow-sm text-white
-              ${isShopOwner
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'bg-emerald-600 hover:bg-emerald-700'
-              }
-              disabled:opacity-60 disabled:cursor-not-allowed`}
-          >
-            {loading ? 'नोंदणी होत आहे...' : (isShopOwner ? 'दुकानदार म्हणून नोंदणी करा' : 'शेतकरी म्हणून नोंदणी करा')}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center text-sm">
-          <Link to="/login" className="text-primary font-bold hover:underline">
-            Already have an account? Login here.
+            <span className="text-[#1A2E1A] dark:text-white font-black text-lg">{t('appName')}</span>
           </Link>
+          <Link to="/" className="inline-flex items-center gap-1.5 text-slate-400 hover:text-slate-650 dark:hover:text-slate-300 text-sm font-semibold transition-colors group">
+            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+            {lang === 'mr' ? 'मुख्यपृष्ठ' : lang === 'hi' ? 'होम' : 'Home'}
+          </Link>
+        </div>
+
+        {/* Card */}
+        <div className="bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-2xl shadow-slate-200/50 dark:shadow-black/30 p-8 md:p-10">
+          
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-black text-[#1A2E1A] dark:text-white leading-tight">
+              {t('register')} Account
+            </h2>
+            <p className="text-slate-400 text-sm font-medium mt-1.5">
+              {lang === 'mr' ? 'तुमची भूमिका निवडून नोंदणी करा' : 'Select your role and register'}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* ── ROLE SELECTION ── */}
+            <div>
+              <label className="block text-xs font-black uppercase tracking-wider text-[#1A2E1A] dark:text-slate-300 mb-3">
+                {lang === 'mr' ? 'मी आहे... / I am a...' : 'Register as...'}
+              </label>
+              <div className="grid grid-cols-2 gap-3.5">
+                {/* Farmer button */}
+                <button
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, role: 'farmer', email: '' }))}
+                  className={`flex flex-col items-center gap-2.5 p-4 rounded-2xl border-2 transition-all cursor-pointer font-black text-xs ${
+                    !isShopOwner
+                      ? 'border-emerald-500 bg-emerald-50/50 text-emerald-800 dark:text-emerald-450 dark:bg-emerald-950/20 shadow-md shadow-emerald-100/20'
+                      : 'border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 hover:border-emerald-300 dark:hover:border-emerald-900/50'
+                  }`}
+                >
+                  <span className={`p-2.5 rounded-xl ${!isShopOwner ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40' : 'bg-slate-100 dark:bg-slate-805 text-slate-400'}`}>
+                    <Sprout className="w-5 h-5" />
+                  </span>
+                  <div>
+                    <span className="block">शेतकरी</span>
+                    <span className="text-[10px] font-semibold opacity-80 mt-0.5 block">Farmer</span>
+                  </div>
+                </button>
+
+                {/* Shop Owner button */}
+                <button
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, role: 'shop_owner' }))}
+                  className={`flex flex-col items-center gap-2.5 p-4 rounded-2xl border-2 transition-all cursor-pointer font-black text-xs ${
+                    isShopOwner
+                      ? 'border-blue-500 bg-blue-50/50 text-blue-800 dark:text-blue-450 dark:bg-blue-950/20 shadow-md shadow-blue-100/20'
+                      : 'border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-slate-500 hover:border-blue-300 dark:hover:border-blue-900/50'
+                  }`}
+                >
+                  <span className={`p-2.5 rounded-xl ${isShopOwner ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40' : 'bg-slate-100 dark:bg-slate-805 text-slate-400'}`}>
+                    <Store className="w-5 h-5" />
+                  </span>
+                  <div>
+                    <span className="block">दुकानदार</span>
+                    <span className="text-[10px] font-semibold opacity-80 mt-0.5 block">Shop Owner</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="relative py-2">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100 dark:border-slate-800" /></div>
+              <div className="relative flex justify-center">
+                <span className="px-3.5 bg-white dark:bg-slate-900 text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">
+                  {isShopOwner ? (lang === 'mr' ? 'दुकानदार माहिती' : 'Shop Owner Details') : (lang === 'mr' ? 'शेतकरी माहिती' : 'Farmer Details')}
+                </span>
+              </div>
+            </div>
+
+            {/* Full Name */}
+            <div>
+              <label className="block text-sm font-bold text-[#1A2E1A] dark:text-white mb-2">
+                {t('fullName')}
+              </label>
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                <input
+                  type="text"
+                  name="fullName"
+                  required
+                  value={form.fullName}
+                  onChange={handleChange}
+                  placeholder="Sanchit Patil"
+                  className="block w-full pl-10 pr-4 py-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:ring-2 font-semibold text-sm transition-all"
+                  style={{ '--tw-ring-color': accent } as React.CSSProperties}
+                  onFocus={(e) => { e.target.style.borderColor = accent; }}
+                  onBlur={(e) => { e.target.style.borderColor = ''; }}
+                />
+              </div>
+            </div>
+
+            {/* Mobile Number */}
+            <div>
+              <label className="block text-sm font-bold text-[#1A2E1A] dark:text-white mb-2">
+                {t('mobileNumber')}
+              </label>
+              <div className="flex gap-2">
+                <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 font-bold text-slate-600 dark:text-slate-350 text-sm shrink-0">
+                  🇮🇳 <span>+91</span>
+                </div>
+                <div className="relative flex-1">
+                  <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+                  <input
+                    type="tel"
+                    name="mobile"
+                    required
+                    maxLength={10}
+                    value={form.mobile}
+                    onChange={(e) => setForm(prev => ({ ...prev, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                    placeholder="9876543210"
+                    className="block w-full pl-10 pr-4 py-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:ring-2 font-semibold text-sm transition-all"
+                    style={{ '--tw-ring-color': accent } as React.CSSProperties}
+                    onFocus={(e) => { e.target.style.borderColor = accent; }}
+                    onBlur={(e) => { e.target.style.borderColor = ''; }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Email (only for Shop Owner) */}
+            {isShopOwner && (
+              <div>
+                <label className="block text-sm font-bold text-[#1A2E1A] dark:text-white mb-2">
+                  Email Address <span className="text-red-500">*</span>
+                  <span className="text-xs font-normal text-slate-400 ml-1">({lang === 'mr' ? 'दुकानदारांसाठी आवश्यक' : 'Required for shop owners'})</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="shop@example.com"
+                  className="block w-full px-4 py-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:ring-2 font-semibold text-sm transition-all"
+                  style={{ '--tw-ring-color': accent } as React.CSSProperties}
+                  onFocus={(e) => { e.target.style.borderColor = accent; }}
+                  onBlur={(e) => { e.target.style.borderColor = ''; }}
+                />
+              </div>
+            )}
+
+            {/* STATE & DISTRICT */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-[#1A2E1A] dark:text-white mb-2">
+                  {t('state')}
+                </label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    name="state"
+                    required
+                    value={form.state}
+                    onChange={handleChange}
+                    className="block w-full pl-9 pr-4 py-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:ring-2 font-semibold text-sm transition-all"
+                    style={{ '--tw-ring-color': accent } as React.CSSProperties}
+                    onFocus={(e) => { e.target.style.borderColor = accent; }}
+                    onBlur={(e) => { e.target.style.borderColor = ''; }}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#1A2E1A] dark:text-white mb-2">
+                  {t('district')}
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    name="district"
+                    required
+                    value={form.district}
+                    onChange={handleChange}
+                    placeholder="Pune"
+                    className="block w-full pl-9 pr-4 py-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:ring-2 font-semibold text-sm transition-all"
+                    style={{ '--tw-ring-color': accent } as React.CSSProperties}
+                    onFocus={(e) => { e.target.style.borderColor = accent; }}
+                    onBlur={(e) => { e.target.style.borderColor = ''; }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* TALUKA & VILLAGE */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-[#1A2E1A] dark:text-white mb-2">
+                  {t('taluka')}
+                </label>
+                <input
+                  type="text"
+                  name="taluka"
+                  required
+                  value={form.taluka}
+                  onChange={handleChange}
+                  placeholder="Haveli"
+                  className="block w-full px-4 py-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:ring-2 font-semibold text-sm transition-all"
+                  style={{ '--tw-ring-color': accent } as React.CSSProperties}
+                  onFocus={(e) => { e.target.style.borderColor = accent; }}
+                  onBlur={(e) => { e.target.style.borderColor = ''; }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#1A2E1A] dark:text-white mb-2">
+                  {t('village')}
+                </label>
+                <input
+                  type="text"
+                  name="village"
+                  required
+                  value={form.village}
+                  onChange={handleChange}
+                  placeholder="Manjri"
+                  className="block w-full px-4 py-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:ring-2 font-semibold text-sm transition-all"
+                  style={{ '--tw-ring-color': accent } as React.CSSProperties}
+                  onFocus={(e) => { e.target.style.borderColor = accent; }}
+                  onBlur={(e) => { e.target.style.borderColor = ''; }}
+                />
+              </div>
+            </div>
+
+            {/* SHOP OWNER EXTRA DETAILS */}
+            {isShopOwner && (
+              <div className="space-y-4 bg-blue-50/50 dark:bg-slate-800/40 p-5 rounded-2xl border border-blue-100 dark:border-slate-800">
+                <h3 className="font-black text-blue-800 dark:text-blue-400 flex items-center gap-2 text-xs uppercase tracking-wider">
+                  <Store className="w-4.5 h-4.5" />
+                  Shop Details (दुकानाची माहिती)
+                </h3>
+                <div>
+                  <label className="block text-xs font-bold text-[#1A2E1A] dark:text-slate-350 mb-1.5">
+                    Shop Name (दुकानाचे नाव) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      name="shopName"
+                      required
+                      value={form.shopName}
+                      onChange={handleChange}
+                      placeholder="Krushi Seva Kendra"
+                      className="block w-full pl-10 pr-4 py-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:ring-2 font-semibold text-sm transition-all"
+                      style={{ '--tw-ring-color': accent } as React.CSSProperties}
+                      onFocus={(e) => { e.target.style.borderColor = accent; }}
+                      onBlur={(e) => { e.target.style.borderColor = ''; }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1A2E1A] dark:text-slate-350 mb-1.5">
+                    GST / License No. <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="gstNumber"
+                    required
+                    value={form.gstNumber}
+                    onChange={handleChange}
+                    placeholder="27AADCB2230M1Z2"
+                    className="block w-full px-4 py-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:ring-2 font-semibold text-sm transition-all"
+                    style={{ '--tw-ring-color': accent } as React.CSSProperties}
+                    onFocus={(e) => { e.target.style.borderColor = accent; }}
+                    onBlur={(e) => { e.target.style.borderColor = ''; }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-[#1A2E1A] dark:text-slate-350 mb-1.5">
+                    Password (पासवर्ड) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <LockKeyhole className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="password"
+                      name="password"
+                      required
+                      minLength={6}
+                      value={form.password}
+                      onChange={handleChange}
+                      placeholder="Minimum 6 characters"
+                      className="block w-full pl-10 pr-4 py-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl focus:outline-none focus:ring-2 font-semibold text-sm transition-all"
+                      style={{ '--tw-ring-color': accent } as React.CSSProperties}
+                      onFocus={(e) => { e.target.style.borderColor = accent; }}
+                      onBlur={(e) => { e.target.style.borderColor = ''; }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SUBMIT BUTTON */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 font-black py-4 rounded-2xl text-white shadow-lg transition-all hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer mt-4"
+              style={{ background: `linear-gradient(135deg, ${accent}ee, ${accent}bb)` }}
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                  {lang === 'mr' ? 'नोंदणी होत आहे...' : 'Processing...'}
+                </span>
+              ) : (
+                <>
+                  {isShopOwner
+                    ? (lang === 'mr' ? 'दुकानदार म्हणून नोंदणी करा' : lang === 'hi' ? 'दुकानदार पंजीकरण' : 'Register as Shop Owner')
+                    : (lang === 'mr' ? 'शेतकरी म्हणून नोंदणी करा' : lang === 'hi' ? 'किसान पंजीकरण' : 'Register as Farmer')
+                  }
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Already have account */}
+          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {lang === 'mr' ? 'आधीच खाते आहे?' : 'Already have an account?'}{' '}
+              <Link
+                to="/login"
+                className="font-black transition-colors hover:underline"
+                style={{ color: accent }}
+              >
+                {lang === 'mr' ? 'लॉगिन करा' : 'Login here'}
+              </Link>
+            </p>
+          </div>
+
         </div>
       </div>
     </div>

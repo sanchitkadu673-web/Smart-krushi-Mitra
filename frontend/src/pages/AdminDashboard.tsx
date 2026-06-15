@@ -23,7 +23,8 @@ import {
   Ban,
   Download,
   Bug,
-  ShieldAlert
+  ShieldAlert,
+  Search
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -43,6 +44,9 @@ export const AdminDashboard: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('adminSidebarCollapsed', sidebarCollapsed.toString());
   }, [sidebarCollapsed]);
+
+  // Search query state
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Directory lists state
   const [farmers, setFarmers] = useState<any[]>([]);
@@ -134,6 +138,7 @@ export const AdminDashboard: React.FC = () => {
 
   const handleTabClick = (tab: 'farmers' | 'shops') => {
     setActiveTab(tab);
+    setSearchTerm('');
     fetchList(tab);
   };
 
@@ -505,100 +510,185 @@ export const AdminDashboard: React.FC = () => {
     { id: 'broadcast' as const, label: t('broadcastGlobalAlert') || 'Broadcast Alert', icon: <Bell className="w-5 h-5" /> },
   ];
 
-  const renderSidebarContent = () => (
-    <>
-      {/* Brand Header */}
-      <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🌱</span>
-          <div>
-            <span className="font-extrabold text-[#1B5E20] dark:text-[#4CAF50] block text-sm">स्मार्ट कृषी मित्र</span>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Admin Portal</span>
+  const renderSidebarContent = (isCollapsed: boolean) => {
+    const getInitials = (n: string) => {
+      if (!n) return 'S';
+      return n.trim()[0].toUpperCase();
+    };
+    const adminInitial = getInitials(profile?.full_name || 'Admin');
+
+    if (isCollapsed) {
+      return (
+        <div className="flex flex-col h-full items-center py-4 bg-white dark:bg-slate-900">
+          {/* Collapse/Expand Toggle Button */}
+          <button 
+            onClick={() => setSidebarCollapsed(false)}
+            className="p-2.5 text-emerald-600 hover:text-emerald-700 dark:text-emerald-500 dark:hover:text-emerald-400 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer mb-6"
+            title="Expand Sidebar"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
+          {/* User Initial Circle Badge */}
+          <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-sm mb-8 border border-emerald-500/20 shadow-sm" title={profile?.full_name}>
+            {adminInitial}
+          </div>
+
+          {/* Nav Icons */}
+          <nav className="flex-1 w-full px-2 space-y-3 flex flex-col items-center overflow-y-auto">
+            {menuItems.map(item => {
+              const active = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    setSearchTerm('');
+                    if (item.id === 'farmers' || item.id === 'shops') {
+                      fetchList(item.id);
+                    } else if (item.id === 'crops') {
+                      fetchCrops();
+                    } else if (item.id === 'stages') {
+                      fetchCrops();
+                      fetchStages();
+                    } else if (item.id === 'diseases') {
+                      fetchCrops();
+                      fetchDiseases();
+                    } else if (item.id === 'pests') {
+                      fetchCrops();
+                      fetchPests();
+                    }
+                  }}
+                  className={`p-3 rounded-xl transition-all duration-200 cursor-pointer flex items-center justify-center relative group ${
+                    active 
+                      ? 'bg-[#1B5E20]/10 text-[#1B5E20] dark:bg-[#4CAF50]/10 dark:text-[#4CAF50]' 
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
+                  }`}
+                  title={item.label}
+                >
+                  {item.icon}
+                  {/* Tooltip on hover */}
+                  <span className="absolute left-14 scale-0 group-hover:scale-100 transition-all rounded-lg p-2 text-xs font-black bg-slate-950 text-white shadow-xl whitespace-nowrap z-50 pointer-events-none">
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Back Home */}
+          <div className="pt-4 border-t border-slate-105 dark:border-slate-800 w-full flex justify-center">
+            <Link
+              to="/"
+              className="p-3 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 transition-all flex items-center justify-center relative group"
+              title="Home"
+            >
+              <Home className="w-5 h-5" />
+              <span className="absolute left-14 scale-0 group-hover:scale-100 transition-all rounded-lg p-2 text-xs font-black bg-slate-950 text-white shadow-xl whitespace-nowrap z-50 pointer-events-none">
+                {t('home') || 'Home'}
+              </span>
+            </Link>
           </div>
         </div>
-        <button 
-          onClick={() => {
-            if (window.innerWidth < 768) {
-              setMobileMenuOpen(false);
-            } else {
-              setSidebarCollapsed(true);
-            }
-          }}
-          className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-350 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
-          title="Sidebar लपवा (Hide Sidebar)"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+      );
+    }
 
-      {/* Nav Menu Items */}
-      <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
-        {menuItems.map(item => {
-          const active = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => {
-                setActiveTab(item.id);
-                if (item.id === 'farmers' || item.id === 'shops') {
-                  fetchList(item.id);
-                } else if (item.id === 'crops') {
-                  fetchCrops();
-                } else if (item.id === 'stages') {
-                  fetchCrops();
-                  fetchStages();
-                } else if (item.id === 'diseases') {
-                  fetchCrops();
-                  fetchDiseases();
-                } else if (item.id === 'pests') {
-                  fetchCrops();
-                  fetchPests();
-                }
+    return (
+      <>
+        {/* Brand Header */}
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🌱</span>
+            <div>
+              <span className="font-extrabold text-[#1B5E20] dark:text-[#4CAF50] block text-sm">स्मार्ट कृषी मित्र</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Admin Portal</span>
+            </div>
+          </div>
+          <button 
+            onClick={() => {
+              if (window.innerWidth < 768) {
                 setMobileMenuOpen(false);
-              }}
-              className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
-                active 
-                  ? 'bg-[#1B5E20]/10 text-[#1B5E20] dark:bg-[#4CAF50]/10 dark:text-[#4CAF50]' 
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {item.icon}
-                <span>{item.label}</span>
-              </div>
-              {item.badge !== undefined && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-black transition-colors ${
-                  active 
-                    ? 'bg-[#1B5E20]/20 text-[#1B5E20] dark:bg-[#4CAF50]/20 dark:text-[#4CAF50]' 
-                    : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-450'
-                }`}>
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </nav>
+              } else {
+                setSidebarCollapsed(true);
+              }
+            }}
+            className="p-1.5 text-slate-400 hover:text-slate-650 dark:hover:text-slate-350 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer"
+            title="Sidebar लपवा (Hide Sidebar)"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
-      {/* Footer link to home */}
-      <div className="p-4 border-t border-slate-100 dark:border-slate-805">
-        <Link
-          to="/"
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
-        >
-          <Home className="w-5 h-5" />
-          <span>{t('home') || 'Home'}</span>
-        </Link>
-      </div>
-    </>
-  );
+        {/* Nav Menu Items */}
+        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+          {menuItems.map(item => {
+            const active = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setSearchTerm('');
+                  if (item.id === 'farmers' || item.id === 'shops') {
+                    fetchList(item.id);
+                  } else if (item.id === 'crops') {
+                    fetchCrops();
+                  } else if (item.id === 'stages') {
+                    fetchCrops();
+                    fetchStages();
+                  } else if (item.id === 'diseases') {
+                    fetchCrops();
+                    fetchDiseases();
+                  } else if (item.id === 'pests') {
+                    fetchCrops();
+                    fetchPests();
+                  }
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200 cursor-pointer ${
+                  active 
+                    ? 'bg-[#1B5E20]/10 text-[#1B5E20] dark:bg-[#4CAF50]/10 dark:text-[#4CAF50]' 
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {item.icon}
+                  <span>{item.label}</span>
+                </div>
+                {item.badge !== undefined && (
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-black transition-colors ${
+                    active 
+                      ? 'bg-[#1B5E20]/20 text-[#1B5E20] dark:bg-[#4CAF50]/20 dark:text-[#4CAF50]' 
+                      : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-450'
+                  }`}>
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Footer link to home */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-805">
+          <Link
+            to="/"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+          >
+            <Home className="w-5 h-5" />
+            <span>{t('home') || 'Home'}</span>
+          </Link>
+        </div>
+      </>
+    );
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
       
       {/* Desktop Persistent Sidebar */}
-      <aside className={`w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-850 ${sidebarCollapsed ? 'hidden' : 'hidden md:flex'} flex-col fixed h-screen z-20 transition-all duration-300`}>
-        {renderSidebarContent()}
+      <aside className={`bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-850 hidden md:flex flex-col fixed h-screen z-20 transition-all duration-300 ${sidebarCollapsed ? 'w-16' : 'w-64'}`}>
+        {renderSidebarContent(sidebarCollapsed)}
       </aside>
 
       {/* Mobile Drawer Sidebar */}
@@ -609,13 +699,13 @@ export const AdminDashboard: React.FC = () => {
             onClick={() => setMobileMenuOpen(false)}
           ></div>
           <aside className="relative w-64 bg-white dark:bg-slate-900 h-full flex flex-col border-r border-slate-200 dark:border-slate-800 shadow-2xl animate-in slide-in-from-left duration-200">
-            {renderSidebarContent()}
+            {renderSidebarContent(false)}
           </aside>
         </div>
       )}
 
       {/* Main Content Pane */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:pl-0' : 'md:pl-64'}`}>
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:pl-16' : 'md:pl-64'}`}>
         <Navbar />
 
         <main className="p-4 md:p-8 flex-grow">
@@ -634,15 +724,6 @@ export const AdminDashboard: React.FC = () => {
           {/* Page Title & Desc */}
           <div className="mb-8 hidden md:block">
             <div className="flex items-center gap-3">
-              {sidebarCollapsed && (
-                <button
-                  onClick={() => setSidebarCollapsed(false)}
-                  className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-850 rounded-xl shadow-sm transition-all flex items-center justify-center cursor-pointer"
-                  title="Sidebar दाखवा (Show Sidebar)"
-                >
-                  <Menu className="w-5 h-5" />
-                </button>
-              )}
               <h1 className="text-3xl font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Settings className="text-[#1B5E20] dark:text-[#4CAF50] w-8 h-8" /> 
                 {activeTab === 'overview' ? t('adminPanel') : activeTab === 'farmers' ? t('farmersList') : activeTab === 'shops' ? t('shopsList') : activeTab === 'crops' ? 'पिकांचे प्रकार (Crop Masters)' : activeTab === 'stages' ? 'पिकांचे टप्पे (Crop Stages)' : activeTab === 'diseases' ? 'रोग नियंत्रण (Diseases DB)' : activeTab === 'pests' ? 'कीड नियंत्रण (Pests DB)' : t('broadcastGlobalAlert')}
@@ -653,69 +734,96 @@ export const AdminDashboard: React.FC = () => {
 
           {/* ACTIVE TAB: OVERVIEW */}
           {activeTab === 'overview' && (
-            <div className="space-y-8 animate-in fade-in duration-300">
+            <div className="space-y-8 animate-in fade-in duration-350">
               
+              {/* Premium Welcome Card */}
+              <div className="bg-gradient-to-r from-emerald-800 to-green-700 dark:from-emerald-950 dark:to-[#1B5E20] text-white rounded-3xl p-6 md:p-8 shadow-xl relative overflow-hidden mb-8">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+                <div className="absolute -bottom-10 right-10 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div>
+                    <span className="bg-emerald-500/20 text-emerald-200 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">SYSTEM ADMINISTRATOR</span>
+                    <h2 className="text-3xl font-black mt-3">{t('welcome') || 'Welcome back'}, {profile?.full_name || 'Admin'}!</h2>
+                    <p className="text-emerald-100/70 text-sm mt-1.5 font-medium max-w-xl">
+                      Here is your platform operational overview. You can manage registered farmers, store directories, agricultural databases, and send live broadcasts.
+                    </p>
+                  </div>
+                  <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl px-5 py-4 shrink-0 flex items-center gap-3 self-start md:self-auto">
+                    <span className="text-2xl">📅</span>
+                    <div>
+                      <p className="text-white/60 text-xs font-bold uppercase tracking-wider">System Date</p>
+                      <p className="text-white font-extrabold text-sm mt-0.5">{new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Quick statistics widgets grid */}
               {stats && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                   {/* Total Farmers Widget */}
                   <div 
                     onClick={() => handleTabClick('farmers')}
-                    className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-sm flex items-center gap-4 cursor-pointer hover:shadow-lg hover:border-[#1B5E20]/25 transition-all duration-300 group"
+                    className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-md flex items-center gap-4 cursor-pointer hover:shadow-xl hover:border-[#1B5E20]/30 hover:-translate-y-1 transition-all duration-300 group"
                   >
-                    <div className="p-3.5 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-2xl group-hover:scale-115 transition-transform duration-350">
+                    <div className="p-3.5 bg-blue-50 dark:bg-blue-950/45 text-blue-600 dark:text-blue-400 rounded-2xl group-hover:scale-110 transition-transform">
                       <Users className="w-6 h-6" />
                     </div>
                     <div>
-                      <span className="block text-slate-400 text-[10px] font-extrabold uppercase tracking-wider">{t('totalFarmers')}</span>
+                      <span className="block text-slate-400 text-[10px] font-black uppercase tracking-wider">{t('totalFarmers')}</span>
                       <span className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-0.5 block">{stats.totalFarmers}</span>
+                      <span className="text-[10px] text-green-500 font-bold flex items-center gap-0.5 mt-1">↑ 12% new</span>
                     </div>
                   </div>
 
                   {/* Total Shopkeepers Widget */}
                   <div 
                     onClick={() => handleTabClick('shops')}
-                    className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-sm flex items-center gap-4 cursor-pointer hover:shadow-lg hover:border-[#F59E0B]/25 transition-all duration-300 group"
+                    className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-md flex items-center gap-4 cursor-pointer hover:shadow-xl hover:border-[#F59E0B]/30 hover:-translate-y-1 transition-all duration-300 group"
                   >
-                    <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 rounded-2xl group-hover:scale-115 transition-transform duration-350">
+                    <div className="p-3.5 bg-amber-50 dark:bg-amber-950/45 text-amber-655 dark:text-amber-400 rounded-2xl group-hover:scale-110 transition-transform">
                       <Building2 className="w-6 h-6" />
                     </div>
                     <div>
-                      <span className="block text-slate-400 text-[10px] font-extrabold uppercase tracking-wider">{t('totalShops')}</span>
+                      <span className="block text-slate-400 text-[10px] font-black uppercase tracking-wider">{t('totalShops')}</span>
                       <span className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-0.5 block">{stats.totalShopOwners}</span>
+                      <span className="text-[10px] text-slate-450 dark:text-slate-500 font-bold mt-1 block">Live directories</span>
                     </div>
                   </div>
 
                   {/* Total Crops Widget */}
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-sm flex items-center gap-4">
-                    <div className="p-3.5 bg-green-50 dark:bg-green-950/40 text-green-600 dark:text-green-400 rounded-2xl">
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-md flex items-center gap-4 hover:-translate-y-1 transition-all duration-305 group">
+                    <div className="p-3.5 bg-green-50 dark:bg-green-950/45 text-green-600 dark:text-green-400 rounded-2xl group-hover:scale-110 transition-transform">
                       <Sprout className="w-6 h-6" />
                     </div>
                     <div>
-                      <span className="block text-slate-400 text-[10px] font-extrabold uppercase tracking-wider">{t('totalCrops')}</span>
+                      <span className="block text-slate-400 text-[10px] font-black uppercase tracking-wider">{t('totalCrops')}</span>
                       <span className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-0.5 block">{stats.totalCrops}</span>
+                      <span className="text-[10px] text-emerald-500 font-bold mt-1 block">Masters database</span>
                     </div>
                   </div>
 
                   {/* Active Crops Widget */}
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-sm flex items-center gap-4">
-                    <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-md flex items-center gap-4 hover:-translate-y-1 transition-all duration-305 group">
+                    <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/45 text-emerald-600 dark:text-emerald-450 rounded-2xl group-hover:scale-110 transition-transform">
                       <BarChart3 className="w-6 h-6" />
                     </div>
                     <div>
-                      <span className="block text-slate-400 text-[10px] font-extrabold uppercase tracking-wider">{t('activeCrops')}</span>
+                      <span className="block text-slate-400 text-[10px] font-black uppercase tracking-wider">{t('activeCrops')}</span>
                       <span className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-0.5 block">{stats.activeCrops}</span>
+                      <span className="text-[10px] text-green-500 font-bold flex items-center gap-0.5 mt-1">↑ Active seasons</span>
                     </div>
                   </div>
 
                   {/* Alerts Issued Widget */}
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-sm flex items-center gap-4">
-                    <div className="p-3.5 bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 rounded-2xl">
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-md flex items-center gap-4 hover:-translate-y-1 transition-all duration-305 group">
+                    <div className="p-3.5 bg-purple-50 dark:bg-purple-950/45 text-purple-650 dark:text-purple-400 rounded-2xl group-hover:scale-110 transition-transform">
                       <Bell className="w-6 h-6" />
                     </div>
                     <div>
-                      <span className="block text-slate-400 text-[10px] font-extrabold uppercase tracking-wider">{t('alertsIssued')}</span>
+                      <span className="block text-slate-400 text-[10px] font-black uppercase tracking-wider">{t('alertsIssued')}</span>
                       <span className="text-2xl font-black text-slate-900 dark:text-slate-100 mt-0.5 block">{stats.notificationsSent}</span>
+                      <span className="text-[10px] text-[#1B5E20] dark:text-[#4CAF50] font-bold mt-1 block">System broadcasts</span>
                     </div>
                   </div>
                 </div>
@@ -725,36 +833,36 @@ export const AdminDashboard: React.FC = () => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
                 {/* Column 1: System Health */}
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
-                  <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-2">
-                    <BarChart3 className="w-5 h-5 text-emerald-600" /> {t('systemHealthTitle')}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-md">
+                  <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-2 border-b border-slate-50 dark:border-slate-800 pb-3">
+                    <BarChart3 className="w-5 h-5 text-emerald-600" /> {t('systemHealthTitle') || 'System Operational Status'}
                   </h3>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center pb-3 border-b border-slate-50 dark:border-slate-800/50">
-                      <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t('serverStatus')}</span>
-                      <span className="text-xs bg-green-100 text-green-800 dark:bg-green-950/45 dark:text-green-455 font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
-                        <span className="h-1.5 w-1.5 rounded-full bg-green-600 animate-pulse"></span> {t('active')}
+                      <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t('serverStatus') || 'Backend API Service'}</span>
+                      <span className="text-xs bg-green-100 text-green-800 dark:bg-green-950/45 dark:text-green-400 font-bold px-3 py-1 rounded-full flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-green-600 animate-pulse"></span> {t('active') || 'Operational'}
                       </span>
                     </div>
                     <div className="flex justify-between items-center pb-3 border-b border-slate-50 dark:border-slate-800/50">
-                      <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t('databaseLatency')}</span>
-                      <span className="text-slate-950 dark:text-slate-100 font-bold text-sm">34ms</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t('databaseLatency') || 'PostgreSQL Connection Latency'}</span>
+                      <span className="text-slate-950 dark:text-slate-100 font-bold text-sm font-mono">34ms</span>
                     </div>
                     <div className="flex justify-between items-center pb-3 border-b border-slate-50 dark:border-slate-800/50">
-                      <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t('geminiStatus')}</span>
-                      <span className="text-xs bg-indigo-100 text-indigo-850 dark:bg-indigo-950/45 dark:text-indigo-400 font-bold px-3 py-1 rounded-full">{t('connected')}</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t('geminiStatus') || 'AI Agent / Gemini API Integration'}</span>
+                      <span className="text-xs bg-indigo-100 text-indigo-850 dark:bg-indigo-950/45 dark:text-indigo-400 font-bold px-3 py-1 rounded-full">{t('connected') || 'Connected'}</span>
                     </div>
                     <div className="flex justify-between items-center pb-3 border-b border-slate-50 dark:border-slate-800/50">
-                      <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t('cronScheduler')}</span>
-                      <span className="text-xs bg-green-100 text-green-800 dark:bg-green-950/45 dark:text-green-455 font-bold px-3 py-1 rounded-full">{t('running')}</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">{t('cronScheduler') || 'Scheduled Jobs / Tasks'}</span>
+                      <span className="text-xs bg-green-100 text-green-800 dark:bg-green-950/45 dark:text-green-400 font-bold px-3 py-1 rounded-full">{t('running') || 'Active'}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Column 2: Crop Distribution */}
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm">
-                  <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-2">
-                    <Sprout className="w-5 h-5 text-green-600" /> {t('cropDistribution')}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-md">
+                  <h3 className="text-lg font-extrabold text-slate-900 dark:text-slate-100 mb-6 flex items-center gap-2 border-b border-slate-50 dark:border-slate-800 pb-3">
+                    <Sprout className="w-5 h-5 text-green-600" /> {t('cropDistribution') || 'Active Cultivation share'}
                   </h3>
                   <div className="space-y-4">
                     <div>
@@ -762,7 +870,7 @@ export const AdminDashboard: React.FC = () => {
                         <span>Cotton (कापूस)</span>
                         <span>42%</span>
                       </div>
-                      <div className="w-full bg-slate-50 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-50 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
                         <div className="bg-emerald-600 h-full rounded-full" style={{ width: '42%' }}></div>
                       </div>
                     </div>
@@ -771,7 +879,7 @@ export const AdminDashboard: React.FC = () => {
                         <span>Soybean (सोयाबीन)</span>
                         <span>28%</span>
                       </div>
-                      <div className="w-full bg-slate-50 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-50 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
                         <div className="bg-[#4CAF50] h-full rounded-full" style={{ width: '28%' }}></div>
                       </div>
                     </div>
@@ -780,7 +888,7 @@ export const AdminDashboard: React.FC = () => {
                         <span>Wheat (गहू)</span>
                         <span>18%</span>
                       </div>
-                      <div className="w-full bg-slate-50 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-50 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
                         <div className="bg-green-600 h-full rounded-full" style={{ width: '18%' }}></div>
                       </div>
                     </div>
@@ -789,7 +897,7 @@ export const AdminDashboard: React.FC = () => {
                         <span>Others (इतर)</span>
                         <span>12%</span>
                       </div>
-                      <div className="w-full bg-slate-50 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-slate-50 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
                         <div className="bg-yellow-500 h-full rounded-full" style={{ width: '12%' }}></div>
                       </div>
                     </div>
@@ -802,34 +910,49 @@ export const AdminDashboard: React.FC = () => {
 
           {/* ACTIVE TAB: FARMERS LIST */}
           {activeTab === 'farmers' && (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm animate-in fade-in duration-300">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  {t('farmersList')}
-                </h3>
-                <div className="flex gap-2 self-end sm:self-auto">
-                  <button
-                    onClick={() => exportToCSV(
-                      farmers, 
-                      'farmers_list', 
-                      ['Full Name', 'Mobile Number', 'State', 'District', 'Taluka', 'Village'],
-                      ['full_name', 'mobile', 'state', 'district', 'taluka', 'village']
-                    )}
-                    className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-emerald-200/50"
-                  >
-                    <Download className="w-3.5 h-3.5" /> Export Excel
-                  </button>
-                  <button
-                    onClick={() => handleExportPDF(
-                      'Farmers Directory',
-                      ['Full Name', 'Mobile', 'State', 'District', 'Taluka', 'Village'],
-                      farmers.map(f => [f.full_name, f.mobile, f.state, f.district, f.taluka, f.village]),
-                      'farmers_list'
-                    )}
-                    className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-red-200/50"
-                  >
-                    <Download className="w-3.5 h-3.5" /> Export PDF
-                  </button>
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-md animate-in fade-in duration-300">
+              <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">
+                    {t('farmersList')}
+                  </h3>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">View and manage registered farmer profiles</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      placeholder="नाव किंवा मोबाईल शोधा..."
+                      className="pl-9 pr-4 py-2.5 text-xs border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-805 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B5E20] dark:focus:ring-[#4CAF50] focus:border-transparent font-semibold w-full sm:w-56"
+                    />
+                  </div>
+                  <div className="flex gap-2 self-end sm:self-auto">
+                    <button
+                      onClick={() => exportToCSV(
+                        farmers, 
+                        'farmers_list', 
+                        ['Full Name', 'Mobile Number', 'State', 'District', 'Taluka', 'Village'],
+                        ['full_name', 'mobile', 'state', 'district', 'taluka', 'village']
+                      )}
+                      className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-emerald-200/50"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Export Excel
+                    </button>
+                    <button
+                      onClick={() => handleExportPDF(
+                        'Farmers Directory',
+                        ['Full Name', 'Mobile', 'State', 'District', 'Taluka', 'Village'],
+                        farmers.map(f => [f.full_name, f.mobile, f.state, f.district, f.taluka, f.village]),
+                        'farmers_list'
+                      )}
+                      className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-red-200/50"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Export PDF
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -855,25 +978,51 @@ export const AdminDashboard: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
-                      {farmers.map(f => (
-                        <tr key={f.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                          <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{f.full_name}</td>
-                          <td className="py-3.5 px-4">{f.mobile}</td>
-                          <td className="py-3.5 px-4">{f.state}</td>
-                          <td className="py-3.5 px-4">{f.district}</td>
-                          <td className="py-3.5 px-4">{f.taluka}</td>
-                          <td className="py-3.5 px-4">{f.village}</td>
-                          <td className="py-3.5 px-4 text-right">
-                            <button
-                              onClick={() => handleDeleteFarmer(f.id)}
-                              className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-650 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
-                              title="Delete Farmer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {farmers
+                        .filter(f => {
+                          const q = searchTerm.toLowerCase();
+                          return (
+                            f.full_name?.toLowerCase().includes(q) ||
+                            f.mobile?.toLowerCase().includes(q) ||
+                            f.district?.toLowerCase().includes(q) ||
+                            f.taluka?.toLowerCase().includes(q) ||
+                            f.village?.toLowerCase().includes(q)
+                          );
+                        })
+                        .map(f => {
+                          const getInitials = (n: string) => {
+                            if (!n) return 'F';
+                            const parts = n.trim().split(' ');
+                            if (parts.length > 1) return (parts[0][0] + parts[1][0]).toUpperCase();
+                            return parts[0].slice(0, 2).toUpperCase();
+                          };
+                          return (
+                            <tr key={f.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                              <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/45 dark:text-emerald-400 flex items-center justify-center font-black text-xs shrink-0 border border-emerald-200/10">
+                                    {getInitials(f.full_name)}
+                                  </div>
+                                  <span>{f.full_name}</span>
+                                </div>
+                              </td>
+                              <td className="py-3.5 px-4 font-mono">{f.mobile}</td>
+                              <td className="py-3.5 px-4">{f.state}</td>
+                              <td className="py-3.5 px-4">{f.district}</td>
+                              <td className="py-3.5 px-4">{f.taluka}</td>
+                              <td className="py-3.5 px-4">{f.village}</td>
+                              <td className="py-3.5 px-4 text-right">
+                                <button
+                                  onClick={() => handleDeleteFarmer(f.id)}
+                                  className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-655 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
+                                  title="Delete Farmer"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>
@@ -883,34 +1032,49 @@ export const AdminDashboard: React.FC = () => {
 
           {/* ACTIVE TAB: SHOPS LIST */}
           {activeTab === 'shops' && (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm animate-in fade-in duration-300">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  {t('shopsList')}
-                </h3>
-                <div className="flex gap-2 self-end sm:self-auto">
-                  <button
-                    onClick={() => exportToCSV(
-                      shops, 
-                      'shops_list', 
-                      ['Shop Name', 'Owner Name', 'Mobile Number', 'Status', 'License Number', 'Address'],
-                      ['shop_name', 'owner.full_name', 'owner.mobile', 'is_approved', 'license_number', 'address']
-                    )}
-                    className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-emerald-200/50"
-                  >
-                    <Download className="w-3.5 h-3.5" /> Export Excel
-                  </button>
-                  <button
-                    onClick={() => handleExportPDF(
-                      'Shops Directory',
-                      ['Shop Name', 'Owner Name', 'Mobile', 'Status', 'License No', 'Address'],
-                      shops.map(s => [s.shop_name, s.owner?.full_name || 'N/A', s.owner?.mobile || 'N/A', s.is_approved ? 'Approved' : 'Pending', s.license_number, s.address]),
-                      'shops_list'
-                    )}
-                    className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-red-200/50"
-                  >
-                    <Download className="w-3.5 h-3.5" /> Export PDF
-                  </button>
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-md animate-in fade-in duration-300">
+              <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">
+                    {t('shopsList')}
+                  </h3>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">Approve and manage registered partner stores</p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      placeholder="दुकान किंवा मालकाचे नाव शोधा..."
+                      className="pl-9 pr-4 py-2.5 text-xs border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-805 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B5E20] dark:focus:ring-[#4CAF50] focus:border-transparent font-semibold w-full sm:w-56"
+                    />
+                  </div>
+                  <div className="flex gap-2 self-end sm:self-auto">
+                    <button
+                      onClick={() => exportToCSV(
+                        shops, 
+                        'shops_list', 
+                        ['Shop Name', 'Owner Name', 'Mobile Number', 'Status', 'License Number', 'Address'],
+                        ['shop_name', 'owner.full_name', 'owner.mobile', 'is_approved', 'license_number', 'address']
+                      )}
+                      className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-emerald-200/50"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Export Excel
+                    </button>
+                    <button
+                      onClick={() => handleExportPDF(
+                        'Shops Directory',
+                        ['Shop Name', 'Owner Name', 'Mobile', 'Status', 'License No', 'Address'],
+                        shops.map(s => [s.shop_name, s.owner?.full_name || 'N/A', s.owner?.mobile || 'N/A', s.is_approved ? 'Approved' : 'Pending', s.license_number, s.address]),
+                        'shops_list'
+                      )}
+                      className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-red-200/50"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Export PDF
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -936,46 +1100,79 @@ export const AdminDashboard: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
-                      {shops.map(s => (
-                        <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                          <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{s.shop_name}</td>
-                          <td className="py-3.5 px-4 font-bold text-slate-700 dark:text-slate-300">{s.owner?.full_name || t('notAvailable')}</td>
-                          <td className="py-3.5 px-4">{s.owner?.mobile || t('notAvailable')}</td>
-                          <td className="py-3.5 px-4">
-                            <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${
-                              s.is_approved 
-                                ? 'bg-green-100 text-green-800 dark:bg-green-950/45 dark:text-green-400' 
-                                : 'bg-amber-100 text-amber-850 dark:bg-amber-950/45 dark:text-amber-400'
-                            }`}>
-                              {s.is_approved ? 'Approved' : 'Pending'}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-4 text-xs font-mono">{s.license_number}</td>
-                          <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={s.address}>{s.address}</td>
-                          <td className="py-3.5 px-4 text-right">
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => handleToggleShopApproval(s.id, s.is_approved)}
-                                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                      {shops
+                        .filter(s => {
+                          const q = searchTerm.toLowerCase();
+                          return (
+                            s.shop_name?.toLowerCase().includes(q) ||
+                            s.owner?.full_name?.toLowerCase().includes(q) ||
+                            s.owner?.mobile?.toLowerCase().includes(q) ||
+                            s.license_number?.toLowerCase().includes(q) ||
+                            s.address?.toLowerCase().includes(q)
+                          );
+                        })
+                        .map(s => {
+                          const getInitials = (n: string) => {
+                            if (!n) return 'S';
+                            const parts = n.trim().split(' ');
+                            if (parts.length > 1) return (parts[0][0] + parts[1][0]).toUpperCase();
+                            return parts[0].slice(0, 2).toUpperCase();
+                          };
+                          return (
+                            <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                              <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-850 dark:bg-amber-950/45 dark:text-amber-400 flex items-center justify-center font-black text-xs shrink-0 border border-amber-200/10">
+                                    🏪
+                                  </div>
+                                  <span>{s.shop_name}</span>
+                                </div>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center font-black text-[10px]">
+                                    {getInitials(s.owner?.full_name)}
+                                  </div>
+                                  <span className="font-semibold text-slate-700 dark:text-slate-300">{s.owner?.full_name || t('notAvailable')}</span>
+                                </div>
+                              </td>
+                              <td className="py-3.5 px-4 font-mono">{s.owner?.mobile || t('notAvailable')}</td>
+                              <td className="py-3.5 px-4">
+                                <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${
                                   s.is_approved 
-                                    ? 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/30 dark:hover:bg-amber-900/40 text-amber-600 dark:text-amber-400' 
-                                    : 'bg-green-50 hover:bg-green-100 dark:bg-green-950/30 dark:hover:bg-green-900/40 text-green-600 dark:text-green-400'
-                                }`}
-                                title={s.is_approved ? 'Suspend Shop' : 'Approve Shop'}
-                              >
-                                {s.is_approved ? <Ban className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
-                              </button>
-                              <button
-                                onClick={() => handleDeleteShop(s.id)}
-                                className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-650 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
-                                title="Delete Shop"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                                    ? 'bg-green-100 text-green-800 dark:bg-green-950/45 dark:text-green-400' 
+                                    : 'bg-amber-100 text-amber-850 dark:bg-amber-950/45 dark:text-amber-400'
+                                }`}>
+                                  {s.is_approved ? 'Approved' : 'Pending'}
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-4 text-xs font-mono">{s.license_number}</td>
+                              <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={s.address}>{s.address}</td>
+                              <td className="py-3.5 px-4 text-right">
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => handleToggleShopApproval(s.id, s.is_approved)}
+                                    className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                                      s.is_approved 
+                                        ? 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/30 dark:hover:bg-amber-900/40 text-amber-605 dark:text-amber-400' 
+                                        : 'bg-green-50 hover:bg-green-100 dark:bg-green-950/30 dark:hover:bg-green-900/40 text-green-605 dark:text-green-400'
+                                    }`}
+                                    title={s.is_approved ? 'Suspend Shop' : 'Approve Shop'}
+                                  >
+                                    {s.is_approved ? <Ban className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteShop(s.id)}
+                                    className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-655 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
+                                    title="Delete Shop"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>
@@ -985,51 +1182,66 @@ export const AdminDashboard: React.FC = () => {
 
           {/* ACTIVE TAB: CROP MASTERS */}
           {activeTab === 'crops' && (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm animate-in fade-in duration-300">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  पिकांचे प्रकार (Crop Masters)
-                </h3>
-                <div className="flex flex-wrap gap-2 self-end sm:self-auto">
-                  <button
-                    onClick={() => exportToCSV(
-                      crops, 
-                      'crop_masters', 
-                      ['Crop Name', 'Category', 'Duration (Days)', 'Expected Yield', 'Varieties'],
-                      ['name', 'category', 'duration_days', 'expected_yield', 'varieties']
-                    )}
-                    className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-emerald-200/50"
-                  >
-                    <Download className="w-3.5 h-3.5" /> Export Excel
-                  </button>
-                  <button
-                    onClick={() => handleExportPDF(
-                      'Crop Masters Database',
-                      ['Crop Name', 'Category', 'Duration', 'Expected Yield', 'Varieties'],
-                      crops.map(c => [c.name, c.category, `${c.duration_days} Days`, c.expected_yield, c.varieties || 'N/A']),
-                      'crop_masters'
-                    )}
-                    className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-red-200/50"
-                  >
-                    <Download className="w-3.5 h-3.5" /> Export PDF
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedCrop(null);
-                      setCropForm({
-                        name: '',
-                        category: '',
-                        duration_days: '',
-                        expected_yield: '',
-                        description: '',
-                        varieties: ''
-                      });
-                      setCropModalOpen(true);
-                    }}
-                    className="bg-[#1B5E20] hover:bg-[#124115] text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Add Crop Master
-                  </button>
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-md animate-in fade-in duration-300">
+              <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">
+                    पिकांचे प्रकार (Crop Masters)
+                  </h3>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">Manage and view the core crop variety databases</p>
+                </div>
+                <div className="flex flex-wrap gap-3 items-center">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={e => setSearchTerm(e.target.value)}
+                      placeholder="पीक किंवा श्रेणी शोधा..."
+                      className="pl-9 pr-4 py-2.5 text-xs border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-805 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B5E20] dark:focus:ring-[#4CAF50] focus:border-transparent font-semibold w-full sm:w-56"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2 self-end sm:self-auto">
+                    <button
+                      onClick={() => exportToCSV(
+                        crops, 
+                        'crop_masters', 
+                        ['Crop Name', 'Category', 'Duration (Days)', 'Expected Yield', 'Varieties'],
+                        ['name', 'category', 'duration_days', 'expected_yield', 'varieties']
+                      )}
+                      className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 dark:text-emerald-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-emerald-200/50"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Export Excel
+                    </button>
+                    <button
+                      onClick={() => handleExportPDF(
+                        'Crop Masters Database',
+                        ['Crop Name', 'Category', 'Duration', 'Expected Yield', 'Varieties'],
+                        crops.map(c => [c.name, c.category, `${c.duration_days} Days`, c.expected_yield, c.varieties || 'N/A']),
+                        'crop_masters'
+                      )}
+                      className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/30 dark:hover:bg-red-900/40 dark:text-red-400 rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer border border-red-200/50"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Export PDF
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedCrop(null);
+                        setCropForm({
+                          name: '',
+                          category: '',
+                          duration_days: '',
+                          expected_yield: '',
+                          description: '',
+                          varieties: ''
+                        });
+                        setCropModalOpen(true);
+                      }}
+                      className="bg-[#1B5E20] hover:bg-[#124115] text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Crop Master
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1054,44 +1266,59 @@ export const AdminDashboard: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
-                      {crops.map(c => (
-                        <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                          <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{c.name}</td>
-                          <td className="py-3.5 px-4">{c.category}</td>
-                          <td className="py-3.5 px-4">{c.duration_days} Days</td>
-                          <td className="py-3.5 px-4">{c.expected_yield}</td>
-                          <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={c.varieties}>{c.varieties || 'N/A'}</td>
-                          <td className="py-3.5 px-4 text-right">
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => {
-                                  setSelectedCrop(c);
-                                  setCropForm({
-                                    name: c.name,
-                                    category: c.category,
-                                    duration_days: c.duration_days.toString(),
-                                    expected_yield: c.expected_yield,
-                                    description: c.description || '',
-                                    varieties: c.varieties || ''
-                                  });
-                                  setCropModalOpen(true);
-                                }}
-                                className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
-                                title="Edit"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteCrop(c.id)}
-                                className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-650 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
-                                title="Delete"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                      {crops
+                        .filter(c => {
+                          const q = searchTerm.toLowerCase();
+                          return (
+                            c.name?.toLowerCase().includes(q) ||
+                            c.category?.toLowerCase().includes(q) ||
+                            c.varieties?.toLowerCase().includes(q) ||
+                            (c.description && c.description.toLowerCase().includes(q))
+                          );
+                        })
+                        .map(c => (
+                          <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                            <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">🌾</span>
+                                <span className="font-bold">{c.name}</span>
+                              </div>
+                            </td>
+                            <td className="py-3.5 px-4">{c.category}</td>
+                            <td className="py-3.5 px-4 font-mono">{c.duration_days} Days</td>
+                            <td className="py-3.5 px-4">{c.expected_yield}</td>
+                            <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={c.varieties}>{c.varieties || 'N/A'}</td>
+                            <td className="py-3.5 px-4 text-right">
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => {
+                                    setSelectedCrop(c);
+                                    setCropForm({
+                                      name: c.name,
+                                      category: c.category,
+                                      duration_days: c.duration_days.toString(),
+                                      expected_yield: c.expected_yield,
+                                      description: c.description || '',
+                                      varieties: c.varieties || ''
+                                    });
+                                    setCropModalOpen(true);
+                                  }}
+                                  className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                                  title="Edit"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteCrop(c.id)}
+                                  className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-650 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>
@@ -1101,24 +1328,36 @@ export const AdminDashboard: React.FC = () => {
 
           {/* ACTIVE TAB: CROP STAGES */}
           {activeTab === 'stages' && (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm animate-in fade-in duration-300">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-md animate-in fade-in duration-300">
+              <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">
                     पिकांचे टप्पे (Crop Stages)
                   </h3>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-xs text-slate-400 font-bold uppercase">Filter By Crop:</span>
-                    <select
-                      value={selectedCropFilter}
-                      onChange={e => setSelectedCropFilter(e.target.value)}
-                      className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-855 dark:text-slate-200 text-xs font-bold focus:outline-none"
-                    >
-                      <option value="all">सर्व पीक प्रकार (All Crop Masters)</option>
-                      {crops.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-400 font-bold uppercase">Filter:</span>
+                      <select
+                        value={selectedCropFilter}
+                        onChange={e => setSelectedCropFilter(e.target.value)}
+                        className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-855 dark:text-slate-200 text-xs font-bold focus:outline-none"
+                      >
+                        <option value="all">सर्व पीक प्रकार (All Crops)</option>
+                        {crops.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        placeholder="टप्पा शोधा..."
+                        className="pl-9 pr-4 py-1.5 text-xs border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-805 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B5E20] dark:focus:ring-[#4CAF50] focus:border-transparent font-semibold w-full sm:w-48"
+                      />
+                    </div>
                   </div>
                 </div>
                 <button
@@ -1132,9 +1371,9 @@ export const AdminDashboard: React.FC = () => {
                     });
                     setStageModalOpen(true);
                   }}
-                  className="bg-[#1B5E20] hover:bg-[#124115] text-white font-extrabold text-sm px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors cursor-pointer self-start sm:self-center shadow-sm"
+                  className="bg-[#1B5E20] hover:bg-[#124115] text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer self-start md:self-center shadow-sm"
                 >
-                  <Plus className="w-4 h-4" /> Add Crop Stage
+                  <Plus className="w-3.5 h-3.5" /> Add Crop Stage
                 </button>
               </div>
 
@@ -1160,14 +1399,19 @@ export const AdminDashboard: React.FC = () => {
                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
                       {stages
                         .filter(s => selectedCropFilter === 'all' || s.crop_master_id === selectedCropFilter)
+                        .filter(s => {
+                          const q = searchTerm.toLowerCase();
+                          const cropName = crops.find(c => c.id === s.crop_master_id)?.name || '';
+                          return s.stage_name?.toLowerCase().includes(q) || cropName.toLowerCase().includes(q);
+                        })
                         .map(s => {
                           const cropName = crops.find(c => c.id === s.crop_master_id)?.name || 'Unknown Crop';
                           return (
                             <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                               <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{cropName}</td>
                               <td className="py-3.5 px-4 font-bold text-[#1B5E20] dark:text-[#4CAF50]">{s.stage_name}</td>
-                              <td className="py-3.5 px-4">Day {s.start_day}</td>
-                              <td className="py-3.5 px-4">Day {s.end_day}</td>
+                              <td className="py-3.5 px-4 font-mono">Day {s.start_day}</td>
+                              <td className="py-3.5 px-4 font-mono">Day {s.end_day}</td>
                               <td className="py-3.5 px-4 text-right">
                                 <div className="flex justify-end gap-2">
                                   <button
@@ -1207,24 +1451,36 @@ export const AdminDashboard: React.FC = () => {
 
           {/* ACTIVE TAB: DISEASES DATABASE */}
           {activeTab === 'diseases' && (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm animate-in fade-in duration-300">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-md animate-in fade-in duration-300">
+              <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">
                     रोग नियंत्रण (Diseases DB)
                   </h3>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-xs text-slate-400 font-bold uppercase">Filter By Crop:</span>
-                    <select
-                      value={selectedCropFilterForDiseases}
-                      onChange={e => setSelectedCropFilterForDiseases(e.target.value)}
-                      className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-855 dark:text-slate-200 text-xs font-bold focus:outline-none"
-                    >
-                      <option value="all">सर्व पीक प्रकार (All Crop Masters)</option>
-                      {crops.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-400 font-bold uppercase">Filter:</span>
+                      <select
+                        value={selectedCropFilterForDiseases}
+                        onChange={e => setSelectedCropFilterForDiseases(e.target.value)}
+                        className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-855 dark:text-slate-200 text-xs font-bold focus:outline-none"
+                      >
+                        <option value="all">सर्व पीक प्रकार (All Crops)</option>
+                        {crops.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        placeholder="रोगाचे नाव किंवा लक्षणे शोधा..."
+                        className="pl-9 pr-4 py-1.5 text-xs border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-805 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B5E20] dark:focus:ring-[#4CAF50] focus:border-transparent font-semibold w-full sm:w-52"
+                      />
+                    </div>
                   </div>
                 </div>
                 <button
@@ -1238,9 +1494,9 @@ export const AdminDashboard: React.FC = () => {
                     });
                     setDiseaseModalOpen(true);
                   }}
-                  className="bg-[#1B5E20] hover:bg-[#124115] text-white font-extrabold text-sm px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors cursor-pointer self-start sm:self-center shadow-sm"
+                  className="bg-[#1B5E20] hover:bg-[#124115] text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer self-start md:self-center shadow-sm"
                 >
-                  <Plus className="w-4 h-4" /> Add Disease Record
+                  <Plus className="w-3.5 h-3.5" /> Add Disease Record
                 </button>
               </div>
 
@@ -1266,12 +1522,17 @@ export const AdminDashboard: React.FC = () => {
                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
                       {diseases
                         .filter(d => selectedCropFilterForDiseases === 'all' || d.crop_master_id === selectedCropFilterForDiseases)
+                        .filter(d => {
+                          const q = searchTerm.toLowerCase();
+                          const cropName = crops.find(c => c.id === d.crop_master_id)?.name || '';
+                          return d.name?.toLowerCase().includes(q) || d.symptoms?.toLowerCase().includes(q) || cropName.toLowerCase().includes(q);
+                        })
                         .map(d => {
                           const cropName = crops.find(c => c.id === d.crop_master_id)?.name || 'Unknown Crop';
                           return (
                             <tr key={d.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                               <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{cropName}</td>
-                              <td className="py-3.5 px-4 font-bold text-red-600 dark:text-red-400">{d.name}</td>
+                              <td className="py-3.5 px-4 font-bold text-red-600 dark:text-red-400">🚨 {d.name}</td>
                               <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={d.symptoms}>{d.symptoms}</td>
                               <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={d.treatment}>{d.treatment}</td>
                               <td className="py-3.5 px-4 text-right">
@@ -1294,7 +1555,7 @@ export const AdminDashboard: React.FC = () => {
                                   </button>
                                   <button
                                     onClick={() => handleDeleteDisease(d.id)}
-                                    className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-650 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
+                                    className="p-1.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/40 text-red-655 dark:text-red-405 rounded-lg transition-colors cursor-pointer"
                                     title="Delete"
                                   >
                                     <Trash2 className="w-4 h-4" />
@@ -1313,24 +1574,36 @@ export const AdminDashboard: React.FC = () => {
 
           {/* ACTIVE TAB: PESTS DATABASE */}
           {activeTab === 'pests' && (
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm animate-in fade-in duration-300">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-md animate-in fade-in duration-300">
+              <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-6">
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">
                     कीड नियंत्रण (Pests DB)
                   </h3>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="text-xs text-slate-400 font-bold uppercase">Filter By Crop:</span>
-                    <select
-                      value={selectedCropFilterForPests}
-                      onChange={e => setSelectedCropFilterForPests(e.target.value)}
-                      className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-855 dark:text-slate-200 text-xs font-bold focus:outline-none"
-                    >
-                      <option value="all">सर्व पीक प्रकार (All Crop Masters)</option>
-                      {crops.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-400 font-bold uppercase">Filter:</span>
+                      <select
+                        value={selectedCropFilterForPests}
+                        onChange={e => setSelectedCropFilterForPests(e.target.value)}
+                        className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-850 text-slate-855 dark:text-slate-200 text-xs font-bold focus:outline-none"
+                      >
+                        <option value="all">सर्व पीक प्रकार (All Crops)</option>
+                        {crops.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        placeholder="कीटक किंवा नियंत्रण पद्धती शोधा..."
+                        className="pl-9 pr-4 py-1.5 text-xs border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-805 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1B5E20] dark:focus:ring-[#4CAF50] focus:border-transparent font-semibold w-full sm:w-52"
+                      />
+                    </div>
                   </div>
                 </div>
                 <button
@@ -1344,9 +1617,9 @@ export const AdminDashboard: React.FC = () => {
                     });
                     setPestModalOpen(true);
                   }}
-                  className="bg-[#1B5E20] hover:bg-[#124115] text-white font-extrabold text-sm px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors cursor-pointer self-start sm:self-center shadow-sm"
+                  className="bg-[#1B5E20] hover:bg-[#124115] text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer self-start md:self-center shadow-sm"
                 >
-                  <Plus className="w-4 h-4" /> Add Pest Record
+                  <Plus className="w-3.5 h-3.5" /> Add Pest Record
                 </button>
               </div>
 
@@ -1372,12 +1645,17 @@ export const AdminDashboard: React.FC = () => {
                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
                       {pests
                         .filter(p => selectedCropFilterForPests === 'all' || p.crop_master_id === selectedCropFilterForPests)
+                        .filter(p => {
+                          const q = searchTerm.toLowerCase();
+                          const cropName = crops.find(c => c.id === p.crop_master_id)?.name || '';
+                          return p.name?.toLowerCase().includes(q) || p.symptoms?.toLowerCase().includes(q) || cropName.toLowerCase().includes(q);
+                        })
                         .map(p => {
                           const cropName = crops.find(c => c.id === p.crop_master_id)?.name || 'Unknown Crop';
                           return (
                             <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                               <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{cropName}</td>
-                              <td className="py-3.5 px-4 font-bold text-amber-650 dark:text-amber-500">{p.name}</td>
+                              <td className="py-3.5 px-4 font-bold text-amber-650 dark:text-amber-500">🐛 {p.name}</td>
                               <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={p.symptoms}>{p.symptoms}</td>
                               <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={p.control_method}>{p.control_method}</td>
                               <td className="py-3.5 px-4 text-right">

@@ -39,5 +39,6 @@ router.get('/pests', AdminController.listPests);
 router.post('/pests', AdminController.createPest);
 router.put('/pests/:id', AdminController.updatePest);
 router.delete('/pests/:id', AdminController.deletePest);
+router.post('/weather-advisories/trigger', AdminController.triggerWeatherAdvisories);
 
 export default router;
