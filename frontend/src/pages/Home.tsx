@@ -555,15 +555,132 @@ export const Home: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { icon: <CalendarDays className="w-8 h-8" />, title: t('feat1Title') || 'Smart Schedules',   desc: t('feat1Desc'), color: 'from-emerald-500 to-green-400',  bg: 'bg-emerald-50 dark:bg-emerald-950/30',  iconColor: 'text-emerald-700 dark:text-emerald-400', accent: '#4CAF50' },
-            { icon: <Sprout      className="w-8 h-8" />, title: t('feat2Title') || 'Crop Management',    desc: t('feat2Desc'), color: 'from-green-600 to-teal-500',     bg: 'bg-green-50 dark:bg-green-950/30',      iconColor: 'text-green-700 dark:text-green-400',   accent: '#059669' },
-            { icon: <CloudSun   className="w-8 h-8" />, title: t('feat3Title') || 'Weather Alerts',     desc: t('feat3Desc'), color: 'from-amber-500 to-yellow-400',   bg: 'bg-amber-50 dark:bg-amber-950/30',      iconColor: 'text-amber-700 dark:text-amber-400',   accent: '#F59E0B' },
-            { icon: <MapPin     className="w-8 h-8" />, title: t('feat4Title') || 'Nearby Shops',       desc: t('feat4Desc'), color: 'from-blue-500 to-cyan-400',      bg: 'bg-blue-50 dark:bg-blue-950/30',        iconColor: 'text-blue-700 dark:text-blue-400',     accent: '#3B82F6' },
-            { icon: <Award      className="w-8 h-8" />, title: t('feat5Title') || 'Expert Advice',      desc: t('feat5Desc'), color: 'from-purple-500 to-violet-400',  bg: 'bg-purple-50 dark:bg-purple-950/30',    iconColor: 'text-purple-700 dark:text-purple-400', accent: '#8B5CF6' },
-            { icon: <TrendingUp className="w-8 h-8" />, title: t('feat6Title') || 'Market Insights',    desc: t('feat6Desc'), color: 'from-orange-500 to-rose-400',    bg: 'bg-orange-50 dark:bg-orange-950/30',    iconColor: 'text-orange-700 dark:text-orange-400', accent: '#F97316' },
+            {
+              icon: <CalendarDays className="w-8 h-8" />,
+              title: t('feat1Title') || 'Smart Schedules',
+              desc: t('feat1Desc'),
+              color: 'from-emerald-500 to-green-400',
+              bg: 'bg-emerald-50 dark:bg-emerald-950/30',
+              iconColor: 'text-emerald-700 dark:text-emerald-400',
+              accent: '#4CAF50',
+              img: '',
+              details: {
+                en: "Automated Crop Stage Calculator computes the exact developmental stage of your crop based on its sowing date. This helps you understand when the crop is in vegetative, flowering, or maturity stages without reference to manual sheets.",
+                mr: "स्वयंचलित पीक वाढ मोजणी यंत्र तुमच्या पिकाची पेरणीच्या तारखेनुसार अचूक वाढीची अवस्था मोजते. यामुळे तुम्हाला मॅन्युअल पत्रके न पाहता पीक शाकीय वाढीच्या, फुलोऱ्याच्या किंवा परिपक्वतेच्या टप्प्यात कधी आहे हे समजण्यास मदत होते.",
+                hi: "स्वचालित फसल चरण कैलकुलेटर आपकी बुवाई की तारीख के आधार पर आपकी फसल के विकास के सटीक चरण की गणना करता है। यह आपको संदर्भ पुस्तिकाओं के बिना यह समझने में मदद करता है कि फसल वानस्पतिक, पुष्पन या परिपक्वता अवस्था में कब है।"
+              },
+              benefits: {
+                en: ["No manual calculations or guesswork required", "Automatic milestone tracking from sowing to harvest", "Timely agricultural actions based on precise stages"],
+                mr: ["कोणत्याही मॅन्युअल मोजणी किंवा तर्काची गरज नाही", "पेरणीपासून काढणीपर्यंत स्वयंचलित लक्ष्यांचा मागोवा", "अचूक टप्प्यांवर आधारित वेळेवर कृषी कृती"],
+                hi: ["किसी भी मैन्युअल गणना या अनुमान की आवश्यकता नहीं है", "बुवाई से लेकर कटाई तक स्वचालित मील के पत्थर की ट्रैकिंग", "सटीक चरणों के आधार पर समय पर कृषि कार्य"]
+              }
+            },
+            {
+              icon: <Sprout className="w-8 h-8" />,
+              title: t('feat2Title') || 'Crop Management',
+              desc: t('feat2Desc'),
+              color: 'from-green-600 to-teal-500',
+              bg: 'bg-green-50 dark:bg-green-950/30',
+              iconColor: 'text-green-700 dark:text-green-400',
+              accent: '#059669',
+              img: '',
+              details: {
+                en: "Get customized fertilizer and prevention spray recommendations based on the active growth stage of your crops. Boost yield and prevent common deficiencies and diseases before they manifest.",
+                mr: "तुमच्या पिकांच्या सक्रिय वाढीच्या टप्प्यावर आधारित कस्टमाइज्ड खते आणि प्रतिबंधात्मक फवारणीच्या शिफारसी मिळवा. पिकाचे उत्पादन वाढवा आणि सामान्य कमतरता व रोग उद्भवण्यापूर्वीच रोखा.",
+                hi: "अपनी फसलों के सक्रिय विकास चरण के आधार पर अनुकूलित उर्वरक और निवारक छिड़काव की सिफारिशें प्राप्त करें। उपज बढ़ाएं और सामान्य कमियों और रोगों को प्रकट होने से पहले रोकें।"
+              },
+              benefits: {
+                en: ["Stage-specific fertilizer dosage guidance", "Disease prevention through timed sprays", "Optimized fertilizer utilization to reduce overall cultivation costs"],
+                mr: ["टप्प्यानुसार खतांच्या मात्रेचे अचूक मार्गदर्शन", "वेळेवर फवारणीद्वारे रोग प्रतिबंध", "शेतीचा एकूण खर्च कमी करण्यासाठी खतांचा इष्टतम वापर"],
+                hi: ["चरण-विशिष्ट उर्वरक खुराक मार्गदर्शन", "समय पर छिड़काव के माध्यम से रोग की रोकथाम", "कुल खेती की लागत को कम करने के लिए उर्वरक का इष्टतम उपयोग"]
+              }
+            },
+            {
+              icon: <CloudSun className="w-8 h-8" />,
+              title: t('feat3Title') || 'Weather Alerts',
+              desc: t('feat3Desc'),
+              color: 'from-amber-500 to-yellow-400',
+              bg: 'bg-amber-50 dark:bg-amber-950/30',
+              iconColor: 'text-amber-700 dark:text-amber-400',
+              accent: '#F59E0B',
+              img: '',
+              details: {
+                en: "Get precise weather warnings customized for your Taluka/Village. Our automated scanner analyzes cloud cover and rain forecasts to warn you against spraying or applying fertilizers when rain is imminent.",
+                mr: "तुमच्या तालुक्यासाठी/गावासाठी कस्टमाइज्ड अचूक हवामान इशारे मिळवा. आमची स्वयंचलित प्रणाली ढगांचे आच्छादन आणि पावसाच्या अंदाजाचे विश्लेषण करून पाऊस पडणार असल्यास फवारणी किंवा खत न देण्याचा इशारा देते.",
+                hi: "अपने तालुका/गाँव के लिए अनुकूलित सटीक मौसम चेतावनी प्राप्त करें। हमारा स्वचालित स्कैनर बादलों के आवरण और बारिश के पूर्वानुमान का विश्लेषण करता है ताकि बारिश होने पर छिड़काव या उर्वरक न लगाने की चेतावनी दी जा सके।"
+              },
+              benefits: {
+                en: ["Rain and storm forecasts up to 3 days in advance", "Prevent chemical and spray wash-off by postponing applications", "Real-time alerts customized to location"],
+                mr: ["३ दिवस आधीच पावसाचा आणि वादळाचा अचूक अंदाज", "फवारणी वाहून जाणे टाळण्यासाठी कामे पुढे ढकलण्याचा सल्ला", "तुमच्या स्थानानुसार रिअल-टाइम इशारे"],
+                hi: ["3 दिन पहले तक बारिश और तूफान का सटीक पूर्वानुमान", "छिड़काव के बह जाने से बचने के लिए कार्यों को स्थगित करने की सलाह", "आपके स्थान के अनुसार रीयल-टाइम अलर्ट"]
+              }
+            },
+            {
+              icon: <MapPin className="w-8 h-8" />,
+              title: t('feat4Title') || 'Nearby Shops',
+              desc: t('feat4Desc'),
+              color: 'from-blue-500 to-cyan-400',
+              bg: 'bg-blue-50 dark:bg-blue-950/30',
+              iconColor: 'text-blue-700 dark:text-blue-400',
+              accent: '#3B82F6',
+              img: '',
+              details: {
+                en: "Browse and discover licensed Krushi Seva Kendra and agro dealers near your taluka. Verify availability of seeds, fertilizers, and pesticide brands along with official prices before visiting the store.",
+                mr: "तुमच्या तालुक्या जवळील परवानाधारक कृषी सेवा केंद्रे आणि विक्रेते शोधा. दुकानात जाण्यापूर्वी बियाणे, खते आणि कीटकनाशक ब्रँड्सची उपलब्धता आणि अधिकृत किमती तपासा.",
+                hi: "अपने तालुका के पास लाइसेंस प्राप्त कृषि सेवा केंद्रों and डीलरों को खोजें। दुकान पर जाने से पहले बीजों, उर्वरकों और कीटनाशक ब्रांडों की उपलब्धता और आधिकारिक कीमतों की जांच करें।"
+              },
+              benefits: {
+                en: ["Map and contact details of verified local shops", "Direct stock catalog verification", "Saves transport cost and prevents out-of-stock trips"],
+                mr: ["प्रमाणित स्थानिक दुकानांचे नकाशे आणि संपर्क माहिती", "थेट स्टॉक कॅटलॉग तपासण्याची सुविधा", "वाहतूक खर्चाची बचत आणि रिक्त फेऱ्या टळतात"],
+                hi: ["सत्यापित स्थानीय दुकानों के नक्शे और संपर्क विवरण", "सीधे स्टॉक कैटलॉग की जांच करने की सुविधा", "परिवहन लागत की बचत और खाली चक्करों से बचाव"]
+              }
+            },
+            {
+              icon: <Award className="w-8 h-8" />,
+              title: t('feat5Title') || 'Expert Advice',
+              desc: t('feat5Desc'),
+              color: 'from-purple-500 to-violet-400',
+              bg: 'bg-purple-50 dark:bg-purple-950/30',
+              iconColor: 'text-purple-700 dark:text-purple-400',
+              accent: '#8B5CF6',
+              img: '',
+              details: {
+                en: "Ask agronomy experts and scientists for solutions to your crop problems. Upload photo logs of damaged leaves or pests to get verified organic and chemical treatments within a short span.",
+                mr: "तुमच्या पिकांच्या समस्यांसाठी कृषी तज्ज्ञ आणि शास्त्रज्ञांकडून उत्तरे मिळवा. काही वेळातच प्रमाणित सेंद्रिय आणि रासायनिक उपाय मिळवण्यासाठी बाधित पानांचे किंवा किडींचे फोटो अपलोड करा.",
+                hi: "अपनी फसल की समस्याओं के लिए कृषि विशेषज्ञों और वैज्ञानिकों से समाधान प्राप्त करें। कम समय में सत्यापित जैविक और रासायनिक उपचार प्राप्त करने के लिए प्रभावित पत्तियों या कीटों की तस्वीरें अपलोड करें।"
+              },
+              benefits: {
+                en: ["Direct connectivity to certified agricultural experts", "Leaf symptom analysis and photo uploading", "Custom remedial action plans"],
+                mr: ["प्रमाणित कृषी तज्ज्ञांशी थेट संपर्क", "पानांची लक्षणे तपासून अचूक मार्गदर्शन", "कस्टमाइज्ड उपाय योजना"],
+                hi: ["प्रमाणित कृषि विशेषज्ञों से सीधे संपर्क", "पत्तियों के लक्षणों की जांच कर सटीक मार्गदर्शन", "अनुकूलित उपचारात्मक कार्य योजना"]
+              }
+            },
+            {
+              icon: <TrendingUp className="w-8 h-8" />,
+              title: t('feat6Title') || 'Market Insights',
+              desc: t('feat6Desc'),
+              color: 'from-orange-500 to-rose-400',
+              bg: 'bg-orange-50 dark:bg-orange-950/30',
+              iconColor: 'text-orange-700 dark:text-orange-400',
+              accent: '#F97316',
+              img: '',
+              details: {
+                en: "Access live APMC market rates (mandi bhav) for crops in major markets across Maharashtra. Track price trends, high/low indices, and demand signals to sell your produce at the maximum profit.",
+                mr: "महाराष्ट्रातील प्रमुख बाजारपेठांमधील पिकांचे थेट APMC बाजारभाव (बाजार समिती दर) मिळवा. पिकाला जास्तीत जास्त नफा मिळवण्यासाठी किमतींचे ट्रेंड आणि मागणी तपासा.",
+                hi: "महाराष्ट्र के प्रमुख बाजारों में फसलों के लाइव APMC बाजार भाव प्राप्त करें। फसल को अधिकतम लाभ पर बेचने के लिए मूल्य प्रवृत्तियों और मांग की जांच करें।"
+              },
+              benefits: {
+                en: ["Live market rates from nearest Mandis", "Historical price comparison graphs", "Decision support on when and where to sell to maximize profit"],
+                mr: ["जवळच्या बाजार समित्यांमधील थेट बाजारभाव", "किंमतींच्या ऐतिहासिक बदलांचे आलेख", "जास्तीत जास्त नफ्यासाठी केव्हा आणि कुठे विकावे याबद्दल मार्गदर्शन"],
+                hi: ["निकटतम मंडियों से लाइव बाजार भाव", "मूल्य परिवर्तनों के ऐतिहासिक आलेख", "अधिकतम लाभ के लिए कब और कहाँ बेचना है, इस पर निर्णय मार्गदर्शन"]
+              }
+            }
           ].map((feat, idx) => (
             <ScrollReveal key={idx} delay={idx * 80}>
-              <div className="group relative bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100/80 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-400 hover:-translate-y-3 overflow-hidden text-left h-full cursor-default">
+              <div 
+                onClick={() => setActiveShowcaseCard(feat as any)}
+                className="group relative bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100/80 dark:border-slate-800 shadow-sm hover:shadow-2xl transition-all duration-400 hover:-translate-y-3 hover:scale-[1.02] overflow-hidden text-left h-full cursor-pointer"
+              >
                 {/* Gradient top bar */}
                 <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${feat.color} transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500`}></div>
                 {/* Subtle glow on hover */}
@@ -1365,12 +1482,21 @@ export const Home: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-12 gap-8 p-6 md:p-8">
               {/* Image Column */}
-              <div className="md:col-span-5 relative overflow-hidden rounded-2xl aspect-video md:aspect-square shadow-md">
-                <img 
-                  src={activeShowcaseCard.img} 
-                  alt={activeShowcaseCard.title} 
-                  className="w-full h-full object-cover" 
-                />
+              <div className="md:col-span-5 relative overflow-hidden rounded-2xl aspect-video md:aspect-square shadow-md flex items-center justify-center bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
+                {activeShowcaseCard.img ? (
+                  <img 
+                    src={activeShowcaseCard.img} 
+                    alt={activeShowcaseCard.title} 
+                    className="w-full h-full object-cover" 
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-6 text-center">
+                    <div className="p-6 bg-[#4CAF50]/10 text-[#1B5E20] dark:text-[#4CAF50] rounded-3xl mb-4 shadow-inner">
+                      <Leaf className="w-16 h-16 animate-pulse" />
+                    </div>
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Feature Spotlight</span>
+                  </div>
+                )}
               </div>
 
               {/* Details Column */}
