@@ -1,0 +1,16 @@
+node_modules
+frontend/node_modules
+backend/node_modules
+frontend/dist
+backend/dist
+.git
+*.log
+backend/check_*.js
+backend/check_*.ts
+backend/test_*.js
+backend/test-supa.ts
+check_users.js
+check_shop_products.js
+fix.js
+update_ui.js
+scratch_restore_dashboard.py
