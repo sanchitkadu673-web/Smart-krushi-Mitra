@@ -6,6 +6,11 @@ import { Navbar } from '../components/navigation/Navbar';
 import { ShieldCheck, CloudSun, CalendarDays, Sprout, Milestone, HelpCircle, ArrowRight, Leaf, Users, Tractor, BarChart3, Star, MapPin, Building2, X, TrendingUp, Award, Zap, Globe, ChevronDown, Phone, Mail, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import imgCropSchedule from '../assets/images/crop_schedule.png';
+import imgWeatherAdvisory from '../assets/images/weather_advisory.png';
+import imgShopInventory from '../assets/images/shop_inventory.png';
+import imgExpertAdvice from '../assets/images/expert_advice.png';
+import imgDiseaseDiagnosis from '../assets/images/disease_diagnosis.png';
 
 // ─── Animated Counter Hook ───────────────────────────────────────────────────
 function useCountUp(target: number, duration = 1800, start = false) {
@@ -716,7 +721,7 @@ export const Home: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
             {[
               {
-                img: '/images/crop_schedule.png',
+                img: imgCropSchedule,
                 title: i18n.language === 'mr' ? 'AI पीक वेळापत्रक' : i18n.language === 'hi' ? 'AI फसल अनुसूची' : 'AI Crop Calendars',
                 desc: i18n.language === 'mr' ? 'पेरणीच्या तारखेनुसार खते, फवारणी आणि पाण्याच्या व्यवस्थापनाचे वेळापत्रक.' : i18n.language === 'hi' ? 'बुवाई की तारीख के अनुसार उर्वरक, छिड़काव और पानी के प्रबंधन का कार्यक्रम।' : 'Step-by-step schedules for seed sowing, fertilizers, spraying, and irrigation based on sowing date.',
                 details: {
@@ -743,7 +748,7 @@ export const Home: React.FC = () => {
                 }
               },
               {
-                img: '/images/weather_advisory.png',
+                img: imgWeatherAdvisory,
                 title: i18n.language === 'mr' ? 'हवामान व पीक सल्ला' : i18n.language === 'hi' ? 'मौसम और फसल सलाह' : 'Weather Insights & Alerts',
                 desc: i18n.language === 'mr' ? 'पाऊस आणि हवामानाचा अचूक अंदाज, जेणेकरून औषधांची फवारणी वाया जाणार नाही.' : i18n.language === 'hi' ? 'बारिश और मौसम का सटीक पूर्वानुमान, ताकि कीटनाशकों का छिड़काव व्यर्थ न जाए।' : 'Real-time weather updates with automatic rain alerts to avoid spray washes and save costs.',
                 details: {
@@ -770,7 +775,7 @@ export const Home: React.FC = () => {
                 }
               },
               {
-                img: '/images/shop_inventory.png',
+                img: imgShopInventory,
                 title: i18n.language === 'mr' ? 'कृषी केंद्र साठा' : i18n.language === 'hi' ? 'कृषि केंद्र स्टॉक' : 'Real-time Shop Stock',
                 desc: i18n.language === 'mr' ? 'जवळच्या कृषी केंद्रांमधील खते व बियाणांची उपलब्धता आणि दर घरबसल्या तपासा.' : i18n.language === 'hi' ? 'पास के कृषि केंद्रों में उर्वरकों और बीजों की उपलब्धता और कीमतें घर बैठे जांचें।' : 'Check local shop seed and fertilizer availability and prices in real-time before visiting.',
                 details: {
@@ -797,7 +802,7 @@ export const Home: React.FC = () => {
                 }
               },
               {
-                img: '/images/expert_advice.png',
+                img: imgExpertAdvice,
                 title: i18n.language === 'mr' ? 'कृषी तज्ज्ञ मार्गदर्शन' : i18n.language === 'hi' ? 'कृषि विशेषज्ञ सलाह' : 'Expert Advisory Q&A',
                 desc: i18n.language === 'mr' ? 'पिकावरील रोग व किडींच्या नियंत्रणासाठी थेट पात्र कृषी तज्ज्ञांकडून मार्गदर्शन मिळवा.' : i18n.language === 'hi' ? 'फसल के रोगों और कीटों के नियंत्रण के लिए सीधे योग्य कृषि विशेषज्ञों से सलाह लें।' : 'Connect directly with certified agriculture experts to solve crop diseases and receive instant remedies.',
                 details: {
@@ -824,7 +829,7 @@ export const Home: React.FC = () => {
                 }
               },
               {
-                img: '/images/disease_diagnosis.png',
+                img: imgDiseaseDiagnosis,
                 title: i18n.language === 'mr' ? 'रोग व कीड नियंत्रण' : i18n.language === 'hi' ? 'रोग और कीट नियंत्रण' : 'Crop Disease Diagnosis',
                 desc: i18n.language === 'mr' ? 'पिकांवरील विविध रोग आणि किडींचे फोटो पाहून त्वरित निदान करा आणि योग्य उपाय शोधा.' : i18n.language === 'hi' ? 'फसलों पर विभिन्न रोगों और कीटों की तस्वीरें देखकर तुरंत निदान करें और उचित उपचार खोजें।' : 'Searchable database outlining crop diseases, symptoms, and organic or chemical spray recommendations.',
                 details: {
