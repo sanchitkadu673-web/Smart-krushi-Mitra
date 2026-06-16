@@ -13,7 +13,7 @@ const supabaseUrl = process.env.SUPABASE_URL || 'https://your-supabase-project.s
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'your-service-role-key';
 const isPlaceholder = supabaseUrl.includes('your-supabase-project') ||
     supabaseServiceKey.includes('your-service-role-key') ||
-    !supabaseServiceKey.startsWith('ey');
+    (!supabaseServiceKey.startsWith('ey') && !supabaseServiceKey.startsWith('sb_secret_'));
 const db = {
     profiles: [
         {

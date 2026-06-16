@@ -10,7 +10,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'your-servic
 
 const isPlaceholder = supabaseUrl.includes('your-supabase-project') || 
                       supabaseServiceKey.includes('your-service-role-key') ||
-                      !supabaseServiceKey.startsWith('ey');
+                      (!supabaseServiceKey.startsWith('ey') && !supabaseServiceKey.startsWith('sb_secret_'));
 
 const db: Record<string, any[]> = {
   profiles: [
