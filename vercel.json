@@ -1,14 +1,8 @@
 {
-  "experimentalServices": {
-    "frontend": {
-      "framework": "vite",
-      "buildCommand": "npm install && npm run build",
-      "rootDirectory": "frontend"
-    },
-    "backend": {
-      "buildCommand": "npm install && npm run build",
-      "startCommand": "node dist/index.js",
-      "rootDirectory": "backend"
-    }
-  }
+  "version": 2,
+  "buildCommand": "cd frontend && npm install && npm run build",
+  "outputDirectory": "frontend/dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
