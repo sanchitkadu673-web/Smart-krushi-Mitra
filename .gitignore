@@ -52,3 +52,5 @@ check_users.js
 fix.js
 scratch_restore_dashboard.py
 update_ui.js
+
+.vercel
