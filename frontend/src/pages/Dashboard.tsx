@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import {
-  CloudRain, Compass, Calendar, PlusCircle, AlertCircle,
+  CloudRain, Compass, Calendar, PlusCircle, AlertCircle, AlertTriangle,
   RefreshCw, Sprout, Wind, Droplets, Thermometer,
   Sun, Cloud, CloudLightning, Snowflake, Eye, Building2, MapPin,
   LayoutDashboard, User, LogOut, Bell, Menu, X, Home, ChevronRight, Globe
@@ -451,6 +451,72 @@ export const Dashboard: React.FC = () => {
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
+          </div>
+        </div>
+
+        {/* ── LIVE WEATHER ALERT TICKER ── */}
+        <div className="bg-[#2D0A0A] border-b border-red-500/20 overflow-hidden shrink-0">
+          <div className="flex items-center">
+            {/* Label Badge */}
+            <div className="shrink-0 bg-[#D32F2F] text-white text-xs font-black px-4 py-3 flex items-center gap-2 z-10 select-none">
+              <span className="w-2 h-2 bg-white rounded-full animate-ping shrink-0"></span>
+              <AlertTriangle className="w-4 h-4 text-white animate-pulse shrink-0" />
+              <span className="whitespace-nowrap">
+                {i18n.language === 'mr' ? 'हवामान इशारा' : i18n.language === 'hi' ? 'मौसम चेतावनी' : 'WEATHER ALERT'}
+              </span>
+            </div>
+            {/* Scrolling Ticker */}
+            <div className="overflow-hidden flex-1 relative min-w-0">
+              <div className="animate-marquee py-3 flex whitespace-nowrap">
+                {[
+                  {
+                    mr: '🌦️ पुणे: पुढील २४ तासांत मुसळधार पावसाची शक्यता. काढणी केलेले पीक सुरक्षित ठिकाणी ठेवा.',
+                    hi: '🌦️ पुणे: अगले 24 घंटों में भारी बारिश की संभावना। कटी हुई फसलों को सुरक्षित रखें।',
+                    en: '🌦️ Pune: Heavy rainfall expected in the next 24 hours. Keep harvested crops safe.'
+                  },
+                  {
+                    mr: '💨 नाशिक: ताशी ४० किमी वेगाने वारे वाहण्याची शक्यता. औषध फवारणी टाळावी.',
+                    hi: '💨 नाशिक: 40 किमी/घंटा की रफ्तार से तेज हवाएं। कीटनाशक छिड़काव से बचें।',
+                    en: '💨 Nashik: Strong winds up to 40 km/h. Avoid spraying pesticides.'
+                  },
+                  {
+                    mr: '🌧️ कोल्हापूर: मध्यम ते मुसळधार पाऊस. शेतातून पाण्याचा निचरा योग्य ठेवा.',
+                    hi: '🌧️ कोल्हापुर: मध्यम से भारी बारिश। खेतों में जल निकासी की उचित व्यवस्था करें।',
+                    en: '🌧️ Kolhapur: Moderate to heavy rain showers. Ensure proper field drainage.'
+                  },
+                  {
+                    mr: '☀️ नागपूर: तीव्र उष्णतेचा इशारा. जनावरांना सावलीत ठेवा व पिकांना पाणी द्या.',
+                    hi: '☀️ नागपुर: अत्यधिक गर्मी की चेतावनी। पशुधन को छांव में रखें और फसलों की सिंचाई करें।',
+                    en: '☀️ Nagpur: High temperature warning. Keep livestock in shade and irrigate crops.'
+                  },
+                  {
+                    mr: '🌦️ पुणे: पुढील २४ तासांत मुसळधार पावसाची शक्यता. काढणी केलेले पीक सुरक्षित ठिकाणी ठेवा.',
+                    hi: '🌦️ पुणे: अगले 24 घंटों में भारी बारिश की संभावना। कटी हुई फसलों को सुरक्षित रखें।',
+                    en: '🌦️ Pune: Heavy rainfall expected in the next 24 hours. Keep harvested crops safe.'
+                  },
+                  {
+                    mr: '💨 नाशिक: ताशी ४० किमी वेगाने वारे वाहण्याची शक्यता. औषध फवारणी टाळावी.',
+                    hi: '💨 नाशिक: 40 किमी/घंटा की रफ्तार से तेज हवाएं। कीटनाशक छिड़काव से बचें।',
+                    en: '💨 Nashik: Strong winds up to 40 km/h. Avoid spraying pesticides.'
+                  },
+                  {
+                    mr: '🌧️ कोल्हापूर: मध्यम ते मुसळधार पाऊस. शेतातून पाण्याचा निचरा योग्य ठेवा.',
+                    hi: '🌧️ कोल्हापुर: मध्यम से भारी बारिश। खेतों में जल निकासी की उचित व्यवस्था करें।',
+                    en: '🌧️ Kolhapur: Moderate to heavy rain showers. Ensure proper field drainage.'
+                  },
+                  {
+                    mr: '☀️ नागपूर: तीव्र उष्णतेचा इशारा. जनावरांना सावलीत ठेवा व पिकांना पाणी द्या.',
+                    hi: '☀️ नागपुर: अत्यधिक गर्मी की चेतावनी। पशुधन को छांव में रखें और फसलों की सिंचाई करें।',
+                    en: '☀️ Nagpur: High temperature warning. Keep livestock in shade and irrigate crops.'
+                  }
+                ].map((item, i) => (
+                  <div key={i} className="shrink-0 flex items-center gap-3 mx-8 text-red-100 font-medium text-sm">
+                    <span>{i18n.language === 'mr' ? item.mr : i18n.language === 'hi' ? item.hi : item.en}</span>
+                    <span className="text-red-500/30 text-lg ml-4">|</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 

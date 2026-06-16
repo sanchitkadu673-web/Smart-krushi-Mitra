@@ -238,7 +238,7 @@ export const Register: React.FC = () => {
             )}
 
             {/* STATE & DISTRICT */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-bold text-[#1A2E1A] dark:text-white mb-2">
                   {t('state')}
@@ -281,7 +281,7 @@ export const Register: React.FC = () => {
             </div>
 
             {/* TALUKA & VILLAGE */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-bold text-[#1A2E1A] dark:text-white mb-2">
                   {t('taluka')}

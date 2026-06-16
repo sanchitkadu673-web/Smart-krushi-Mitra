@@ -390,7 +390,7 @@ export const CropDetails: React.FC = () => {
         {/* Tabs and Details */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Navigation tab links */}
-          <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm h-fit space-y-1">
+          <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm h-fit flex lg:flex-col overflow-x-auto lg:overflow-x-visible whitespace-nowrap lg:whitespace-normal gap-2 lg:space-y-1 pb-3 lg:pb-4 scrollbar-none">
             {[
               { id: 'master_chart', label: i18n.language === 'mr' ? 'संपूर्ण वेळापत्रक' : i18n.language === 'hi' ? 'संपूर्ण अनुसूची' : 'Master Chart', icon: Calendar },
               { id: 'ai_schedule', label: i18n.language === 'mr' ? 'AI स्मार्ट वेळापत्रक' : i18n.language === 'hi' ? 'AI स्मार्ट अनुसूची' : 'AI Smart Schedule', icon: Sparkles },
@@ -405,7 +405,7 @@ export const CropDetails: React.FC = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`w-full text-left px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2.5 ${
+                  className={`px-4 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2.5 shrink-0 lg:shrink lg:w-full text-left ${
                     activeTab === tab.id 
                       ? 'bg-primary text-white shadow-sm' 
                       : 'text-gray-600 hover:bg-gray-50'
@@ -427,7 +427,7 @@ export const CropDetails: React.FC = () => {
                 </div>
                 
                 {/* Summary Statistics */}
-                <div className="grid grid-cols-3 gap-4 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                   <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 text-center">
                     <span className="block text-2xl font-black text-primary">{recommendations.allFertilizers?.length || 0}</span>
                     <span className="text-xs font-bold text-gray-600 uppercase mt-1">{i18n.language === 'mr' ? 'एकूण खत वेळा' : i18n.language === 'hi' ? 'कुल उर्वरक समय' : 'Fertilizer Times'}</span>

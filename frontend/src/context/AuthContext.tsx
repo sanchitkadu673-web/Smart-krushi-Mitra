@@ -30,16 +30,22 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(sessionStorage.getItem('token'));
   const [profile, setProfile] = useState<Profile | null>(() => {
     try {
-      const saved = localStorage.getItem('profile');
+      const saved = sessionStorage.getItem('profile');
       return saved && saved !== 'undefined' ? JSON.parse(saved) : null;
     } catch {
       return null;
     }
   });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    // Clear legacy localStorage authentication keys to ensure no persistent sessions from previous versions
+    localStorage.removeItem('token');
+    localStorage.removeItem('profile');
+  }, []);
 
   useEffect(() => {
     if (token) {
@@ -55,8 +61,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await axios.post('/api/auth/verify-otp', { ...credentials, otp });
       const { token: receivedToken, profile: receivedProfile } = response.data;
       
-      localStorage.setItem('token', receivedToken);
-      localStorage.setItem('profile', JSON.stringify(receivedProfile));
+      sessionStorage.setItem('token', receivedToken);
+      sessionStorage.setItem('profile', JSON.stringify(receivedProfile));
       
       setToken(receivedToken);
       setProfile(receivedProfile);
@@ -74,8 +80,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await axios.post('/api/auth/login-password', { mobile, password });
       const { token: receivedToken, profile: receivedProfile } = response.data;
       
-      localStorage.setItem('token', receivedToken);
-      localStorage.setItem('profile', JSON.stringify(receivedProfile));
+      sessionStorage.setItem('token', receivedToken);
+      sessionStorage.setItem('profile', JSON.stringify(receivedProfile));
       
       setToken(receivedToken);
       setProfile(receivedProfile);
@@ -108,14 +114,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('profile');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('profile');
     setToken(null);
     setProfile(null);
   };
 
   const updateProfileState = (updatedProfile: Profile) => {
-    localStorage.setItem('profile', JSON.stringify(updatedProfile));
+    sessionStorage.setItem('profile', JSON.stringify(updatedProfile));
     setProfile(updatedProfile);
   };
 

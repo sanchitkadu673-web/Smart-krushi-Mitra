@@ -148,22 +148,22 @@ export const ManageProducts: React.FC = () => {
       <Navbar />
       
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">Manage Inventory</h1>
             <p className="text-gray-500 mt-1">Add or update your shop products.</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
             <button
               onClick={triggerFileSelect}
-              className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer border border-amber-400/20"
+              className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer border border-amber-400/20 flex-1 sm:flex-none"
             >
               <Sparkles className="w-5 h-5 text-white animate-pulse" />
               <span>Scan Bill / बिल स्कॅन करा</span>
             </button>
             <button 
               onClick={() => setShowAddForm(!showAddForm)}
-              className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              className="bg-primary hover:bg-primary-dark text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer flex-1 sm:flex-none"
             >
               {showAddForm ? 'Cancel' : <><Plus className="w-5 h-5" /> Add Product</>}
             </button>
@@ -216,7 +216,7 @@ export const ManageProducts: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-gray-50 text-gray-600 text-sm border-b border-gray-200">
+                  <tr className="bg-gray-50 text-gray-600 text-sm border-b border-gray-200 whitespace-nowrap">
                     <th className="p-4 font-semibold">Product</th>
                     <th className="p-4 font-semibold">Category</th>
                     <th className="p-4 font-semibold">Price</th>
@@ -226,7 +226,7 @@ export const ManageProducts: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {products.map(product => (
-                    <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={product.id} className="hover:bg-gray-50 transition-colors whitespace-nowrap">
                       <td className="p-4">
                         <div className="font-bold text-gray-900">{product.name}</div>
                         <div className="text-sm text-gray-500">{product.company}</div>
@@ -370,10 +370,10 @@ export const ManageProducts: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="max-h-[300px] overflow-y-auto border border-slate-100 rounded-2xl mb-6">
+                <div className="max-h-[300px] overflow-y-auto overflow-x-auto border border-slate-100 rounded-2xl mb-6">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase text-xs">
+                      <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase text-xs whitespace-nowrap">
                         <th className="py-2.5 px-4">Item Name</th>
                         <th className="py-2.5 px-4">Company</th>
                         <th className="py-2.5 px-4">Qty Added</th>
@@ -383,7 +383,7 @@ export const ManageProducts: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-slate-50 font-medium text-slate-700">
                       {scanResults.map((item, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50/50">
+                        <tr key={idx} className="hover:bg-slate-50/50 whitespace-nowrap">
                           <td className="py-2.5 px-4 font-bold text-slate-900">{item.name}</td>
                           <td className="py-2.5 px-4">{item.company}</td>
                           <td className="py-2.5 px-4 font-bold text-emerald-600">+{item.quantity}</td>

@@ -310,7 +310,7 @@ export const ShopDashboard: React.FC = () => {
       )}
 
       {/* Main Content Pane */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:pl-0' : 'md:pl-64'}`}>
+      <div className={`flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:pl-0' : 'md:pl-64'}`}>
         <Navbar />
         
         {/* Top Hero Banner */}
@@ -348,7 +348,8 @@ export const ShopDashboard: React.FC = () => {
           </div>
         </div>
 
-           {/* Stats Grid */}
+        <main className="p-4 md:p-8 flex-grow min-w-0">
+          {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-8">
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-4 hover:shadow-md transition-all">
               <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
@@ -437,7 +438,7 @@ export const ShopDashboard: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase text-xs">
+                      <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase text-xs whitespace-nowrap">
                         <th className="py-3 px-4">Product Name</th>
                         <th className="py-3 px-4">Company</th>
                         <th className="py-3 px-4">Category</th>
@@ -449,7 +450,7 @@ export const ShopDashboard: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-slate-50 font-medium text-slate-700">
                       {filteredProducts.map(p => (
-                        <tr key={p.id} className="hover:bg-slate-50/80">
+                        <tr key={p.id} className="hover:bg-slate-50/80 whitespace-nowrap">
                           <td className="py-3.5 px-4 font-bold text-slate-900">{p.name}</td>
                           <td className="py-3.5 px-4">{p.company}</td>
                           <td className="py-3.5 px-4">
@@ -494,7 +495,8 @@ export const ShopDashboard: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        </main>
+      </div>
 
       {/* AI Scan Bill Modal */}
       {showScanModal && (
@@ -597,7 +599,7 @@ export const ShopDashboard: React.FC = () => {
                 <div className="max-h-[300px] overflow-y-auto border border-slate-100 rounded-2xl mb-6">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase text-xs">
+                      <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase text-xs whitespace-nowrap">
                         <th className="py-2.5 px-4">Item Name</th>
                         <th className="py-2.5 px-4">Company</th>
                         <th className="py-2.5 px-4">Qty Added</th>
@@ -607,7 +609,7 @@ export const ShopDashboard: React.FC = () => {
                     </thead>
                     <tbody className="divide-y divide-slate-50 font-medium text-slate-700">
                       {scanResults.map((item, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50/50">
+                        <tr key={idx} className="hover:bg-slate-50/50 whitespace-nowrap">
                           <td className="py-2.5 px-4 font-bold text-slate-900">{item.name}</td>
                           <td className="py-2.5 px-4">{item.company}</td>
                           <td className="py-2.5 px-4 font-bold text-emerald-600">+{item.quantity}</td>

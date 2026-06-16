@@ -772,10 +772,10 @@ export const AdminDashboard: React.FC = () => {
       )}
 
       {/* Main Content Pane */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:pl-16' : 'md:pl-64'}`}>
+      <div className={`flex-1 min-w-0 flex flex-col min-h-screen transition-all duration-300 ${sidebarCollapsed ? 'md:pl-16' : 'md:pl-64'}`}>
         <Navbar />
 
-        <main className="p-4 md:p-8 flex-grow">
+        <main className="p-4 md:p-8 flex-grow min-w-0">
           {/* Mobile header bar */}
           <div className="flex items-center justify-between mb-6 md:hidden bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-3 rounded-2xl shadow-sm">
             <button
@@ -1034,7 +1034,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs">
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs whitespace-nowrap">
                         <th className="py-3 px-4">{t('fullName')}</th>
                         <th className="py-3 px-4">{t('mobileNumber')}</th>
                         <th className="py-3 px-4">{t('state')}</th>
@@ -1064,7 +1064,7 @@ export const AdminDashboard: React.FC = () => {
                             return parts[0].slice(0, 2).toUpperCase();
                           };
                           return (
-                            <tr key={f.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                            <tr key={f.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors whitespace-nowrap">
                               <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">
                                 <div className="flex items-center gap-3">
                                   <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/45 dark:text-emerald-400 flex items-center justify-center font-black text-xs shrink-0 border border-emerald-200/10">
@@ -1156,7 +1156,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs">
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs whitespace-nowrap">
                         <th className="py-3 px-4">{t('shopName')}</th>
                         <th className="py-3 px-4">{t('ownerName')}</th>
                         <th className="py-3 px-4">{t('mobileNumber')}</th>
@@ -1186,7 +1186,7 @@ export const AdminDashboard: React.FC = () => {
                             return parts[0].slice(0, 2).toUpperCase();
                           };
                           return (
-                            <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                            <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors whitespace-nowrap">
                               <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">
                                 <div className="flex items-center gap-3">
                                   <div className="w-9 h-9 rounded-full bg-amber-100 text-amber-850 dark:bg-amber-950/45 dark:text-amber-400 flex items-center justify-center font-black text-xs shrink-0 border border-amber-200/10">
@@ -1195,7 +1195,7 @@ export const AdminDashboard: React.FC = () => {
                                   <span>{s.shop_name}</span>
                                 </div>
                               </td>
-                              <td className="py-3.5 px-4">
+                              <td>
                                 <div className="flex items-center gap-2">
                                   <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex items-center justify-center font-black text-[10px]">
                                     {getInitials(s.owner?.full_name)}
@@ -1204,7 +1204,7 @@ export const AdminDashboard: React.FC = () => {
                                 </div>
                               </td>
                               <td className="py-3.5 px-4 font-mono">{s.owner?.mobile || t('notAvailable')}</td>
-                              <td className="py-3.5 px-4">
+                              <td>
                                 <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${
                                   s.is_approved 
                                     ? 'bg-green-100 text-green-800 dark:bg-green-950/45 dark:text-green-400' 
@@ -1214,7 +1214,7 @@ export const AdminDashboard: React.FC = () => {
                                 </span>
                               </td>
                               <td className="py-3.5 px-4 text-xs font-mono">{s.license_number}</td>
-                              <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={s.address}>{s.address}</td>
+                              <td className="py-3.5 px-4 text-xs min-w-[200px] max-w-xs whitespace-normal break-words" title={s.address}>{s.address}</td>
                               <td className="py-3.5 px-4 text-right">
                                 <div className="flex justify-end gap-2">
                                   <button
@@ -1323,7 +1323,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs">
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs whitespace-nowrap">
                         <th className="py-3 px-4">Name</th>
                         <th className="py-3 px-4">Category</th>
                         <th className="py-3 px-4">Duration</th>
@@ -1344,7 +1344,7 @@ export const AdminDashboard: React.FC = () => {
                           );
                         })
                         .map(c => (
-                          <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                          <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors whitespace-nowrap">
                             <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">
                               <div className="flex items-center gap-2">
                                 <span className="text-lg">🌾</span>
@@ -1354,7 +1354,7 @@ export const AdminDashboard: React.FC = () => {
                             <td className="py-3.5 px-4">{c.category}</td>
                             <td className="py-3.5 px-4 font-mono">{c.duration_days} Days</td>
                             <td className="py-3.5 px-4">{c.expected_yield}</td>
-                            <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={c.varieties}>{c.varieties || 'N/A'}</td>
+                            <td className="py-3.5 px-4 text-xs min-w-[200px] max-w-xs whitespace-normal break-words" title={c.varieties}>{c.varieties || 'N/A'}</td>
                             <td className="py-3.5 px-4 text-right">
                               <div className="flex justify-end gap-2">
                                 <button
@@ -1455,7 +1455,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs">
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs whitespace-nowrap">
                         <th className="py-3 px-4">Crop Type</th>
                         <th className="py-3 px-4">Stage Name</th>
                         <th className="py-3 px-4">Start Day</th>
@@ -1474,7 +1474,7 @@ export const AdminDashboard: React.FC = () => {
                         .map(s => {
                           const cropName = crops.find(c => c.id === s.crop_master_id)?.name || 'Unknown Crop';
                           return (
-                            <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                            <tr key={s.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors whitespace-nowrap">
                               <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{cropName}</td>
                               <td className="py-3.5 px-4 font-bold text-[#1B5E20] dark:text-[#4CAF50]">{s.stage_name}</td>
                               <td className="py-3.5 px-4 font-mono">Day {s.start_day}</td>
@@ -1578,7 +1578,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs">
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs whitespace-nowrap">
                         <th className="py-3 px-4">Crop Type</th>
                         <th className="py-3 px-4">Disease Name</th>
                         <th className="py-3 px-4">Symptoms</th>
@@ -1597,11 +1597,11 @@ export const AdminDashboard: React.FC = () => {
                         .map(d => {
                           const cropName = crops.find(c => c.id === d.crop_master_id)?.name || 'Unknown Crop';
                           return (
-                            <tr key={d.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                            <tr key={d.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors whitespace-nowrap">
                               <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{cropName}</td>
                               <td className="py-3.5 px-4 font-bold text-red-600 dark:text-red-400">🚨 {d.name}</td>
-                              <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={d.symptoms}>{d.symptoms}</td>
-                              <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={d.treatment}>{d.treatment}</td>
+                              <td className="py-3.5 px-4 text-xs min-w-[200px] max-w-xs whitespace-normal break-words" title={d.symptoms}>{d.symptoms}</td>
+                              <td className="py-3.5 px-4 text-xs min-w-[250px] max-w-sm whitespace-normal break-words" title={d.treatment}>{d.treatment}</td>
                               <td className="py-3.5 px-4 text-right">
                                 <div className="flex justify-end gap-2">
                                   <button
@@ -1701,7 +1701,7 @@ export const AdminDashboard: React.FC = () => {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs">
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-extrabold uppercase text-xs whitespace-nowrap">
                         <th className="py-3 px-4">Crop Type</th>
                         <th className="py-3 px-4">Pest Name</th>
                         <th className="py-3 px-4">Symptoms</th>
@@ -1720,11 +1720,11 @@ export const AdminDashboard: React.FC = () => {
                         .map(p => {
                           const cropName = crops.find(c => c.id === p.crop_master_id)?.name || 'Unknown Crop';
                           return (
-                            <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                            <tr key={p.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors whitespace-nowrap">
                               <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-100">{cropName}</td>
                               <td className="py-3.5 px-4 font-bold text-amber-650 dark:text-amber-500">🐛 {p.name}</td>
-                              <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={p.symptoms}>{p.symptoms}</td>
-                              <td className="py-3.5 px-4 text-xs max-w-xs truncate" title={p.control_method}>{p.control_method}</td>
+                              <td className="py-3.5 px-4 text-xs min-w-[200px] max-w-xs whitespace-normal break-words" title={p.symptoms}>{p.symptoms}</td>
+                              <td className="py-3.5 px-4 text-xs min-w-[250px] max-w-sm whitespace-normal break-words" title={p.control_method}>{p.control_method}</td>
                               <td className="py-3.5 px-4 text-right">
                                 <div className="flex justify-end gap-2">
                                   <button
@@ -2067,7 +2067,7 @@ export const AdminDashboard: React.FC = () => {
             <p className="text-sm text-slate-500 mb-6">Manage global crop settings in the master database.</p>
 
             <form onSubmit={handleCropSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Crop Name</label>
                   <input
@@ -2092,7 +2092,7 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Duration (Days)</label>
                   <input
@@ -2195,7 +2195,7 @@ export const AdminDashboard: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-400 uppercase mb-1.5">Start Day</label>
                   <input
