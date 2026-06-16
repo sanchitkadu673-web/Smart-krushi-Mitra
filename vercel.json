@@ -3,7 +3,6 @@
     "frontend": {
       "framework": "vite",
       "buildCommand": "npm install && npm run build",
-      "devCommand": "npm run dev",
       "outputDirectory": "dist",
       "rootDirectory": "frontend",
       "rewrites": [
@@ -11,7 +10,6 @@
       ]
     },
     "backend": {
-      "framework": null,
       "buildCommand": "npm install && npm run build",
       "startCommand": "node dist/index.js",
       "rootDirectory": "backend"
