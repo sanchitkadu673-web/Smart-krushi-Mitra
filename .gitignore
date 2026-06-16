@@ -36,3 +36,19 @@ Thumbs.db
 
 # Local mock DB persistence file
 .dev-database.json
+
+# Vercel
+.vercel
+
+# Debug / test scripts (not part of main codebase)
+backend/change_to_shop_owner.ts
+backend/check_shop_products.js
+backend/check_user_role.ts
+backend/check_users.js
+backend/test-supa.ts
+backend/test_admin_stats.js
+check_shop_products.js
+check_users.js
+fix.js
+scratch_restore_dashboard.py
+update_ui.js
