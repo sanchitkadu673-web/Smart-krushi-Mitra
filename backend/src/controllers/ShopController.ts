@@ -415,4 +415,45 @@ export class ShopController {
       next(err);
     }
   }
+
+  public static async listAllShops(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const { data: shops, error: shopsError } = await supabaseAdmin
+        .from('shops')
+        .select('*')
+        .eq('is_approved', true);
+
+      if (shopsError) return res.status(400).json({ error: shopsError.message });
+
+      const { data: profiles, error: profilesError } = await supabaseAdmin
+        .from('profiles')
+        .select('user_id, full_name, mobile');
+      if (profilesError) return res.status(400).json({ error: profilesError.message });
+
+      const { data: products, error: productsError } = await supabaseAdmin
+        .from('products')
+        .select('*');
+      if (productsError) return res.status(400).json({ error: productsError.message });
+
+      const joined = (shops || []).map((shop: any) => {
+        const owner = (profiles || []).find((p: any) => p.user_id === shop.owner_id);
+        const shopProducts = (products || []).filter((p: any) => p.shop_id === shop.id);
+        return {
+          id: shop.id,
+          shop_name: shop.shop_name,
+          license_number: shop.license_number,
+          address: shop.address,
+          gps_lat: shop.gps_lat,
+          gps_lng: shop.gps_lng,
+          owner_name: owner ? owner.full_name : 'N/A',
+          owner_mobile: owner ? owner.mobile : 'N/A',
+          products: shopProducts
+        };
+      });
+
+      return res.status(200).json(joined);
+    } catch (err) {
+      next(err);
+    }
+  }
 }

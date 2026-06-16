@@ -75,7 +75,7 @@ export const Login: React.FC = () => {
 
   const handleRoleChange = (newRole: typeof role) => {
     setRole(newRole);
-    setMethod(newRole === 'shop_owner' ? 'password' : 'mobile');
+    setMethod(newRole === 'shop_owner' || newRole === 'super_admin' ? 'password' : 'mobile');
     setMobile('');
     setPassword('');
     setOtp(['', '', '', '', '', '']);
@@ -285,6 +285,27 @@ export const Login: React.FC = () => {
                       </div>
                     )}
 
+                    {/* Method toggle link for super_admin */}
+                    {role === 'super_admin' && (
+                      <div className="text-right">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const target = method === 'password' ? 'mobile' : 'password';
+                            setMethod(target);
+                            setOtp(['', '', '', '', '', '']);
+                            setStep(1);
+                          }}
+                          className="text-xs font-bold text-[#3B82F6] hover:text-[#2563EB] transition-colors"
+                        >
+                          {method === 'password'
+                            ? (lang === 'mr' ? 'OTP द्वारे लॉगिन करा' : 'Login with OTP instead')
+                            : (lang === 'mr' ? 'पासवर्ड द्वारे लॉगिन करा' : 'Login with Password instead')
+                          }
+                        </button>
+                      </div>
+                    )}
+
                     {/* Submit */}
                     <button
                       type="submit"
@@ -398,14 +419,23 @@ export const Login: React.FC = () => {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setMobile('9876543212')}
+                      onClick={() => {
+                        setMobile('9876543212');
+                        if (method === 'password') {
+                          setPassword('admin123');
+                        }
+                      }}
                       className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-1 rounded-lg cursor-pointer transition-all"
                     >
                       Autofill
                     </button>
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-400 font-mono">
-                    Mobile: <strong>9876543212</strong> &nbsp;|&nbsp; OTP: <strong>123456</strong>
+                    {method === 'password' ? (
+                      <>Mobile: <strong>9876543212</strong> &nbsp;|&nbsp; PW: <strong>admin123</strong></>
+                    ) : (
+                      <>Mobile: <strong>9876543212</strong> &nbsp;|&nbsp; OTP: <strong>123456</strong></>
+                    )}
                   </p>
                 </div>
               )}

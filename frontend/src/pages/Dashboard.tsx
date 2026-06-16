@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Navbar } from '../components/navigation/Navbar';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import {
   CloudRain, Compass, Calendar, PlusCircle, AlertCircle,
   RefreshCw, Sprout, Wind, Droplets, Thermometer,
-  Sun, Cloud, CloudLightning, Snowflake, Eye, Building2, MapPin
+  Sun, Cloud, CloudLightning, Snowflake, Eye, Building2, MapPin,
+  LayoutDashboard, User, LogOut, Bell, Menu, X, Home, ChevronRight, Globe
 } from 'lucide-react';
 import i18n from 'i18next';
 
@@ -104,17 +104,20 @@ const formatDay = (dateStr: string, lang: string) => {
 /* ─── main component ─────────────────────────────────────────── */
 
 export const Dashboard: React.FC = () => {
-  const { profile } = useAuth();
+  const navigate = useNavigate();
+  const { profile, logout } = useAuth();
   const { t } = useTranslation();
 
   const [crops, setCrops] = useState<any[]>([]);
   const [weather, setWeather] = useState<any>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
-  const [linkedShopData, setLinkedShopData] = useState<{ shop: any; products: any[] } | null>(null);
+  const [allShops, setAllShops] = useState<any[]>([]);
+  const [expandedDashboardShopId, setExpandedDashboardShopId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [now, setNow] = useState(new Date());
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   /* live clock — ticks every second */
   useEffect(() => {
@@ -155,16 +158,16 @@ export const Dashboard: React.FC = () => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
     try {
-      const [cropsRes, weatherRes, notifRes, shopRes] = await Promise.all([
+      const [cropsRes, weatherRes, notifRes, allShopsRes] = await Promise.all([
         axios.get('/api/crops'),
         axios.get('/api/weather/forecast'),
         axios.get('/api/notifications'),
-        axios.get('/api/shop/linked').catch(() => ({ data: { shop: null, products: [] } }))
+        axios.get('/api/shop/all').catch(() => ({ data: [] }))
       ]);
       setCrops(cropsRes.data);
       setWeather(weatherRes.data);
       setNotifications(notifRes.data);
-      setLinkedShopData(shopRes.data);
+      setAllShops(allShopsRes.data);
       setLastUpdated(new Date());
     } catch {
       if (!silent) toast.error('Dashboard data लोड होण्यात अडचण आली');
@@ -185,51 +188,265 @@ export const Dashboard: React.FC = () => {
 
   const activeCrops = crops.filter(c => c.status === 'active');
 
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const lang = e.target.value;
+    i18n.changeLanguage(lang);
+    localStorage.setItem('language', lang);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  const menuItems = [
+    {
+      label: i18n.language === 'mr' ? 'डॅशबोर्ड' : i18n.language === 'hi' ? 'डैशबोर्ड' : 'Dashboard',
+      icon: <LayoutDashboard className="w-5 h-5" />,
+      path: '/dashboard',
+      active: true,
+    },
+    {
+      label: i18n.language === 'mr' ? 'पीक जोडा' : i18n.language === 'hi' ? 'फसल जोड़ें' : 'Add Crop',
+      icon: <PlusCircle className="w-5 h-5" />,
+      path: '/crops/add',
+      active: false,
+    },
+    {
+      label: i18n.language === 'mr' ? 'सूचना / शिफारसी' : i18n.language === 'hi' ? 'सूचनाएं / सिफारिशें' : 'Alerts & Tips',
+      icon: <Bell className="w-5 h-5" />,
+      path: '/notifications',
+      active: false,
+    },
+    {
+      label: i18n.language === 'mr' ? 'माझी माहिती' : i18n.language === 'hi' ? 'प्रोफ़ाइल' : 'My Profile',
+      icon: <User className="w-5 h-5" />,
+      path: '/profile',
+      active: false,
+    },
+    {
+      label: i18n.language === 'mr' ? 'मुख्यपृष्ठ' : i18n.language === 'hi' ? 'मुख्यपृष्ठ' : 'Back to Home',
+      icon: <Home className="w-5 h-5" />,
+      path: '/',
+      active: false,
+    },
+  ];
+
   /* ── render ── */
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <div className="min-h-screen bg-[#F4F7F2] dark:bg-slate-950 flex flex-col md:flex-row text-gray-800 dark:text-slate-100">
+      
+      {/* ── MOBILE HEADER ── */}
+      <div className="flex md:hidden items-center justify-between bg-white dark:bg-slate-900 px-4 py-3.5 border-b border-slate-200/60 dark:border-slate-800 sticky top-0 z-40 shadow-sm w-full">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-1.5 text-gray-600 dark:text-slate-350 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <div className="flex items-center gap-1.5">
+            <Sprout className="w-6 h-6 text-primary" />
+            <span className="font-black text-base text-primary tracking-tight">
+              {t('appName')}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link to="/notifications" className="relative p-1.5 text-gray-600 dark:text-slate-350 hover:text-primary transition-colors">
+            <Bell className="w-5 h-5" />
+            {notifications.filter(n => !n.is_read).length > 0 && (
+              <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-red-500 ring-2 ring-white select-none"></span>
+            )}
+          </Link>
+          <div className="flex items-center gap-1 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-1.5 py-1">
+            <select
+              value={i18n.language}
+              onChange={handleLanguageChange}
+              className="bg-transparent text-xs font-semibold text-gray-700 dark:text-slate-200 focus:outline-none cursor-pointer"
+            >
+              <option value="mr">मराठी</option>
+              <option value="hi">हिन्दी</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8 md:px-8">
+      {/* ── MOBILE SIDEBAR DRAWER (OVERLAY) ── */}
+      {isSidebarOpen && (
+        <>
+          <div
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/40 dark:bg-black/60 z-50 md:hidden backdrop-blur-sm transition-opacity"
+          />
+          <div className="fixed top-0 left-0 bottom-0 w-72 bg-white dark:bg-slate-900 z-50 md:hidden flex flex-col shadow-2xl border-r border-slate-200/60 dark:border-slate-800 animate-slide-in">
+            <div className="p-4 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <Sprout className="w-7 h-7 text-primary" />
+                <span className="font-extrabold text-lg text-primary tracking-tight">
+                  {t('appName')}
+                </span>
+              </div>
+              <button
+                onClick={() => setIsSidebarOpen(false)}
+                className="p-1.5 text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-        {/* ── Header ── */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-extrabold text-gray-900">
-              {t('welcome')}, {transliterateName(profile?.full_name || 'Farmer', i18n.language)}
-            </h1>
-            <p className="text-gray-500 mt-1 flex items-center gap-2">
-              <Compass className="w-4 h-4 text-primary" />
-              {profile?.village}, {profile?.taluka}
+            {/* User Profile Block */}
+            <div className="p-5 bg-gradient-to-br from-emerald-50 to-green-50/30 dark:from-emerald-950/20 dark:to-slate-900 border-b border-slate-150 dark:border-slate-800 flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/15 text-primary flex items-center justify-center font-black text-xl shadow-inner border border-primary/20">
+                {profile?.full_name?.charAt(0).toUpperCase() || 'F'}
+              </div>
+              <div>
+                <h4 className="font-extrabold text-[#1A2E1A] dark:text-[#F7FAF4]">
+                  {transliterateName(profile?.full_name || 'Farmer', i18n.language)}
+                </h4>
+                <p className="text-xs text-[#1B5E20] dark:text-[#4CAF50] font-bold bg-[#4CAF50]/10 px-2 py-0.5 rounded-full inline-block mt-1">
+                  {i18n.language === 'mr' ? 'शेतकरी' : i18n.language === 'hi' ? 'किसान' : 'Farmer'}
+                </p>
+              </div>
+            </div>
+
+            {/* Menu Links */}
+            <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+              {menuItems.map((item, idx) => (
+                <Link
+                  key={idx}
+                  to={item.path}
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={`flex items-center gap-3.5 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
+                    item.active
+                      ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                      : 'text-gray-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/80 hover:text-primary dark:hover:text-primary'
+                  }`}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </Link>
+              ))}
+            </nav>
+
+            {/* Logout Footer */}
+            <div className="p-4 border-t border-slate-150 dark:border-slate-800">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/30 text-red-650 dark:text-red-400 font-extrabold py-3 rounded-xl transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>{t('logout')}</span>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── DESKTOP SIDEBAR (FIXED) ── */}
+      <div className="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200/60 dark:border-slate-800 h-screen sticky top-0 shrink-0">
+        <div className="p-6 flex items-center gap-2.5 border-b border-slate-100 dark:border-slate-800">
+          <Sprout className="w-8 h-8 text-primary shrink-0" />
+          <span className="font-extrabold text-xl text-primary tracking-tight">
+            {t('appName')}
+          </span>
+        </div>
+
+        {/* User Card */}
+        <div className="m-4 p-4 rounded-2xl bg-gradient-to-br from-[#F7FAF4] to-[#EEF5E6] dark:from-emerald-950/30 dark:to-slate-800 border border-[#4CAF50]/15 flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black text-lg border border-primary/20 shrink-0">
+            {profile?.full_name?.charAt(0).toUpperCase() || 'F'}
+          </div>
+          <div className="min-w-0">
+            <h4 className="font-black text-sm text-[#1A2E1A] dark:text-[#F7FAF4] truncate">
+              {transliterateName(profile?.full_name || 'Farmer', i18n.language)}
+            </h4>
+            <p className="text-[10px] text-gray-500 dark:text-slate-400 font-semibold truncate flex items-center gap-0.5 mt-0.5">
+              <MapPin className="w-3 h-3 text-primary shrink-0" />
+              {profile?.village}
             </p>
           </div>
+        </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Live indicator */}
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
+        {/* Navigation */}
+        <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
+          {menuItems.map((item, idx) => (
+            <Link
+              key={idx}
+              to={item.path}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200 ${
+                item.active
+                  ? 'bg-primary text-white shadow-md shadow-primary/20'
+                  : 'text-gray-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-850 hover:text-primary dark:hover:text-primary'
+              }`}
+            >
+              <div className="shrink-0">{item.icon}</div>
+              <span className="truncate">{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+
+        {/* Sidebar Footer (Language + Logout) */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+          <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2">
+            <Globe className="w-4 h-4 text-gray-500 dark:text-slate-400 shrink-0" />
+            <select
+              value={i18n.language}
+              onChange={handleLanguageChange}
+              className="bg-transparent text-xs font-bold text-gray-700 dark:text-slate-200 focus:outline-none cursor-pointer w-full"
+            >
+              <option value="mr">मराठी</option>
+              <option value="hi">हिन्दी</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 font-extrabold py-2.5 rounded-xl transition-colors text-sm"
+          >
+            <LogOut className="w-4 h-4 shrink-0" />
+            <span>{t('logout')}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── MAIN CONTENT AREA ── */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        
+        {/* DESKTOP TOP HEADER */}
+        <div className="hidden md:flex items-center justify-between bg-white dark:bg-slate-900 px-8 py-4 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-30 shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5 text-xs font-black text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 px-3 py-1.5 rounded-full select-none">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
               {i18n.language === 'mr' ? 'थेट' : i18n.language === 'hi' ? 'लाइव' : 'LIVE'}
             </span>
-
-            {/* Live clock */}
-            <span className="text-sm bg-white border border-gray-200 px-3 py-2 rounded-xl text-gray-700 font-mono font-bold shadow-sm tabular-nums">
-              {now.toLocaleTimeString(i18n.language === 'mr' ? 'mr-IN' : i18n.language === 'hi' ? 'hi-IN' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            <span className="text-xs text-gray-400 font-medium">
+              {i18n.language === 'mr' ? 'सिस्टम कार्यरत आहे' : i18n.language === 'hi' ? 'सिस्टम सक्रिय है' : 'System Operational'}
             </span>
+          </div>
 
-            {/* Date */}
-            <span className="text-sm bg-white border border-gray-200 px-3 py-2 rounded-xl text-gray-600 font-medium flex items-center gap-2 shadow-sm">
-              <Calendar className="w-4 h-4 text-primary" />
-              {new Date().toLocaleDateString(i18n.language === 'mr' ? 'mr-IN' : i18n.language === 'hi' ? 'hi-IN' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </span>
+          <div className="flex items-center gap-4">
+            {/* Live Clock & Date */}
+            <div className="flex items-center gap-3 bg-[#EEF5E6] dark:bg-slate-800 px-4 py-2 rounded-2xl border border-primary/10">
+              <Calendar className="w-4 h-4 text-primary shrink-0 animate-pulse" />
+              <span className="text-sm font-extrabold text-[#1B5E20] dark:text-[#4CAF50] tabular-nums">
+                {now.toLocaleTimeString(i18n.language === 'mr' ? 'mr-IN' : i18n.language === 'hi' ? 'hi-IN' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+              <span className="text-xs text-[#1A2E1A]/40 dark:text-slate-400">|</span>
+              <span className="text-xs font-bold text-[#1A2E1A] dark:text-slate-200">
+                {new Date().toLocaleDateString(i18n.language === 'mr' ? 'mr-IN' : i18n.language === 'hi' ? 'hi-IN' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+            </div>
 
-            {/* Manual refresh */}
             <button
               onClick={() => fetchDashboardData(true)}
               disabled={refreshing}
-              className="p-2.5 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl shadow-sm text-gray-600 hover:text-primary transition-colors disabled:opacity-50"
+              className="p-2.5 bg-white border border-slate-200 dark:border-slate-800 dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-850 rounded-xl shadow-sm text-gray-600 dark:text-slate-300 hover:text-primary transition-colors disabled:opacity-50"
               title={i18n.language === 'mr' ? 'ताजे करा' : i18n.language === 'hi' ? 'ताज़ा करें' : 'Refresh'}
             >
               <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
@@ -237,333 +454,407 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Last updated badge */}
-        {lastUpdated && (
-          <p className="text-xs text-gray-400 mb-6 -mt-4">
-            {i18n.language === 'mr' ? 'शेवटचे अपडेट: ' : i18n.language === 'hi' ? 'अंतिम अपडेट: ' : 'Last updated: '}
-            {lastUpdated.toLocaleTimeString(i18n.language === 'mr' ? 'mr-IN' : i18n.language === 'hi' ? 'hi-IN' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-            &nbsp;·&nbsp;
-            {i18n.language === 'mr' ? 'दर ५ मिनिटांनी आपोआप ताजे होते' : i18n.language === 'hi' ? 'हर ५ मिनट में स्वचालित रूप से ताज़ा होता है' : 'Auto-refreshes every 5 mins'}
-          </p>
-        )}
+        {/* SCROLLABLE MAIN CONTENT WRAPPER */}
+        <div className="flex-1 p-4 md:p-8 space-y-8 overflow-y-auto">
+          
+          {/* Welcome Premium Greeting Card */}
+          <div className="relative overflow-hidden bg-gradient-to-r from-emerald-800 to-green-600 dark:from-emerald-950 dark:to-slate-900 rounded-[2rem] p-6 md:p-8 text-white shadow-xl shadow-emerald-900/15 border border-emerald-700/20 animate-fade-up">
+            <div className="absolute top-0 right-1/4 w-72 h-72 bg-white/5 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
+            <div className="absolute bottom-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-          {/* ── Main (2/3 width) ── */}
-          <div className="lg:col-span-2 space-y-8">
-
-            {/* Active Crops */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  <Sprout className="text-primary w-5 h-5" /> {t('myCrops')}
-                  {!loading && (
-                    <span className="ml-2 text-xs bg-primary/10 text-primary font-bold px-2 py-0.5 rounded-full">
-                      {activeCrops.length} {i18n.language === 'mr' ? 'सक्रिय' : i18n.language === 'hi' ? 'सक्रिय' : 'Active'}
-                    </span>
-                  )}
-                </h3>
-                <Link
-                  to="/crops/add"
-                  className="text-sm bg-primary hover:bg-primary-dark text-white font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-colors"
-                >
-                  <PlusCircle className="w-4 h-4" /> {t('addCrop')}
-                </Link>
+            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div>
+                <h2 className="text-3xl md:text-4xl font-black tracking-tight mb-2">
+                  {i18n.language === 'mr' ? 'राम राम' : i18n.language === 'hi' ? 'नमस्कार' : 'Welcome'}, {transliterateName(profile?.full_name || 'Farmer', i18n.language)}!
+                </h2>
+                <p className="text-sm md:text-base text-emerald-100 font-medium max-w-xl">
+                  {i18n.language === 'mr' 
+                    ? `तुमचा शेती सोबती सक्रिय आहे. गाव: ${profile?.village || 'उपलब्ध नाही'}, तालुका: ${profile?.taluka || 'उपलब्ध नाही'}` 
+                    : i18n.language === 'hi' 
+                    ? `आपका कृषि साथी सक्रिय है। गाँव: ${profile?.village || 'N/A'}, तहसील: ${profile?.taluka || 'N/A'}` 
+                    : `Your smart farming assistant is active. Village: ${profile?.village || 'N/A'}, Taluka: ${profile?.taluka || 'N/A'}`}
+                </p>
+                {lastUpdated && (
+                  <p className="text-[10px] text-white/50 mt-3 font-semibold">
+                    {i18n.language === 'mr' ? 'शेवटचे अपडेट: ' : i18n.language === 'hi' ? 'अंतिम अपडेट: ' : 'Last updated: '}
+                    {lastUpdated.toLocaleTimeString(i18n.language === 'mr' ? 'mr-IN' : i18n.language === 'hi' ? 'hi-IN' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+                    &nbsp;·&nbsp;
+                    {i18n.language === 'mr' ? 'दर ५ मिनिटांनी स्वयंचलित ताजे' : 'Auto-refreshes every 5 mins'}
+                  </p>
+                )}
               </div>
 
-              {loading ? (
-                <div className="animate-pulse space-y-4">
-                  <div className="h-16 bg-gray-100 rounded-xl" />
-                  <div className="h-16 bg-gray-100 rounded-xl" />
+              {/* Counter badges */}
+              <div className="flex gap-4 shrink-0 w-full md:w-auto">
+                <div className="flex-1 md:flex-initial bg-white/10 backdrop-blur-md border border-white/10 px-5 py-4 rounded-2xl text-center">
+                  <span className="block text-xs font-bold text-emerald-200 uppercase tracking-wider mb-1">
+                    {i18n.language === 'mr' ? 'एकूण पिके' : i18n.language === 'hi' ? 'कुल फसलें' : 'Total Crops'}
+                  </span>
+                  <span className="text-2xl font-black tabular-nums">{crops.length}</span>
                 </div>
-              ) : activeCrops.length === 0 ? (
-                <div className="text-center py-10 border-2 border-dashed border-gray-100 rounded-2xl">
-                  <p className="text-gray-400 text-sm mb-4">{t('noCrops')}</p>
-                  <Link to="/crops/add" className="text-primary font-bold hover:underline">
-                    {i18n.language === 'mr' ? 'तुमचे पहिले पीक आता जोडा →' : i18n.language === 'hi' ? 'अपनी पहली फसल अभी जोड़ें →' : 'Add your first crop now →'}
-                  </Link>
+                <div className="flex-1 md:flex-initial bg-white/10 backdrop-blur-md border border-white/10 px-5 py-4 rounded-2xl text-center">
+                  <span className="block text-xs font-bold text-emerald-200 uppercase tracking-wider mb-1">
+                    {i18n.language === 'mr' ? 'नवीन शिफारसी' : i18n.language === 'hi' ? 'सिफारिशें' : 'Alerts'}
+                  </span>
+                  <span className="text-2xl font-black tabular-nums">{notifications.filter(n => !n.is_read).length}</span>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {activeCrops.map(crop => {
-                    const days = Math.floor(
-                      (Date.now() - new Date(crop.sowing_date).getTime()) / (1000 * 60 * 60 * 24)
-                    );
-                    return (
-                      <div
-                        key={crop.id}
-                        className="p-5 bg-[#F7FAF4] dark:bg-slate-850 border border-slate-100 dark:border-slate-800 hover:border-primary/20 rounded-2xl relative block transition-card shadow-sm text-left"
-                      >
-                        <div className="flex justify-between items-start mb-3">
-                          <h4 className="font-extrabold text-lg text-[#1A2E1A] dark:text-[#F7FAF4]">
-                            {crop.crop_master.name}
-                          </h4>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs font-bold bg-[#4CAF50]/15 text-[#1B5E20] dark:text-[#4CAF50] px-2.5 py-1 rounded-full">
-                              {t('active') || 'Active'}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                e.preventDefault();
-                                handleDeleteCrop(crop.id);
-                              }}
-                              className="text-red-500 hover:text-red-700 p-1.5 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
-                              title={i18n.language === 'mr' ? 'पीक हटवा' : i18n.language === 'hi' ? 'फसल हटाएं' : 'Delete Crop'}
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                            </button>
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-500 dark:text-slate-400">{t('sowingDate') || 'Sowing Date'}: {crop.sowing_date}</p>
-                        <div className="mt-4 flex items-center justify-between text-xs font-bold">
-                          <span className="text-[#1A2E1A]/70 dark:text-slate-300">{t('age') || 'Age'}: {days} {t('days') || 'Days'}</span>
-                          <Link to={`/crops/${crop.id}`} className="text-primary hover:underline flex items-center gap-1">
-                            {t('viewTimeline') || 'View Timeline'} →
-                          </Link>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Linked Shop Stock */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <Building2 className="text-primary w-5 h-5" /> {i18n.language === 'mr' ? 'माझे जोडलेले दुकान' : i18n.language === 'hi' ? 'मेरी जुड़ी हुई दुकान' : 'My Linked Shop'}
-              </h3>
-              
-              {!linkedShopData?.shop ? (
-                <div className="text-center py-6 bg-slate-50/50 rounded-xl border border-slate-100 text-sm">
-                  <p className="text-gray-500 font-medium">
-                    {i18n.language === 'mr' ? 'तुमचे खाते अद्याप कोणत्याही दुकानाशी जोडलेले नाही.' : i18n.language === 'hi' ? 'आपका खाता अभी किसी दुकान से नहीं जुड़ा है।' : 'Your account is not linked to any shop yet.'}
-                  </p>
-                  <p className="text-gray-400 mt-1">
-                    {i18n.language === 'mr' ? 'तुमच्या गावातील दुकानदार तुम्हाला त्यांच्याकडे नोंदणी करतील, तेव्हा तुम्हाला त्यांचा स्टॉक आणि दर दिसतील.' : i18n.language === 'hi' ? 'जब आपके गांव के दुकानदार आपको अपने साथ पंजीकृत करेंगे, तो आप उनका स्टॉक और दरें देख पाएंगे।' : 'Once a shop owner in your village registers you, you will see their stock and prices here.'}
-                  </p>
-                </div>
-              ) : (
-                <div>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4 mb-4">
-                    <div>
-                      <h4 className="font-extrabold text-gray-900 text-lg">{linkedShopData.shop.shop_name}</h4>
-                      <p className="text-gray-500 text-xs flex items-center gap-1 mt-1">
-                        <MapPin className="w-3.5 h-3.5 text-primary" /> {linkedShopData.shop.address}
-                      </p>
-                    </div>
-                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full shrink-0">
-                      ✓ {i18n.language === 'mr' ? 'जोडलेले' : i18n.language === 'hi' ? 'जुड़ा हुआ' : 'Linked'}
-                    </span>
-                  </div>
-
-                  <h5 className="font-bold text-sm text-gray-700 mb-3">
-                    {i18n.language === 'mr' ? 'उपलब्ध खते व औषधे' : i18n.language === 'hi' ? 'उपलब्ध उर्वरक और दवाएं' : 'Available Fertilizers & Sprays'}
-                  </h5>
-                  {linkedShopData.products.length === 0 ? (
-                    <p className="text-gray-400 text-xs text-center py-4 bg-slate-50 rounded-xl">
-                      {i18n.language === 'mr' ? 'दुकानदाराने अद्याप कोणतीही उत्पादने जोडलेली नाहीत.' : i18n.language === 'hi' ? 'दुकानदार ने अभी तक कोई उत्पाद नहीं जोड़ा है।' : 'No products added by the shop owner yet.'}
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto pr-1">
-                      {linkedShopData.products.map(p => (
-                        <div key={p.id} className="p-3.5 border border-slate-100 rounded-xl bg-slate-50/50 flex justify-between items-center text-xs">
-                          <div>
-                            <p className="font-bold text-gray-900 text-sm">{p.name}</p>
-                            <p className="text-gray-400 font-medium mt-0.5">{p.company} · {p.category}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-black text-gray-800 text-sm">₹{p.price}</p>
-                            {p.stock_quantity <= 0 ? (
-                              <span className="text-red-500 font-bold text-[10px]">
-                                {i18n.language === 'mr' ? 'स्टॉक संपला' : i18n.language === 'hi' ? 'स्टॉक समाप्त' : 'Out of Stock'}
-                              </span>
-                            ) : (
-                              <span className="text-green-600 font-bold text-[10px]">
-                                {i18n.language === 'mr' ? `शिल्लक: ${p.stock_quantity}` : i18n.language === 'hi' ? `शेष: ${p.stock_quantity}` : `Stock: ${p.stock_quantity}`}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Notifications */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <AlertCircle className="text-primary w-5 h-5" /> {t('recentRecommendations')}
-              </h3>
-
-              {loading ? (
-                <div className="animate-pulse space-y-4">
-                  <div className="h-12 bg-gray-100 rounded-xl" />
-                </div>
-              ) : notifications.length === 0 ? (
-                <p className="text-gray-400 text-sm text-center py-6">
-                  {i18n.language === 'mr' ? 'सध्या कोणत्याही शिफारसी नाहीत.' : i18n.language === 'hi' ? 'वर्तमान में कोई सिफारिशें नहीं हैं।' : 'No recommendations at the moment.'}
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {notifications.slice(0, 5).map(notif => {
-                    const translated = translateNotification(notif);
-                    return (
-                      <div
-                        key={notif.id}
-                        className={`p-4 rounded-xl border flex items-start gap-3.5 transition-colors ${
-                          notif.is_read
-                            ? 'bg-gray-50/50 border-gray-100'
-                            : 'bg-green-50/20 border-green-100'
-                        }`}
-                      >
-                        <div className="shrink-0">
-                          {notif.type === 'fertilizer' ? (
-                            <Sprout className="w-5 h-5 text-green-600" />
-                          ) : notif.type === 'spray' ? (
-                            <Wind className="w-5 h-5 text-amber-500" />
-                          ) : (
-                            <Droplets className="w-5 h-5 text-blue-500" />
-                          )}
-                        </div>
-                        <div>
-                          <h4 className="font-bold text-gray-900">{translated.title}</h4>
-                          <p className="text-sm text-gray-600 mt-1">{translated.message}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              </div>
             </div>
           </div>
 
-          {/* ── Sidebar (1/3 width) ── */}
-          <div className="space-y-6">
-
-            {/* Current Weather Card */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-8 -mt-8" />
-
-              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                <CloudRain className="text-primary w-5 h-5" /> {t('weatherToday')}
-              </h3>
-
-              {loading || !weather ? (
-                <div className="animate-pulse space-y-4">
-                  <div className="h-10 bg-gray-100 rounded-xl" />
-                  <div className="h-6 bg-gray-100 rounded-xl w-2/3" />
-                </div>
-              ) : (
-                <div>
-                  {/* Main temp row */}
-                  <div className="flex items-center justify-between mb-5">
-                    <div>
-                      <span className="text-5xl font-extrabold text-gray-900 tabular-nums">
-                        {weather.temperature}°C
+          {/* Core Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* LEFT 2 COLUMNS: CROPS & STORES */}
+            <div className="lg:col-span-2 space-y-8">
+              
+              {/* Active Crops Widget */}
+              <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-premium-3d">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-extrabold text-gray-900 dark:text-white flex items-center gap-2.5">
+                    <Sprout className="text-primary w-5 h-5 shrink-0" />
+                    {t('myCrops')}
+                    {!loading && (
+                      <span className="text-xs font-black bg-primary/10 text-primary px-3 py-1 rounded-full">
+                        {activeCrops.length} {i18n.language === 'mr' ? 'सक्रिय' : i18n.language === 'hi' ? 'सक्रिय' : 'Active'}
                       </span>
-                      <p className="text-sm text-gray-500 mt-1 font-semibold flex items-center gap-1">
-                        <WeatherIcon condition={weather.condition} className="w-4 h-4 text-primary" />
-                        {weather.condition}
-                      </p>
-                    </div>
-                    <WeatherIcon condition={weather.condition} className="w-12 h-12 text-amber-500 shrink-0" />
+                    )}
+                  </h3>
+                  <Link
+                    to="/crops/add"
+                    className="text-xs bg-primary hover:bg-emerald-600 text-white font-extrabold px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-all shadow-md shadow-primary/10"
+                  >
+                    <PlusCircle className="w-4 h-4 shrink-0" /> {t('addCrop')}
+                  </Link>
+                </div>
+
+                {loading ? (
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-20 bg-gray-50 dark:bg-slate-800 rounded-2xl" />
+                    <div className="h-20 bg-gray-50 dark:bg-slate-800 rounded-2xl" />
                   </div>
-
-                  {/* Stats grid */}
-                  <div className="grid grid-cols-2 gap-3 text-sm border-t border-gray-100 pt-4 mb-4">
-                    <div className="flex items-center gap-2">
-                      <Droplets className="w-4 h-4 text-blue-400" />
-                      <div>
-                        <span className="text-gray-400 block text-xs">{t('humidity')}</span>
-                        <span className="text-gray-900 font-bold">{weather.humidity}%</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Wind className="w-4 h-4 text-cyan-400" />
-                      <div>
-                        <span className="text-gray-400 block text-xs">{t('windSpeed')}</span>
-                        <span className="text-gray-900 font-bold">{weather.windSpeed} km/h</span>
-                      </div>
-                    </div>
+                ) : activeCrops.length === 0 ? (
+                  <div className="text-center py-12 border border-dashed border-slate-200 dark:border-slate-800 rounded-3xl bg-slate-50/50 dark:bg-slate-900/30">
+                    <p className="text-gray-400 dark:text-slate-500 text-sm mb-4 font-semibold">{t('noCrops')}</p>
+                    <Link to="/crops/add" className="inline-flex items-center gap-1.5 text-primary font-black hover:underline text-sm bg-primary/5 px-4 py-2 rounded-xl">
+                      {i18n.language === 'mr' ? 'तुमचे पहिले पीक आता जोडा →' : i18n.language === 'hi' ? 'अपनी पहली फसल अभी जोड़ें →' : 'Add your first crop now →'}
+                    </Link>
                   </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {activeCrops.map(crop => {
+                      const days = Math.floor(
+                        (Date.now() - new Date(crop.sowing_date).getTime()) / (1000 * 60 * 60 * 24)
+                      );
+                      
+                      const totalDuration = crop.crop_master.duration_days || 120;
+                      const progressPercentage = Math.min(Math.round((days / totalDuration) * 100), 100);
 
-                  {/* Rain alert */}
-                  {weather.rainAlert && (
-                    <div className="mb-4 p-3 bg-red-50 text-red-700 text-xs font-bold rounded-lg border border-red-100 flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                      {t('rainAlertWarning')}
-                    </div>
-                  )}
-
-                  {/* 5-day forecast */}
-                  {weather.forecast && weather.forecast.length > 0 && (
-                    <div className="border-t border-gray-100 pt-4">
-                      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                        {i18n.language === 'mr' ? 'पुढील ५ दिवस' : i18n.language === 'hi' ? 'अगले ५ दिन' : 'Next 5 Days'}
-                      </p>
-                      <div className="space-y-2">
-                        {weather.forecast.slice(0, 5).map((day: any, idx: number) => (
-                          <div
-                            key={idx}
-                            className={`flex items-center justify-between text-sm px-2 py-1.5 rounded-lg ${
-                              idx === 0 ? 'bg-primary/5' : 'hover:bg-gray-50'
-                            }`}
-                          >
-                            <span className="font-semibold text-gray-700 w-12">{formatDay(day.date, i18n.language)}</span>
-                            <WeatherIcon condition={day.condition} className="w-5 h-5 text-slate-400" />
-                            <div className="text-right tabular-nums">
-                              <span className="font-bold text-gray-900">{day.tempMax}°</span>
-                              <span className="text-gray-400 ml-1">{day.tempMin}°</span>
+                      return (
+                        <div
+                          key={crop.id}
+                          className="group p-5 bg-[#F7FAF4] dark:bg-slate-850/60 border border-slate-100 dark:border-slate-800 hover:border-primary/20 rounded-2xl transition-all duration-305 hover:-translate-y-1 shadow-sm relative flex flex-col justify-between text-left"
+                        >
+                          <div>
+                            <div className="flex justify-between items-start gap-2 mb-3">
+                              <h4 className="font-black text-lg text-[#1A2E1A] dark:text-[#F7FAF4] group-hover:text-primary transition-colors leading-snug">
+                                {crop.crop_master.name}
+                              </h4>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <span className="text-[10px] font-bold bg-[#4CAF50]/15 text-[#1B5E20] dark:text-[#4CAF50] px-2.5 py-1 rounded-full border border-green-200/20">
+                                  {t('active')}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    e.preventDefault();
+                                    handleDeleteCrop(crop.id);
+                                  }}
+                                  className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 p-1.5 rounded-lg transition-colors cursor-pointer"
+                                  title={i18n.language === 'mr' ? 'पीक हटवा' : i18n.language === 'hi' ? 'फसल हटाएं' : 'Delete Crop'}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                                </button>
+                              </div>
                             </div>
-                            {day.rainAlert && (
-                              <CloudRain className="w-4 h-4 text-blue-500 inline ml-1 shrink-0" />
+                            
+                            <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">
+                              {t('sowingDate')}: <span className="font-bold text-gray-700 dark:text-slate-350">{crop.sowing_date}</span>
+                            </p>
+                          </div>
+
+                          <div className="mt-5 space-y-1.5">
+                            <div className="flex justify-between text-[10px] font-bold text-gray-500 dark:text-slate-400">
+                              <span>{i18n.language === 'mr' ? 'कालावधी प्रगती' : 'Progress'}</span>
+                              <span className="tabular-nums">{progressPercentage}%</span>
+                            </div>
+                            <div className="w-full bg-slate-200/70 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                              <div 
+                                className="bg-primary h-full rounded-full transition-all duration-500" 
+                                style={{ width: `${progressPercentage}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mt-4 pt-3 border-t border-slate-200/50 dark:border-slate-800/80 flex items-center justify-between text-xs font-extrabold">
+                            <span className="text-[#1A2E1A]/70 dark:text-slate-350 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-100 dark:border-slate-750 font-semibold">
+                              {t('age')}: <span className="text-primary font-bold">{days}</span> {t('days')}
+                            </span>
+                            <Link to={`/crops/${crop.id}`} className="text-primary hover:text-emerald-600 hover:underline flex items-center gap-0.5">
+                              {t('viewTimeline')} <ChevronRight className="w-3.5 h-3.5 shrink-0" />
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* All Registered Shops Widget */}
+              <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-premium-3d">
+                <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-2 flex items-center gap-2.5">
+                  <Building2 className="text-primary w-5 h-5 shrink-0" />
+                  {i18n.language === 'mr' ? 'प्लॅटफॉर्मवरील सर्व नोंदणीकृत दुकाने' : i18n.language === 'hi' ? 'प्लेटफ़ॉर्म पर सभी पंजीकृत दुकानें' : 'All Registered Shops on Platform'}
+                </h3>
+                <p className="text-xs text-gray-400 dark:text-slate-500 mb-6 font-medium">
+                  {i18n.language === 'mr' ? 'खालील दुकानांमध्ये खते, औषधे आणि शेती साहित्य उपलब्ध आहे.' : i18n.language === 'hi' ? 'निम्नलिखित दुकानों में उर्वरक, दवाएं और कृषि सामग्री उपलब्ध हैं।' : 'Fertilizer, seed, and agriculture material shops registered on the platform.'}
+                </p>
+
+                {allShops.length === 0 ? (
+                  <p className="text-gray-450 dark:text-slate-500 text-xs text-center py-8 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                    {i18n.language === 'mr' ? 'सध्या कोणतेही दुकान नोंदणीकृत नाही.' : i18n.language === 'hi' ? 'वर्तमान में कोई भी दुकान पंजीकृत नहीं है।' : 'No registered shops found at the moment.'}
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {allShops.map((shop) => (
+                      <div 
+                        key={shop.id}
+                        onClick={() => setExpandedDashboardShopId(expandedDashboardShopId === shop.id ? null : shop.id)}
+                        className="p-5 border border-slate-100 dark:border-slate-800/80 rounded-2xl bg-[#F7FAF4]/40 dark:bg-slate-850/30 hover:border-primary/20 hover:shadow-md transition-all flex flex-col justify-between text-left cursor-pointer select-none"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-start gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-slate-400 transition-transform duration-200 shrink-0" style={{ transform: expandedDashboardShopId === shop.id ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}>▶</span>
+                              <h4 className="font-black text-slate-900 dark:text-white text-base leading-snug">🏪 {shop.shop_name}</h4>
+                            </div>
+                            <span className="text-[9px] font-black text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full shrink-0">
+                              Active
+                            </span>
+                          </div>
+                          <div className="text-xs space-y-1 text-slate-650 dark:text-slate-350">
+                            <p><span className="font-bold text-slate-700 dark:text-slate-200">{i18n.language === 'mr' ? 'मालक' : i18n.language === 'hi' ? 'मालिक' : 'Owner'}:</span> {shop.owner_name}</p>
+                            <p><span className="font-bold text-slate-700 dark:text-slate-200">{i18n.language === 'mr' ? 'मोबाईल' : i18n.language === 'hi' ? 'मोबाइल' : 'Mobile'}:</span> <a href={`tel:${shop.owner_mobile}`} onClick={(e) => e.stopPropagation()} className="text-primary font-bold hover:underline">{shop.owner_mobile}</a></p>
+                            <p><span className="font-bold text-slate-700 dark:text-slate-200">GST / Lic:</span> <span className="font-mono">{shop.license_number || 'N/A'}</span></p>
+                            <p className="text-[11px] text-[#1A2E1A]/60 dark:text-slate-400 mt-1 flex items-start gap-1 font-medium">
+                              <MapPin className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" /> 
+                              <span className="leading-snug">{shop.address}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Collapsible products list */}
+                        {expandedDashboardShopId === shop.id && (
+                          <div className="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-800 space-y-3" onClick={(e) => e.stopPropagation()}>
+                            <h5 className="font-extrabold text-xs text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                              <span className="w-1.5 h-3 bg-primary rounded-full" />
+                              {i18n.language === 'mr' ? 'उपलब्ध साहित्य व स्टॉक' : i18n.language === 'hi' ? 'उपलब्ध स्टॉक' : 'Available Products & Stock'}
+                            </h5>
+                            {!shop.products || shop.products.length === 0 ? (
+                              <p className="text-[11px] text-gray-400 dark:text-slate-500 italic py-2">
+                                {i18n.language === 'mr' ? 'या दुकानात सध्या कोणतेही उत्पादन उपलब्ध नाही.' : i18n.language === 'hi' ? 'इस दुकान में वर्तमान में कोई उत्पाद उपलब्ध नहीं है।' : 'No products available in this shop currently.'}
+                              </p>
+                            ) : (
+                              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                {shop.products.map((p: any) => (
+                                  <div key={p.id} className="p-2.5 bg-white dark:bg-slate-905 border border-slate-100 dark:border-slate-800 rounded-xl flex justify-between items-center text-[11px] hover:border-primary/20 transition-all">
+                                    <div className="pr-2">
+                                      <p className="font-black text-slate-800 dark:text-slate-250">{p.name}</p>
+                                      <p className="text-[9px] text-gray-400 font-bold mt-0.5">{p.company} | {p.category}</p>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                      <p className="font-black text-slate-950 dark:text-slate-100">₹{p.price}</p>
+                                      {p.stock_quantity <= 0 ? (
+                                        <span className="text-[8px] font-black text-red-650 bg-red-50 dark:bg-red-950/20 px-1.5 py-0.5 rounded">
+                                          {i18n.language === 'mr' ? 'संपला' : i18n.language === 'hi' ? 'समाप्त' : 'Out of Stock'}
+                                        </span>
+                                      ) : (
+                                        <span className="text-[8px] font-black text-green-700 bg-green-50 dark:bg-green-950/20 px-1.5 py-0.5 rounded">
+                                          {i18n.language === 'mr' ? `स्टॉक: ${p.stock_quantity}` : i18n.language === 'hi' ? `स्टॉक: ${p.stock_quantity}` : `Stock: ${p.stock_quantity}`}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             )}
                           </div>
-                        ))}
+                        )}
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
+
             </div>
 
-            {/* Quick stats card */}
-            {!loading && (
-              <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                  {i18n.language === 'mr' ? 'जलद माहिती' : i18n.language === 'hi' ? 'त्वरित जानकारी' : 'Quick Info'}
-                </p>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600 flex items-center gap-1.5">
-                      <Sprout className="w-4 h-4 text-primary" /> {i18n.language === 'mr' ? 'एकूण पिके' : i18n.language === 'hi' ? 'कुल फसलें' : 'Total Crops'}
-                    </span>
-                    <span className="font-extrabold text-gray-900">{crops.length}</span>
+            {/* RIGHT COLUMN: WEATHER FORECAST & ALERTS FEED */}
+            <div className="space-y-8">
+              
+              {/* Modern Weather Card Widget */}
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-premium-3d relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-36 h-36 bg-primary/5 dark:bg-primary/10 rounded-full -mr-12 -mt-12 blur-md" />
+
+                <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center gap-2.5 relative z-10">
+                  <CloudRain className="text-primary w-5 h-5 shrink-0" />
+                  {t('weatherToday')}
+                </h3>
+
+                {loading || !weather ? (
+                  <div className="animate-pulse space-y-5">
+                    <div className="h-12 bg-gray-50 dark:bg-slate-800 rounded-xl" />
+                    <div className="h-8 bg-gray-55 dark:bg-slate-800 rounded-xl w-3/4" />
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600 flex items-center gap-1.5">
-                      <AlertCircle className="w-4 h-4 text-amber-500" /> {i18n.language === 'mr' ? 'न वाचलेल्या सूचना' : i18n.language === 'hi' ? 'अपठित सूचनाएं' : 'Unread Alerts'}
-                    </span>
-                    <span className="font-extrabold text-gray-900">
-                      {notifications.filter(n => !n.is_read).length}
-                    </span>
-                  </div>
-                  {weather && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600 flex items-center gap-1.5">
-                        <Thermometer className="w-4 h-4 text-orange-400" /> {i18n.language === 'mr' ? 'तापमान' : i18n.language === 'hi' ? 'तापमान' : 'Temperature'}
-                      </span>
-                      <span className="font-extrabold text-gray-900">{weather.temperature}°C</span>
+                ) : (
+                  <div className="relative z-10 space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-5xl font-black text-gray-900 dark:text-white tabular-nums tracking-tight">
+                          {weather.temperature}°C
+                        </span>
+                        <p className="text-xs font-bold text-gray-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                          <WeatherIcon condition={weather.condition} className="w-3.5 h-3.5 text-primary" />
+                          {weather.condition}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-amber-500/10 dark:bg-amber-400/10 rounded-2xl border border-amber-500/10 shrink-0">
+                        <WeatherIcon condition={weather.condition} className="w-10 h-10 text-amber-500 shrink-0" />
+                      </div>
                     </div>
-                  )}
-                </div>
+
+                    <div className="grid grid-cols-2 gap-4 border-t border-slate-100 dark:border-slate-800/80 pt-5">
+                      <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-850/50 p-3 rounded-2xl border border-slate-100/50 dark:border-slate-800/40">
+                        <Droplets className="w-4 h-4 text-blue-400 shrink-0" />
+                        <div>
+                          <span className="text-[10px] font-bold text-gray-400 block tracking-wider uppercase">{t('humidity')}</span>
+                          <span className="text-sm text-gray-900 dark:text-white font-extrabold tabular-nums">{weather.humidity}%</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-850/50 p-3 rounded-2xl border border-slate-100/50 dark:border-slate-800/40">
+                        <Wind className="w-4 h-4 text-cyan-400 shrink-0" />
+                        <div>
+                          <span className="text-[10px] font-bold text-gray-400 block tracking-wider uppercase">{t('windSpeed')}</span>
+                          <span className="text-sm text-gray-900 dark:text-white font-extrabold tabular-nums">{weather.windSpeed} km/h</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {weather.rainAlert && (
+                      <div className="p-3.5 bg-red-50/80 dark:bg-red-950/20 text-red-700 dark:text-red-400 text-xs font-bold rounded-2xl border border-red-150 dark:border-red-900/30 flex items-start gap-2.5 animate-glow-pulse">
+                        <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-450 shrink-0 mt-0.5" />
+                        <span className="leading-relaxed">{t('rainAlertWarning')}</span>
+                      </div>
+                    )}
+
+                    {weather.forecast && weather.forecast.length > 0 && (
+                      <div className="border-t border-slate-100 dark:border-slate-800/80 pt-5">
+                        <p className="text-xs font-black text-gray-400 dark:text-slate-550 uppercase tracking-wider mb-4 flex items-center gap-1.5">
+                          <span className="w-1.5 h-3.5 bg-primary rounded-full" />
+                          {i18n.language === 'mr' ? 'पुढील ५ दिवस हवामान' : i18n.language === 'hi' ? 'अगले ५ दिन का मौसम' : 'Next 5 Days Forecast'}
+                        </p>
+                        <div className="space-y-2.5">
+                          {weather.forecast.slice(0, 5).map((day: any, idx: number) => (
+                            <div
+                              key={idx}
+                              className={`flex items-center justify-between text-xs px-3.5 py-2.5 rounded-xl border border-transparent transition-all ${
+                                idx === 0 
+                                  ? 'bg-[#4CAF50]/10 border-[#4CAF50]/10 text-emerald-900 dark:text-emerald-400 font-bold' 
+                                  : 'hover:bg-slate-50 dark:hover:bg-slate-850/80 text-gray-700 dark:text-slate-350'
+                              }`}
+                            >
+                              <span className="font-extrabold w-12">{formatDay(day.date, i18n.language)}</span>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <WeatherIcon condition={day.condition} className="w-4.5 h-4.5 text-slate-400 shrink-0" />
+                                {day.rainAlert && (
+                                  <CloudRain className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                                )}
+                              </div>
+                              <div className="text-right font-black tabular-nums">
+                                <span className="text-gray-900 dark:text-white">{day.tempMax}°</span>
+                                <span className="text-gray-400 ml-1.5 font-bold">{day.tempMin}°</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Recommendations/Alerts list Widget */}
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-premium-3d">
+                <h3 className="text-xl font-extrabold text-gray-900 dark:text-white mb-6 flex items-center gap-2.5">
+                  <AlertCircle className="text-primary w-5 h-5 shrink-0" />
+                  {t('recentRecommendations')}
+                </h3>
+
+                {loading ? (
+                  <div className="animate-pulse space-y-3">
+                    <div className="h-14 bg-gray-50 dark:bg-slate-800 rounded-xl" />
+                    <div className="h-14 bg-gray-50 dark:bg-slate-800 rounded-xl" />
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <p className="text-gray-400 dark:text-slate-500 text-xs text-center py-8 bg-slate-50/50 dark:bg-slate-900/10 rounded-2xl border border-slate-100 dark:border-slate-850">
+                    {i18n.language === 'mr' ? 'सध्या कोणत्याही शिफारसी नाहीत.' : i18n.language === 'hi' ? 'वर्तमान में कोई सिफारिशें नहीं हैं।' : 'No recommendations at the moment.'}
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {notifications.slice(0, 5).map(notif => {
+                      const translated = translateNotification(notif);
+                      
+                      let typeBadgeBg = "bg-green-500/10 text-green-700 dark:text-green-400";
+                      let borderStyle = "border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900";
+                      
+                      if (notif.type === 'spray') {
+                        typeBadgeBg = "bg-amber-500/10 text-amber-700 dark:text-amber-400";
+                      } else if (notif.type === 'irrigation' || notif.type === 'weather') {
+                        typeBadgeBg = "bg-blue-500/10 text-blue-700 dark:text-blue-400";
+                      }
+                      
+                      if (!notif.is_read) {
+                        borderStyle = "border-green-150 dark:border-emerald-800/60 bg-green-50/10 dark:bg-emerald-950/10";
+                      }
+
+                      return (
+                        <div
+                          key={notif.id}
+                          className={`p-4 rounded-2xl border flex items-start gap-3.5 transition-all hover:scale-[1.01] duration-200 ${borderStyle}`}
+                        >
+                          <div className={`p-2 rounded-xl shrink-0 ${typeBadgeBg}`}>
+                            {notif.type === 'fertilizer' ? (
+                              <Sprout className="w-4.5 h-4.5" />
+                            ) : notif.type === 'spray' ? (
+                              <Wind className="w-4.5 h-4.5" />
+                            ) : (
+                              <Droplets className="w-4.5 h-4.5" />
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <h4 className="font-extrabold text-xs text-gray-900 dark:text-white leading-tight">{translated.title}</h4>
+                            <p className="text-[11px] text-gray-600 dark:text-slate-400 font-medium leading-relaxed">{translated.message}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+            </div>
+
           </div>
         </div>
       </div>

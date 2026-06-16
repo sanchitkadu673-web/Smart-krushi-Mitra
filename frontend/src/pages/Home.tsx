@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { Navbar } from '../components/navigation/Navbar';
-import { ShieldCheck, CloudSun, CalendarDays, Sprout, Milestone, HelpCircle, ArrowRight, Leaf, Users, Tractor, BarChart3, Star, MapPin, Building2, X, TrendingUp, Award, Zap, Globe, ChevronDown, Phone, Mail, MessageSquare, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ShieldCheck, CloudSun, CalendarDays, Sprout, Milestone, HelpCircle, ArrowRight, Leaf, Users, Tractor, BarChart3, Star, MapPin, Building2, X, TrendingUp, Award, Zap, Globe, ChevronDown, Phone, Mail, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -1219,25 +1219,7 @@ export const Home: React.FC = () => {
             ))}
           </div>
 
-          {/* More questions CTA */}
-          <ScrollReveal delay={400}>
-            <div className="mt-10 text-center p-6 bg-[#4CAF50]/5 dark:bg-[#4CAF50]/10 rounded-2xl border border-[#4CAF50]/15">
-              <MessageSquare className="w-8 h-8 text-[#1B5E20] dark:text-[#4CAF50] mx-auto mb-3" />
-              <p className="font-bold text-[#1A2E1A] dark:text-white mb-1">
-                {lang === 'mr' ? 'आणखी प्रश्न आहेत?' : lang === 'hi' ? 'और सवाल हैं?' : 'Still have questions?'}
-              </p>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                {lang === 'mr' ? 'आमच्याशी थेट संपर्क साधा.' : lang === 'hi' ? 'हमसे सीधे संपर्क करें।' : 'Reach out to us directly and we will help you.'}
-              </p>
-              <a
-                href="tel:+919876543210"
-                className="inline-flex items-center gap-2 bg-[#1B5E20] text-white font-bold text-sm px-6 py-3 rounded-xl hover:bg-[#124115] transition-all"
-              >
-                <Phone className="w-4 h-4" />
-                {lang === 'mr' ? 'आम्हाला कॉल करा' : lang === 'hi' ? 'हमें कॉल करें' : 'Call Us'}
-              </a>
-            </div>
-          </ScrollReveal>
+
         </div>
       </section>
 

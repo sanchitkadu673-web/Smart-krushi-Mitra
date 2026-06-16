@@ -65,7 +65,13 @@ export class CropController {
       try {
         const { AiService } = require('../services/AiService');
         const cropName = crop.crop_master?.name || 'Unknown Crop';
-        const aiData = await AiService.generateCropSchedule(cropName, crop.sowing_date);
+        const aiData = await AiService.generateCropSchedule(
+          cropName,
+          crop.sowing_date,
+          validated.soilType || undefined,
+          validated.soilReport || undefined,
+          validated.soilReportMime || undefined
+        );
         
         // Update crop with AI data
         await supabaseAdmin

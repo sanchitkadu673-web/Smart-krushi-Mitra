@@ -46,10 +46,13 @@ export const otpVerifySchema = z.object({
 export const addCropSchema = z.object({
   cropMasterId: z.string().uuid('Invalid Crop Master reference'),
   sowingDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Sowing date must be YYYY-MM-DD'),
-  area: z.number().positive('Area must be a positive number').optional(),
-  variety: z.string().optional(),
+  area: z.number().positive('Area must be a positive number').optional().nullable(),
+  variety: z.string().optional().nullable(),
   farmingType: z.enum(['irrigated', 'rainfed']).optional().default('irrigated'),
-  status: z.enum(['active', 'harvested', 'abandoned']).optional()
+  status: z.enum(['active', 'harvested', 'abandoned']).optional(),
+  soilType: z.string().optional().nullable(),
+  soilReport: z.string().optional().nullable(),
+  soilReportMime: z.string().optional().nullable()
 });
 
 export const updateCropSchema = addCropSchema.partial();

@@ -10,19 +10,80 @@ export class AiService {
    * Generate farming schedule and information for a specific crop.
    * Returns a JSON string with the structured schedule.
    */
-  public static async generateCropSchedule(cropName: string, sowingDate: string): Promise<any> {
+  public static async generateCropSchedule(
+    cropName: string,
+    sowingDate: string,
+    soilType?: string,
+    soilReportBase64?: string,
+    soilReportMime?: string
+  ): Promise<any> {
     try {
+      let soilAnalysisText = "";
+
+      // If a soil report is uploaded, scan it with Gemini first
+      if (soilReportBase64 && apiKey && apiKey !== 'dummy_key') {
+        try {
+          const base64Data = soilReportBase64.includes(';base64,') 
+            ? soilReportBase64.split(';base64,')[1] 
+            : soilReportBase64;
+            
+          const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
+          const scanPrompt = `
+You are an expert agricultural soil analyst. Look at this soil test report (soil health card) image/document.
+Extract the key soil parameters: pH, Organic Carbon (OC), Nitrogen (N), Phosphorus (P), and Potassium (K) levels if visible.
+Provide a clear, brief diagnostic summary in Marathi language explaining if the soil is deficient in any nutrients and what general corrections are needed.
+Keep it under 3-4 bullet points.
+          `;
+          
+          const scanResult = await model.generateContent([
+            {
+              inlineData: {
+                data: base64Data,
+                mimeType: soilReportMime || 'image/jpeg'
+              }
+            },
+            scanPrompt
+          ]);
+          
+          soilAnalysisText = (await scanResult.response).text().trim();
+        } catch (scanErr) {
+          console.error("Failed to scan soil report with Gemini:", scanErr);
+          soilAnalysisText = "माती परीक्षण अहवाल वाचण्यात अडचण आली, परंतु आम्ही तुमच्या पिकासाठी सर्वसाधारण खत वेळापत्रक तयार केले आहे.";
+        }
+      } else if (soilReportBase64) {
+        // Fallback mock analysis if no API key
+        soilAnalysisText = "• मातीचा सामू (pH) ७.२ आहे जो पीक वाढीसाठी अत्यंत योग्य आहे.\n• नायट्रोजन (N) आणि सेंद्रिय कर्ब (OC) चे प्रमाण अत्यंत कमी आहे, त्यामुळे नत्राचा वापर वाढवावा लागेल.\n• स्फुरद (P) आणि पालाश (K) चे प्रमाण मध्यम आहे.";
+      }
+
       if (!apiKey || apiKey === 'dummy_key') {
         console.warn('GEMINI_API_KEY is not set. Returning mock AI data.');
-        return this.getMockData(cropName);
+        const mock = this.getMockData(cropName);
+        if (soilType || soilAnalysisText) {
+          mock.crop_info.general_advice += `\n\nमातीचा प्रकार: ${soilType || 'साधारण'}.\nअहवाल विश्लेषण:\n${soilAnalysisText}`;
+          mock.soil_analysis = {
+            soil_type: soilType,
+            analysis_report: soilAnalysisText
+          };
+        }
+        return mock;
       }
 
       // Using gemini-2.0-flash-lite as it is fast and cost-effective
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
-      const prompt = `
+      let prompt = `
 You are an expert Indian agriculturist. 
 The farmer has planted the crop: "${cropName}" on the date: "${sowingDate}".
+`;
+
+      if (soilType) {
+        prompt += `The farmer's soil type is: "${soilType}". `;
+      }
+      if (soilAnalysisText) {
+        prompt += `Here is the diagnostic summary from their soil report: "${soilAnalysisText}". Customize the fertilizer recommendations and soil management advice to address these specific deficiencies or soil conditions. `;
+      }
+
+      prompt += `
 Generate a detailed and complete farming schedule in JSON format. Do not use markdown backticks in your response, just return valid JSON.
 
 The JSON MUST exactly match this structure:
@@ -30,9 +91,9 @@ The JSON MUST exactly match this structure:
   "crop_info": {
     "name": "crop name in Marathi",
     "estimated_harvest_days": 90,
-    "pre_sowing_tillage": "Detailed advice on pre-sowing tillage (पूर्व मशागत), soil preparation, and basal dose in Marathi.",
+    "pre_sowing_tillage": "Detailed advice on pre-sowing tillage (पूर्व मशागत), soil preparation, and basal dose in Marathi adjusted for crop and soil type.",
     "sowing_method": "Detailed advice on sowing method, seed treatment, and spacing in Marathi.",
-    "general_advice": "Other general advice in Marathi"
+    "general_advice": "Other general advice in Marathi including remarks on the soil type/parameters if provided."
   },
   "stages": [
     {
@@ -40,7 +101,7 @@ The JSON MUST exactly match this structure:
       "start_day": 0,
       "end_day": 20,
       "water_requirement": "Detailed irrigation schedule in Marathi",
-      "fertilizer_advice": "Detailed fertilizer advice in Marathi",
+      "fertilizer_advice": "Detailed fertilizer advice in Marathi customized for soil conditions",
       "spray_advice": "Detailed spray and pest control advice in Marathi",
       "intercultural_operations": "Weeding or other operations (खुरपणी, कोळपणी) in Marathi"
     }
@@ -57,15 +118,31 @@ Ensure the entire response is purely valid JSON without any \`\`\`json wrappers.
       // Clean up markdown JSON wrappers if Gemini accidentally adds them
       text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
-      return JSON.parse(text);
+      const parsedJson = JSON.parse(text);
+
+      if (soilType || soilAnalysisText) {
+        parsedJson.soil_analysis = {
+          soil_type: soilType,
+          analysis_report: soilAnalysisText
+        };
+      }
+
+      return parsedJson;
     } catch (error: any) {
       console.error('Error generating AI crop schedule:', error?.message || error);
       // Fallback to mock data if AI fails
-      return this.getMockData(cropName);
+      const mock = this.getMockData(cropName);
+      if (soilType || soilReportBase64) {
+        mock.soil_analysis = {
+          soil_type: soilType,
+          analysis_report: "माती अहवाल विश्लेषण उपलब्ध आहे परंतु पीक वेळापत्रक तयार करताना त्रुटी आली."
+        };
+      }
+      return mock;
     }
   }
 
-  private static getMockData(cropName: string) {
+  private static getMockData(cropName: string): any {
     return {
       "crop_info": {
         "name": cropName,

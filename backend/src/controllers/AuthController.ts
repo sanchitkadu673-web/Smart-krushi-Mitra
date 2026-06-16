@@ -113,8 +113,8 @@ export class AuthController {
       // Fetch user profile
       const { data: profile } = await supabaseAdmin.from('profiles').select('*').eq('mobile', mobile).single();
 
-      if (!profile || profile.role !== 'shop_owner') {
-         return res.status(403).json({ error: 'This login is only for Shop Owners' });
+      if (!profile || (profile.role !== 'shop_owner' && profile.role !== 'admin' && profile.role !== 'super_admin')) {
+         return res.status(403).json({ error: 'This login is only for Shop Owners and Admins' });
       }
 
       return res.status(200).json({

@@ -114,12 +114,31 @@ export class AdminController {
   // Listing farmers for admin
   public static async listFarmers(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
-      const { data, error } = await supabaseAdmin
+      const { data: farmers, error: farmersError } = await supabaseAdmin
         .from('profiles')
         .select('*')
         .eq('role', 'farmer');
-      if (error) return res.status(400).json({ error: error.message });
-      return res.status(200).json(data);
+      if (farmersError) return res.status(400).json({ error: farmersError.message });
+
+      const { data: crops, error: cropsError } = await supabaseAdmin
+        .from('crops')
+        .select('*, crop_master(*)');
+      
+      const { data: shops, error: shopsError } = await supabaseAdmin
+        .from('shops')
+        .select('*');
+
+      const joined = (farmers || []).map((farmer: any) => {
+        const farmerCrops = (crops || []).filter((c: any) => c.user_id === farmer.user_id);
+        const linkedShop = (shops || []).find((s: any) => s.id === farmer.shop_id);
+        return {
+          ...farmer,
+          crops: farmerCrops,
+          shop: linkedShop || null
+        };
+      });
+
+      return res.status(200).json(joined);
     } catch (err) { next(err); }
   }
 
@@ -136,9 +155,20 @@ export class AdminController {
 
       const joined = shops.map((shop: any) => {
         const owner = profiles.find((p: any) => p.user_id === shop.owner_id);
+        const linkedFarmers = profiles.filter((p: any) => p.role === 'farmer' && p.shop_id === shop.id);
+        
         return {
           ...shop,
-          owner: owner || null
+          owner: owner || null,
+          farmersCount: linkedFarmers.length,
+          farmers: linkedFarmers.map((f: any) => ({
+            id: f.id,
+            full_name: f.full_name,
+            mobile: f.mobile,
+            village: f.village,
+            taluka: f.taluka,
+            district: f.district
+          }))
         };
       });
 

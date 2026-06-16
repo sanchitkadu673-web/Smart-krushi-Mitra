@@ -23,5 +23,6 @@ router.post('/broadcast', requireAuth, requireRole(['shop_owner']), ShopControll
 
 // Farmer link route
 router.get('/linked', requireAuth, requireRole(['farmer']), ShopController.getLinkedShopForFarmer);
+router.get('/all', requireAuth, requireRole(['farmer']), ShopController.listAllShops);
 
 export default router;

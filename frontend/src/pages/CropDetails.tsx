@@ -4,9 +4,20 @@ import { useTranslation } from 'react-i18next';
 import { Navbar } from '../components/navigation/Navbar';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Activity, Calendar, Droplets, ShieldAlert, Sparkles, Sprout, ChevronDown, Info, Edit2 } from 'lucide-react';
+import { ArrowLeft, Activity, Calendar, Droplets, ShieldAlert, Sparkles, Sprout, ChevronDown, Info, Edit2, FileText, CheckCircle2 } from 'lucide-react';
 
 import { cropTranslations } from '../constants/cropTranslations';
+
+const getSoilTypeLabel = (soilType: string, lang: string) => {
+  const dictionary: Record<string, Record<string, string>> = {
+    black: { mr: 'काळी माती (Black Soil)', hi: 'काली मिट्टी', en: 'Black Soil' },
+    red: { mr: 'तांबडी माती (Red Soil)', hi: 'लाल मिट्टी', en: 'Red Soil' },
+    murmad: { mr: 'मुरमाड माती (Sandy/Rocky Soil)', hi: 'मुरम मिट्टी', en: 'Sandy/Rocky Soil' },
+    clayey: { mr: 'गाळाची माती (Clayey Soil)', hi: 'जलोढ़ मिट्टी', en: 'Clayey Soil' },
+    loamy: { mr: 'दुमट माती (Loamy Soil)', hi: 'दुमट मिट्टी', en: 'Loamy Soil' }
+  };
+  return dictionary[soilType]?.[lang] || soilType;
+};
 
 const translateStageName = (stageName: string, lang: string) => {
   if (!stageName) return '';
@@ -499,6 +510,45 @@ export const CropDetails: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-6">
+                    {/* Soil Report Analysis Card */}
+                    {crop.ai_schedule_data?.soil_analysis && (
+                      <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-50 to-green-50/30 dark:from-slate-900 dark:to-slate-900/50 border border-[#4CAF50]/15 shadow-sm text-left animate-fade-up">
+                        <h4 className="font-black text-emerald-800 dark:text-emerald-400 text-lg mb-3 flex items-center gap-2">
+                          <FileText className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                          {i18n.language === 'mr' ? 'माती परीक्षण अहवाल विश्लेषण (AI Analysis)' : i18n.language === 'hi' ? 'मिट्टी परीक्षण रिपोर्ट विश्लेषण (AI Analysis)' : 'Soil Health Analysis (AI Report)'}
+                        </h4>
+                        
+                        <div className="space-y-3 text-xs md:text-sm">
+                          <p className="text-gray-650 dark:text-slate-400">
+                            <span className="font-extrabold text-gray-850 dark:text-slate-200">
+                              {i18n.language === 'mr' ? 'मातीचा प्रकार:' : i18n.language === 'hi' ? 'मिट्टी का प्रकार:' : 'Soil Type:'}
+                            </span>{' '}
+                            <span className="font-black text-primary bg-primary/10 px-2.5 py-1 rounded-lg">
+                              {getSoilTypeLabel(crop.ai_schedule_data.soil_analysis.soil_type, i18n.language)}
+                            </span>
+                          </p>
+
+                          <div className="bg-white dark:bg-slate-950 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2">
+                            <span className="font-extrabold text-gray-750 dark:text-slate-350 block border-b pb-1 mb-2">
+                              {i18n.language === 'mr' ? 'मातीतील पोषणद्रव्ये व सल्ले:' : i18n.language === 'hi' ? 'मिट्टी के पोषक तत्व और सलाह:' : 'Nutrient Levels & Diagnostics:'}
+                            </span>
+                            <div className="text-gray-750 dark:text-slate-300 leading-relaxed space-y-1.5">
+                              {crop.ai_schedule_data.soil_analysis.analysis_report.split('\n').map((line: string, i: number) => {
+                                const cleanLine = line.replace(/^\s*[•*-]\s*/, '').trim();
+                                if (!cleanLine) return null;
+                                return (
+                                  <div key={i} className="flex items-start gap-2">
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                    <span>{cleanLine}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="p-5 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100">
                        <h4 className="font-bold text-green-800 text-xl mb-4 border-b border-green-200 pb-2">{crop.ai_schedule_data.crop_info?.name}</h4>
                        
