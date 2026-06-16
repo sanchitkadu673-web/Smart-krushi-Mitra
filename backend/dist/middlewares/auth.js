@@ -1,0 +1,49 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.requireAuth = requireAuth;
+exports.requireRole = requireRole;
+const supabase_1 = require("../config/supabase");
+async function requireAuth(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Missing or invalid token format' });
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+        // Verify session token with Supabase
+        const { data: { user }, error } = await supabase_1.supabaseAdmin.auth.getUser(token);
+        if (error || !user) {
+            return res.status(401).json({ error: 'Invalid or expired token' });
+        }
+        // Retrieve local user profile to check roles
+        const { data: profile, error: profileError } = await supabase_1.supabaseAdmin
+            .from('profiles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single();
+        if (profileError || !profile) {
+            return res.status(403).json({ error: 'Profile not found or registered' });
+        }
+        req.user = {
+            id: user.id,
+            email: user.email,
+            role: profile.role
+        };
+        next();
+    }
+    catch (err) {
+        return res.status(500).json({ error: 'Internal Authentication Error' });
+    }
+}
+function requireRole(roles) {
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        const allowedRoles = Array.isArray(roles) ? roles : [roles];
+        if (!allowedRoles.includes(req.user.role)) {
+            return res.status(403).json({ error: `Forbidden: Access restricted to ${allowedRoles.join(', ')}` });
+        }
+        next();
+    };
+}
