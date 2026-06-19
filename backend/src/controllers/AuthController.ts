@@ -52,7 +52,6 @@ export class AuthController {
           user_id: userId,
           full_name: validated.fullName,
           mobile: validated.mobile,
-          email: validated.email || null,
           state: validated.state,
           district: validated.district,
           taluka: validated.taluka,
