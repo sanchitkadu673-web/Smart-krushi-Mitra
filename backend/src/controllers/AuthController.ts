@@ -191,7 +191,7 @@ export class AuthController {
       }
 
       if (error) {
-        if (error.message.includes('SMS provider') || error.message.includes('not configured') || error.message.includes('Mailer') || error.message.includes('email provider') || error.message.includes('Phone logins are disabled') || error.message.includes('Phone signups are disabled')) {
+        if (error.message.includes('SMS provider') || error.message.includes('not configured') || error.message.includes('Unsupported phone provider') || error.message.includes('Mailer') || error.message.includes('email provider') || error.message.includes('Phone logins are disabled') || error.message.includes('Phone signups are disabled')) {
           return res.status(200).json({
             message: 'OTP sent successfully (Development fallback: Use OTP 123456)',
             development: true
