@@ -10,6 +10,37 @@ async function requireAuth(req, res, next) {
     }
     const token = authHeader.split(' ')[1];
     try {
+        // Handle dev/mock tokens (issued when Supabase phone auth is disabled)
+        if (token.startsWith('dev-token-') || token.startsWith('mock-token-')) {
+            let profile = null;
+            if (token.startsWith('dev-token-')) {
+                const userId = token.replace('dev-token-', '');
+                const { data } = await supabase_1.supabaseAdmin
+                    .from('profiles')
+                    .select('user_id, role')
+                    .eq('user_id', userId)
+                    .single();
+                profile = data;
+            }
+            else {
+                // mock-token-{mobile}
+                const mobile = token.replace('mock-token-', '');
+                const { data } = await supabase_1.supabaseAdmin
+                    .from('profiles')
+                    .select('user_id, role')
+                    .eq('mobile', mobile)
+                    .single();
+                profile = data;
+            }
+            if (!profile) {
+                return res.status(401).json({ error: 'Invalid or expired token' });
+            }
+            req.user = {
+                id: profile.user_id,
+                role: profile.role
+            };
+            return next();
+        }
         // Verify session token with Supabase
         const { data: { user }, error } = await supabase_1.supabaseAdmin.auth.getUser(token);
         if (error || !user) {

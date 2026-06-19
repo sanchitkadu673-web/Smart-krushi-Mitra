@@ -411,8 +411,10 @@ function loadFromFile() {
   }
 }
 
-// Load database from file at startup
-loadFromFile();
+// Load database from file at startup (only when using mock DB, not on production/Vercel)
+if (isPlaceholder) {
+  loadFromFile();
+}
 
 // Helper to create chainable query builders
 const createChainableQuery = (tableName: string) => {
@@ -570,6 +572,13 @@ const mockSupabase = {
       listUsers: async () => {
         return { data: { users: mockAuthUsers }, error: null };
       },
+      getUserById: async (id: string) => {
+        const user = mockAuthUsers.find(u => u.id === id);
+        if (user) {
+          return { data: { user }, error: null };
+        }
+        return { data: { user: null }, error: { message: 'User not found' } };
+      },
       deleteUser: async (id: string) => {
         const index = mockAuthUsers.findIndex(u => u.id === id);
         if (index !== -1) {
@@ -592,6 +601,26 @@ const mockSupabase = {
               user: {
                 id: profile.user_id,
                 phone: `+91${mobile}`,
+                email: profile.email,
+                user_metadata: {
+                  full_name: profile.full_name
+                }
+              }
+            },
+            error: null
+          };
+        }
+      }
+      // Handle dev-token-* (issued when phone auth is disabled in Supabase)
+      if (token && token.startsWith('dev-token-')) {
+        const userId = token.replace('dev-token-', '');
+        const profile = db.profiles.find(p => p.user_id === userId);
+        if (profile) {
+          return {
+            data: {
+              user: {
+                id: profile.user_id,
+                phone: `+91${profile.mobile}`,
                 email: profile.email,
                 user_metadata: {
                   full_name: profile.full_name

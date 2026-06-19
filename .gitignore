@@ -40,6 +40,7 @@ Thumbs.db
 # Vercel
 .vercel
 .env.vercel
+.env.vercel.local
 
 # Debug / test scripts (not part of main codebase)
 backend/change_to_shop_owner.ts

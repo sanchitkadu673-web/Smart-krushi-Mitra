@@ -6,12 +6,22 @@ let app;
 try {
   app = require('../backend/dist/index.js').default || require('../backend/dist/index.js');
 } catch (e) {
-  // Fallback: create a minimal express app if build not found
-  const express = require('express');
-  app = express();
-  app.get('*', (req, res) => {
-    res.status(500).json({ error: 'Backend build not found. Run: cd backend && npm run build' });
-  });
+  // Fallback: create a minimal handler if build not found
+  // Uses express from backend's node_modules since root has no package.json
+  try {
+    const express = require('../backend/node_modules/express');
+    app = express();
+    app.all('*', (req, res) => {
+      res.status(500).json({ error: 'Backend build not found. Run: cd backend && npm run build', detail: e.message });
+    });
+  } catch (e2) {
+    // Absolute minimal fallback - no express at all
+    app = (req, res) => {
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: 'Backend not initialized', detail: e.message }));
+    };
+  }
 }
 
 module.exports = app;

@@ -72,8 +72,8 @@ app.use('/api/shop', shopRoutes);
 // Global Error Handler
 app.use(errorHandler);
 
-// Start Server
-if (process.env.NODE_ENV !== 'test') {
+// Start Server (only when running as standalone, not as Vercel serverless function)
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`Smart Krushi Mitra server running on port ${PORT}`);
     AdvisoryScheduler.start();
