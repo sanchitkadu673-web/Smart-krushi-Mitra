@@ -22,6 +22,7 @@ EXCEPTION WHEN duplicate_object THEN null; END $$;
 
 -- PROFILES TABLE
 CREATE TABLE IF NOT EXISTS public.profiles (
+    
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE,
     full_name TEXT NOT NULL,

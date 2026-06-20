@@ -453,10 +453,10 @@ export const Home: React.FC = () => {
               {lang === 'mr' ? 'लाईव्ह आकडेवारी' : lang === 'hi' ? 'लाइव डेटा' : 'Live Platform Data'}
             </span>
             <h2 className="text-3xl md:text-4xl font-black text-white mb-3">
-              {lang === 'mr' ? 'शेतकऱ्यांनी विश्वास ठेवलेले' : lang === 'hi' ? 'किसानों का भरोसा' : 'Trusted by Farmers Across India'}
+              {lang === 'mr' ? 'शेतकऱ्यांचा विश्वास असलेले' : lang === 'hi' ? 'किसानों का भरोसा' : 'Trusted by Farmers Across India'}
             </h2>
             <p className="text-white/60 max-w-xl mx-auto">
-              {lang === 'mr' ? 'संख्या जी आमची कामगिरी सांगतात' : lang === 'hi' ? 'संख्याएं जो हमारी उपलब्धि बताती हैं' : 'Numbers that speak for our impact'}
+              {lang === 'mr' ? 'आमची कामगिरी दर्शवणारी आकडेवारी' : lang === 'hi' ? 'संख्याएं जो हमारी उपलब्धि बताती हैं' : 'Numbers that speak for our impact'}
             </p>
           </div>
 
@@ -711,7 +711,7 @@ export const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-4xl font-black text-[#1A2E1A] dark:text-[#F7FAF4] mb-4">
-              {i18n.language === 'mr' ? 'स्मार्ट कृषी मित्र कार्यात' : i18n.language === 'hi' ? 'स्मार्ट कृषि मित्र कार्यप्रणाली' : 'Smart Krushi Mitra in Action'}
+              {i18n.language === 'mr' ? 'स्मार्ट कृषी मित्र कसे कार्य करते' : i18n.language === 'hi' ? 'स्मार्ट कृषि मित्र कार्यप्रणाली' : 'Smart Krushi Mitra in Action'}
             </h2>
             <p className="text-lg text-slate-500 dark:text-slate-400 font-medium">
               {i18n.language === 'mr' ? 'आपले प्लॅटफॉर्म शेतकरी आणि दुकानदार दोघांना कसे सक्षम बनवते ते पहा.' : i18n.language === 'hi' ? 'देखें कि हमारा प्लेटफॉर्म किसानों और दुकानदारों दोनों को कैसे सशक्त बनाता है।' : 'See how our platform empowers farmers and shop owners in their daily activities.'}
@@ -803,7 +803,7 @@ export const Home: React.FC = () => {
               },
               {
                 img: imgExpertAdvice,
-                title: i18n.language === 'mr' ? 'कृषी तज्ज्ञ मार्गदर्शन' : i18n.language === 'hi' ? 'कृषि विशेषज्ञ सलाह' : 'Expert Advisory Q&A',
+                title: i18n.language === 'mr' ? 'कृषी तज्ज्ञांचे मार्गदर्शन' : i18n.language === 'hi' ? 'कृषि विशेषज्ञ सलाह' : 'Expert Advisory Q&A',
                 desc: i18n.language === 'mr' ? 'पिकावरील रोग व किडींच्या नियंत्रणासाठी थेट पात्र कृषी तज्ज्ञांकडून मार्गदर्शन मिळवा.' : i18n.language === 'hi' ? 'फसल के रोगों और कीटों के नियंत्रण के लिए सीधे योग्य कृषि विशेषज्ञों से सलाह लें।' : 'Connect directly with certified agriculture experts to solve crop diseases and receive instant remedies.',
                 details: {
                   en: 'Connect directly with certified agricultural scientists and experienced extension officers. Post questions with pictures of your crop, ask about fertilization plans, and get personalized remedies within hours.',

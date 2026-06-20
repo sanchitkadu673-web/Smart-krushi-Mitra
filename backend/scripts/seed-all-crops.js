@@ -39,6 +39,27 @@ const CROPS = {
   CHILLI:      '043779ff-6835-47af-8f2b-ef2f9af50b00',
 };
 
+const CROP_MASTER_DATA = [
+  { id: CROPS.WHEAT, name: 'Wheat (Gahu / गहु)', category: 'Cereal', duration_days: 120, expected_yield: 20 },
+  { id: CROPS.RICE, name: 'Rice (Bhat / भात)', category: 'Cereal', duration_days: 130, expected_yield: 25 },
+  { id: CROPS.SUGARCANE, name: 'Sugarcane (Oos / ऊस)', category: 'Cash Crop', duration_days: 360, expected_yield: 400 },
+  { id: CROPS.TUR, name: 'Tur (Arhar / तूर)', category: 'Pulse', duration_days: 160, expected_yield: 8 },
+  { id: CROPS.CHICKPEA, name: 'Chickpea (Harbara / हरभरा)', category: 'Pulse', duration_days: 110, expected_yield: 10 },
+  { id: CROPS.GROUNDNUT, name: 'Groundnut (Bhuimug / भुईमूग)', category: 'Oilseed', duration_days: 120, expected_yield: 12 },
+  { id: CROPS.ONION, name: 'Onion (Kanda / कांदा)', category: 'Vegetable', duration_days: 120, expected_yield: 120 },
+  { id: CROPS.TOMATO, name: 'Tomato (टोमॅटो)', category: 'Vegetable', duration_days: 110, expected_yield: 200 },
+  { id: CROPS.MAIZE, name: 'Maize (Maka / मका)', category: 'Cereal', duration_days: 110, expected_yield: 30 },
+  { id: CROPS.BAJRA, name: 'Bajra (बाजरी)', category: 'Cereal', duration_days: 90, expected_yield: 12 },
+  { id: CROPS.JOWAR, name: 'Jowar (Sorghum / ज्वारी)', category: 'Cereal', duration_days: 110, expected_yield: 15 },
+  { id: CROPS.GRAPES, name: 'Grapes (Draksha / द्राक्ष)', category: 'Fruit', duration_days: 150, expected_yield: 100 },
+  { id: CROPS.POMEGRANATE, name: 'Pomegranate (Dalimb / डाळिंब)', category: 'Fruit', duration_days: 180, expected_yield: 60 },
+  { id: CROPS.MANGO, name: 'Mango (Amba / आंबा)', category: 'Fruit', duration_days: 365, expected_yield: 50 },
+  { id: CROPS.BANANA, name: 'Banana (Keli / केळी)', category: 'Fruit', duration_days: 300, expected_yield: 250 },
+  { id: CROPS.TURMERIC, name: 'Turmeric (Halad / हळद)', category: 'Spice', duration_days: 240, expected_yield: 80 },
+  { id: CROPS.GINGER, name: 'Ginger (Aale / आले)', category: 'Spice', duration_days: 240, expected_yield: 70 },
+  { id: CROPS.CHILLI, name: 'Chilli (Mirchi / मिरची)', category: 'Spice', duration_days: 150, expected_yield: 40 }
+];
+
 // Proper UUID format Stage IDs
 const S = {
   W1:'f9910001-0000-0000-0000-000000000001', W2:'f9910001-0000-0000-0000-000000000002',
@@ -369,53 +390,50 @@ const PESTS = [
 const fs = require('fs');
 
 async function generateSQL() {
-  console.log('\n🌾 Smart Krushi Mitra - Generating Mega Seed SQL Script...\n');
+  console.log('\n🌾 Smart Krushi Mitra - Executing Mega Seed Script...\n');
 
+  console.log('\n⏳ Seeding Crop Master...');
+  const { error: err0 } = await supabase.from('crop_master').upsert(CROP_MASTER_DATA, { onConflict: 'id' });
+  if (err0) { console.error('Error in Crop Master:', err0); return; }
+  console.log('✅ Crop Master Seeded!');
+
+  console.log('\n⏳ Seeding Crop Stages...');
   let sql = `-- =============================================================================\n`;
   sql += `-- Smart Krushi Mitra - MEGA SEED SCRIPT (20 Crops)\n`;
   sql += `-- Generated on: ${new Date().toISOString()}\n`;
   sql += `-- Execute this script in your Supabase SQL Editor to bypass RLS policies.\n`;
   sql += `-- =============================================================================\n\n`;
 
-  // Function to escape strings for SQL
-  const esc = (str) => typeof str === 'string' ? `'${str.replace(/'/g, "''")}'` : 'NULL';
+  const { error: err1 } = await supabase.from('crop_stages').upsert(STAGES, { onConflict: 'id' });
+  if (err1) { console.error('Error in Crop Stages:', err1); return; }
+  console.log('✅ Crop Stages Seeded!');
 
-  sql += `-- 1. SEED CROP STAGES\n`;
-  STAGES.forEach(s => {
-    sql += `INSERT INTO crop_stages (id, crop_master_id, stage_name, start_day, end_day) VALUES (${esc(s.id)}, ${esc(s.crop_master_id)}, ${esc(s.stage_name)}, ${s.start_day}, ${s.end_day}) ON CONFLICT (id) DO NOTHING;\n`;
-  });
+  console.log('\n⏳ Seeding Fertilizer Schedule...');
+  const { error: err2 } = await supabase.from('fertilizer_schedule').insert(FERTILIZERS);
+  if (err2) { console.error('Error in Fertilizer Schedule:', err2); return; }
+  console.log('✅ Fertilizer Schedule Seeded!');
 
-  sql += `\n-- 2. SEED FERTILIZER SCHEDULE\n`;
-  FERTILIZERS.forEach(f => {
-    sql += `INSERT INTO fertilizer_schedule (crop_master_id, stage_id, fertilizer_name, quantity) VALUES (${esc(f.crop_master_id)}, ${esc(f.stage_id)}, ${esc(f.fertilizer_name)}, ${esc(f.quantity)});\n`;
-  });
+  console.log('\n⏳ Seeding Spray Schedule...');
+  const { error: err3 } = await supabase.from('spray_schedule').insert(SPRAYS);
+  if (err3) { console.error('Error in Spray Schedule:', err3); return; }
+  console.log('✅ Spray Schedule Seeded!');
 
-  sql += `\n-- 3. SEED SPRAY SCHEDULE\n`;
-  SPRAYS.forEach(s => {
-    sql += `INSERT INTO spray_schedule (crop_master_id, stage_id, spray_name) VALUES (${esc(s.crop_master_id)}, ${esc(s.stage_id)}, ${esc(s.spray_name)});\n`;
-  });
+  console.log('\n⏳ Seeding Irrigation Schedule...');
+  const { error: err4 } = await supabase.from('irrigation_schedule').insert(IRRIGATION);
+  if (err4) { console.error('Error in Irrigation Schedule:', err4); return; }
+  console.log('✅ Irrigation Schedule Seeded!');
 
-  sql += `\n-- 4. SEED IRRIGATION SCHEDULE\n`;
-  IRRIGATION.forEach(i => {
-    sql += `INSERT INTO irrigation_schedule (crop_master_id, stage_id, water_requirement) VALUES (${esc(i.crop_master_id)}, ${esc(i.stage_id)}, ${esc(i.water_requirement)});\n`;
-  });
+  console.log('\n⏳ Seeding Diseases...');
+  const { error: err5 } = await supabase.from('diseases').insert(DISEASES);
+  if (err5) { console.error('Error in Diseases:', err5); return; }
+  console.log('✅ Diseases Seeded!');
 
-  sql += `\n-- 5. SEED DISEASES\n`;
-  DISEASES.forEach(d => {
-    sql += `INSERT INTO diseases (crop_master_id, name, symptoms, treatment) VALUES (${esc(d.crop_master_id)}, ${esc(d.name)}, ${esc(d.symptoms)}, ${esc(d.treatment)});\n`;
-  });
+  console.log('\n⏳ Seeding Pests...');
+  const { error: err6 } = await supabase.from('pests').insert(PESTS);
+  if (err6) { console.error('Error in Pests:', err6); return; }
+  console.log('✅ Pests Seeded!');
 
-  sql += `\n-- 6. SEED PESTS\n`;
-  PESTS.forEach(p => {
-    sql += `INSERT INTO pests (crop_master_id, name, symptoms, control_method) VALUES (${esc(p.crop_master_id)}, ${esc(p.name)}, ${esc(p.symptoms)}, ${esc(p.control_method)});\n`;
-  });
-
-  const outputPath = path.join(__dirname, 'seed-all-crops.sql');
-  fs.writeFileSync(outputPath, sql);
-  
-  console.log(`\x1b[32m✅ SQL Script Generated Successfully!\x1b[0m`);
-  console.log(`File saved at: ${outputPath}`);
-  console.log('Please copy the contents of this file and execute it in your Supabase SQL Editor.');
+  console.log('\n\x1b[32m🎉 Mega Seed Completed Successfully via REST API!\x1b[0m\n');
 }
 
 generateSQL().catch(e => { console.error('CRASH:', e.message); process.exit(1); });

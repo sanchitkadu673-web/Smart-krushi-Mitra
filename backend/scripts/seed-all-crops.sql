@@ -1,6 +1,6 @@
 -- =============================================================================
 -- Smart Krushi Mitra - MEGA SEED SCRIPT (20 Crops)
--- Generated on: 2026-06-10T09:20:16.231Z
+-- Generated on: 2026-06-19T07:15:02.006Z
 -- Execute this script in your Supabase SQL Editor to bypass RLS policies.
 -- =============================================================================
 
