@@ -159,18 +159,45 @@ export const Dashboard: React.FC = () => {
     else setRefreshing(true);
     try {
       const [cropsRes, weatherRes, notifRes, allShopsRes] = await Promise.all([
-        axios.get('/api/crops'),
-        axios.get('/api/weather/forecast'),
-        axios.get('/api/notifications'),
-        axios.get('/api/shop/all').catch(() => ({ data: [] }))
+        axios.get('/api/crops').catch(err => {
+          console.error('Failed to fetch crops:', err);
+          return { data: [] };
+        }),
+        axios.get('/api/weather/forecast').catch(err => {
+          console.error('Failed to fetch weather:', err);
+          return { data: { error: true } };
+        }),
+        axios.get('/api/notifications').catch(err => {
+          console.error('Failed to fetch notifications:', err);
+          return { data: [] };
+        }),
+        axios.get('/api/shop/all').catch(err => {
+          console.error('Failed to fetch shops:', err);
+          return { data: [] };
+        })
       ]);
+
       setCrops(cropsRes.data);
-      setWeather(weatherRes.data);
+      
+      if (weatherRes.data && !weatherRes.data.error) {
+        setWeather(weatherRes.data);
+      } else {
+        setWeather({ error: true });
+      }
+
       setNotifications(notifRes.data);
       setAllShops(allShopsRes.data);
       setLastUpdated(new Date());
-    } catch {
-      if (!silent) toast.error('Dashboard data लोड होण्यात अडचण आली');
+    } catch (err) {
+      console.error('Unexpected error in fetchDashboardData:', err);
+      if (!silent) {
+        const errorMsg = i18n.language === 'mr' 
+          ? 'डॅशबोर्ड डेटा लोड करताना त्रुटी आली' 
+          : i18n.language === 'hi' 
+          ? 'डैशबोर्ड डेटा लोड करने में त्रुटि हुई' 
+          : 'Failed to load dashboard data';
+        toast.error(errorMsg);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -780,8 +807,21 @@ export const Dashboard: React.FC = () => {
 
                 {loading || !weather ? (
                   <div className="animate-pulse space-y-5">
-                    <div className="h-12 bg-gray-50 dark:bg-slate-800 rounded-xl" />
-                    <div className="h-8 bg-gray-55 dark:bg-slate-800 rounded-xl w-3/4" />
+                    <div className="h-12 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+                    <div className="h-8 bg-slate-100 dark:bg-slate-800 rounded-xl w-3/4" />
+                  </div>
+                ) : weather.error ? (
+                  <div className="text-center py-6 space-y-3">
+                    <AlertCircle className="w-8 h-8 text-red-500 mx-auto" />
+                    <p className="text-xs text-gray-500 dark:text-slate-400 font-bold">
+                      {i18n.language === 'mr' ? 'हवामान माहिती लोड करता आली नाही' : i18n.language === 'hi' ? 'मौसम डेटा प्राप्त करने में असमर्थ' : 'Unable to load weather data'}
+                    </p>
+                    <button
+                      onClick={() => fetchDashboardData(true)}
+                      className="text-xs bg-primary hover:bg-emerald-600 text-white font-extrabold px-3 py-1.5 rounded-lg flex items-center gap-1 mx-auto shadow-sm cursor-pointer"
+                    >
+                      <RefreshCw className="w-3 h-3" /> {i18n.language === 'mr' ? 'पुन्हा प्रयत्न करा' : i18n.language === 'hi' ? 'पुनः प्रयास करें' : 'Retry'}
+                    </button>
                   </div>
                 ) : (
                   <div className="relative z-10 space-y-6">

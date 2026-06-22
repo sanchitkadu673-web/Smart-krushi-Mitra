@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-import { Globe, LogOut, User, Bell, Sprout, Menu, X } from 'lucide-react';
+import { Globe, LogOut, User, Bell, Sprout, Menu, X, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 
 const transliterateName = (name: string, lang: string) => {
@@ -27,13 +27,88 @@ const transliterateName = (name: string, lang: string) => {
     .join(' ');
 };
 
+const WeatherNotificationDropdown: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const { i18n } = useTranslation();
+  const lang = i18n.language;
+
+  const weatherAlerts = [
+    {
+      mr: '🌦️ पुणे: पुढील २४ तासांत मुसळधार पावसाची शक्यता. काढणी केलेले पीक सुरक्षित ठिकाणी ठेवा.',
+      hi: '🌦️ पुणे: अगले 24 घंटों में भारी बारिश की संभावना। कटी हुई फसलों को सुरक्षित रखें।',
+      en: '🌦️ Pune: Heavy rainfall expected in the next 24 hours. Keep harvested crops safe.'
+    },
+    {
+      mr: '💨 नाशिक: ताशी ४० किमी वेगाने वारे वाहण्याची शक्यता. औषध फवारणी टाळावी.',
+      hi: '💨 नाशिक: 40 किमी/घंटा की रफ्तार से तेज हवाएं। कीटनाशक छिड़काव से बचें।',
+      en: '💨 Nashik: Strong winds up to 40 km/h. Avoid spraying pesticides.'
+    },
+    {
+      mr: '🌧️ कोल्हापूर: मध्यम ते मुसळधार पाऊस. शेतातून पाण्याचा निचरा योग्य ठेवा.',
+      hi: '🌧️ कोल्हापुर: मध्यम से भारी बारिश। खेतों में जल निकासी की उचित व्यवस्था करें।',
+      en: '🌧️ Kolhapur: Moderate to heavy rain showers. Ensure proper field drainage.'
+    },
+    {
+      mr: '☀️ नागपूर: तीव्र उष्णतेचा इशारा. जनावरांना सावलीत ठेवा व पिकांना पाणी द्या.',
+      hi: '☀️ नागपुर: अत्यधिक गर्मी की चेतावनी। पशुधन को छांव में रखें और फसलों की सिंचाई करें।',
+      en: '☀️ Nagpur: High temperature warning. Keep livestock in shade and irrigate crops.'
+    }
+  ];
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative p-1.5 text-gray-650 hover:text-primary transition-colors flex items-center justify-center bg-gray-50 border border-gray-200 rounded-lg hover:border-primary/30 cursor-pointer"
+        title="Weather Alerts"
+      >
+        <Bell className="w-4 h-4 md:w-5 h-5 text-gray-600 hover:text-primary shrink-0" />
+        <span className="absolute top-1.5 right-1.5 flex h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+      </button>
+
+      {isOpen && (
+        <>
+          <div 
+            className="fixed inset-0 z-40" 
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute right-0 mt-2 w-72 sm:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 p-4 text-left">
+            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
+              <h4 className="font-extrabold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-red-500 animate-pulse" />
+                {lang === 'mr' ? 'हवामान इशारे' : lang === 'hi' ? 'मौसम चेतावनी' : 'Weather Alerts'}
+              </h4>
+              <span className="text-[10px] font-black bg-red-100 text-red-700 px-2 py-0.5 rounded-full uppercase">
+                {lang === 'mr' ? 'थेट' : lang === 'hi' ? 'लाइव' : 'Live'}
+              </span>
+            </div>
+
+            <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+              {weatherAlerts.map((alert, idx) => (
+                <div 
+                  key={idx} 
+                  className="p-2.5 rounded-xl bg-red-50/40 dark:bg-red-950/10 border border-red-100/50 dark:border-red-900/20 text-xs text-red-950 dark:text-red-300 font-bold leading-relaxed"
+                >
+                  {lang === 'mr' ? alert.mr : lang === 'hi' ? alert.hi : alert.en}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 export const Navbar: React.FC = () => {
   const { profile, logout } = useAuth();
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const isLandingPage = location.pathname === '/';
 
   useEffect(() => {
     if (!profile) return;
@@ -87,6 +162,10 @@ export const Navbar: React.FC = () => {
               <option value="en">English</option>
             </select>
           </div>
+          
+          {isLandingPage && !profile && (
+            <WeatherNotificationDropdown />
+          )}
 
           {profile ? (
             <>
